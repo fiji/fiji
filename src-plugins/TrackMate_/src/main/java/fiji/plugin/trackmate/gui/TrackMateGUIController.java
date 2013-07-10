@@ -92,12 +92,12 @@ public class TrackMateGUIController implements ActionListener {
 	 */
 
 	private static final boolean DEBUG = false;
-	private final Logger logger;
+	protected final Logger logger;
 	/** The trackmate piloted here. */
-	private final TrackMate trackmate;
+	protected final TrackMate trackmate;
 	/** The GUI controlled by this controller.  */
-	private final TrackMateWizard gui;
-	private final TrackMateGUIModel guimodel;
+	protected final TrackMateWizard gui;
+	protected final TrackMateGUIModel guimodel;
 
 	protected SpotAnalyzerProvider spotAnalyzerProvider;
 	protected EdgeAnalyzerProvider edgeAnalyzerProvider;
@@ -182,8 +182,6 @@ public class TrackMateGUIController implements ActionListener {
 		createProviders();
 		// 3.
 		registeredDescriptors = createDescriptors();
-
-		guimodel.currentDescriptor = startDialoDescriptor;
 
 		trackmate.getModel().setLogger(logger);
 		gui.setVisible(true);
@@ -684,6 +682,7 @@ public class TrackMateGUIController implements ActionListener {
 		// Get start panel id
 		gui.setPreviousButtonEnabled(false);
 		final WizardPanelDescriptor panelDescriptor = getFirstDescriptor();
+		guimodel.currentDescriptor = panelDescriptor;
 
 		final String welcomeMessage = TrackMate.PLUGIN_NAME_STR + " v" + TrackMate.PLUGIN_NAME_VERSION + " started on:\n" +
 				TMUtils.getCurrentTimeString() + '\n';

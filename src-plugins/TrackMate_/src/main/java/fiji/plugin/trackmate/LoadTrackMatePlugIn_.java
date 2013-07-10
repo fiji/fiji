@@ -1,5 +1,9 @@
 package fiji.plugin.trackmate;
 
+import ij.IJ;
+import ij.ImageJ;
+import ij.plugin.PlugIn;
+
 import java.io.File;
 import java.util.Collection;
 import java.util.Map;
@@ -28,9 +32,6 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotImageUpdater;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
-import ij.IJ;
-import ij.ImageJ;
-import ij.plugin.PlugIn;
 
 public class LoadTrackMatePlugIn_ extends SomeDialogDescriptor implements PlugIn {
 
@@ -46,81 +47,82 @@ public class LoadTrackMatePlugIn_ extends SomeDialogDescriptor implements PlugIn
 
 
 	@Override
-	public void run(String arg0) {
-		
+	public void run(final String arg0) {
+
 		// I can't stand the metal look. If this is a problem, contact me (jeanyves.tinevez@gmail.com)
 		if (IJ.isMacOSX() || IJ.isWindows()) {
 			try {
 				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			} catch (ClassNotFoundException e) {
+			} catch (final ClassNotFoundException e) {
 				e.printStackTrace();
-			} catch (InstantiationException e) {
+			} catch (final InstantiationException e) {
 				e.printStackTrace();
-			} catch (IllegalAccessException e) {
+			} catch (final IllegalAccessException e) {
 				e.printStackTrace();
-			} catch (UnsupportedLookAndFeelException e) {
+			} catch (final UnsupportedLookAndFeelException e) {
 				e.printStackTrace();
 			}
 		}
-		
+
 		if (null == file) {
-			File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
+			final File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 			file = new File(folder.getPath() + File.separator + "TrackMateData.xml");
 		}
 
-		Logger logger = logPanel.getLogger();
-		File tmpFile = IOUtils.askForFileForLoading(file, "Load a TrackMate XML file", frame, logger );
+		final Logger logger = logPanel.getLogger();
+		final File tmpFile = IOUtils.askForFileForLoading(file, "Load a TrackMate XML file", frame, logger );
 		if (null == tmpFile) {
 			return;
 		}
 		file = tmpFile;
 
 		// Read the file content
-		TmXmlReader reader = new TmXmlReader(file);
+		final TmXmlReader reader = new TmXmlReader(file);
 		if (!reader.isReadingOk()) {
 			logger.error(reader.getErrorMessage());
 			logger.error("Aborting.\n"); // If I cannot even open the xml file, it is not work going on.
+			displayingPanel();
 			return;
 		}
-		
+
 		// Log
-		String logText = reader.getLog() + '\n';
+		final String logText = reader.getLog() + '\n';
 		// Model
-		Model model = reader.getModel();
+		final Model model = reader.getModel();
 		// Settings -> empty for now.
-		Settings settings = new Settings();
-		
+		final Settings settings = new Settings();
+
 		// With this we can create a new controller from the provided one:
-		TrackMate trackmate = new TrackMate(model, settings);
-		TrackMateGUIController controller = new TrackMateGUIController(trackmate);
-		
+		final TrackMate trackmate = new TrackMate(model, settings);
+		final TrackMateGUIController controller = new TrackMateGUIController(trackmate);
+
 		// We feed then the reader with the providers taken from the NEW controller.
-		DetectorProvider detectorProvider = controller.getDetectorProvider();
-		TrackerProvider trackerProvider = controller.getTrackerProvider();
-		SpotAnalyzerProvider spotAnalyzerProvider = controller.getSpotAnalyzerProvider();
-		EdgeAnalyzerProvider edgeAnalyzerProvider = controller.getEdgeAnalyzerProvider();
-		TrackAnalyzerProvider trackAnalyzerProvider = controller.getTrackAnalyzerProvider();
-		reader.readSettings(settings, detectorProvider, trackerProvider, 
+		final DetectorProvider detectorProvider = controller.getDetectorProvider();
+		final TrackerProvider trackerProvider = controller.getTrackerProvider();
+		final SpotAnalyzerProvider spotAnalyzerProvider = controller.getSpotAnalyzerProvider();
+		final EdgeAnalyzerProvider edgeAnalyzerProvider = controller.getEdgeAnalyzerProvider();
+		final TrackAnalyzerProvider trackAnalyzerProvider = controller.getTrackAnalyzerProvider();
+		reader.readSettings(settings, detectorProvider, trackerProvider,
 				spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider);
-		
+
 		// GUI position
 		GuiUtils.positionWindow(controller.getGUI(), settings.imp.getWindow());
-		
+
 		// GUI state
-		String guiState = reader.getGUIState();
-		
+		final String guiState = reader.getGUIState();
+
 		// Views
-		ViewProvider viewProvider = controller.getViewProvider();
-		Collection<TrackMateModelView> views = reader.getViews(viewProvider);
-		for (TrackMateModelView view : views) {
+		final ViewProvider viewProvider = controller.getViewProvider();
+		final Collection<TrackMateModelView> views = reader.getViews(viewProvider);
+		for (final TrackMateModelView view : views) {
 			if (view.getKey().equals(TrackScheme.KEY)) {
-				TrackScheme trackscheme = (TrackScheme) view;
+				final TrackScheme trackscheme = (TrackScheme) view;
 				trackscheme.setSpotImageUpdater(new SpotImageUpdater(settings));
 			}
 		}
-		
+
 		if (!reader.isReadingOk()) {
-			Logger newlogger = controller.getGUI().getLogger();
+			final Logger newlogger = controller.getGUI().getLogger();
 			newlogger.error("Some errors occured while reading file:\n");
 			newlogger.error(reader.getErrorMessage());
 		}
@@ -130,21 +132,18 @@ public class LoadTrackMatePlugIn_ extends SomeDialogDescriptor implements PlugIn
 		if (views.isEmpty()) { // at least one view.
 			views.add(new HyperStackDisplayer(model, controller.getSelectionModel(), settings.imp));
 		}
-		Map<String, Object> displaySettings = controller.getGuimodel().getDisplaySettings();
-		for (TrackMateModelView view : views) {
-			for (String key : displaySettings.keySet()) {
+		final Map<String, Object> displaySettings = controller.getGuimodel().getDisplaySettings();
+		for (final TrackMateModelView view : views) {
+			for (final String key : displaySettings.keySet()) {
 				controller.getGuimodel().addView(view);
 				view.setDisplaySettings(key, displaySettings.get(key));
 			}
 			view.render();
 		}
-		
+
 		// Text
 		controller.getGUI().getLogPanel().setTextContent(logText);
 		model.getLogger().log("File loaded on " + TMUtils.getCurrentTimeString() + '\n', Logger.BLUE_COLOR);
-		
-		// Close log
-//		frame.dispose();
 	}
 
 
@@ -161,18 +160,18 @@ public class LoadTrackMatePlugIn_ extends SomeDialogDescriptor implements PlugIn
 	public String getKey() {
 		return KEY;
 	}
-	
+
 	/*
 	 * MAIN METHOD
 	 */
-	
+
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		ImageJ.main(args);
 		SomeDialogDescriptor.file =  new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
-		LoadTrackMatePlugIn_ plugIn = new LoadTrackMatePlugIn_();
+		final LoadTrackMatePlugIn_ plugIn = new LoadTrackMatePlugIn_();
 		plugIn.run(null);
 	}
 

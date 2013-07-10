@@ -23,15 +23,15 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
  * This class is used to store user settings for the {@link TrackMate} trackmate.
- * It is simply made of public fields 
+ * It is simply made of public fields
  */
 public class Settings {
-	
-	/** The ImagePlus to operate on. Will also be used by some {@link TrackMateModelView} 
+
+	/** The ImagePlus to operate on. Will also be used by some {@link TrackMateModelView}
 	 * as a GUI target. */
 	public ImagePlus imp;
-	/** The polygon of interest. This will be used to crop the image and to discard 
-	 * found spots out of the polygon. If <code>null</code>, the whole image is 
+	/** The polygon of interest. This will be used to crop the image and to discard
+	 * found spots out of the polygon. If <code>null</code>, the whole image is
 	 * considered. */
 	public Polygon polygon;
 	// Crop cube
@@ -64,18 +64,18 @@ public class Settings {
 	public int nframes;
 	public String imageFolder 		= "";
 	public String imageFileName 	= "";
-	
+
 	/** The name of the detector factory to use. It will be used to generate {@link SpotDetector}
 	 * for each target frame. */
 	public SpotDetectorFactory<?> detectorFactory;
 	/** The the tracker to use. */
 	public SpotTracker tracker;
-	
+
 	public Map<String, Object> detectorSettings = new HashMap<String, Object>();
 	public Map<String, Object> trackerSettings = new HashMap<String, Object>();
-	
+
 	// Filters
-	
+
 	/**
 	 * The feature filter list that is used to generate {@link #filteredSpots}
 	 * from {@link #spots}.
@@ -89,14 +89,14 @@ public class Settings {
 	/** The track filter list that is used to prune track and spots. */
 	protected List<FeatureFilter> trackFilters = new ArrayList<FeatureFilter>();
 	protected String errorMessage;
-	
-	
+
+
 	// Spot features
-	
+
 	/** The {@link SpotAnalyzerFactory}s that will be used to compute spot features.
 	 * They are ordered in a {@link List} in case some analyzers requires the results
 	 * of another analyzer to proceed. */
-	protected List<SpotAnalyzerFactory<?>> spotAnalyzerFactories = new ArrayList<SpotAnalyzerFactory<?>>(); 
+	protected List<SpotAnalyzerFactory<?>> spotAnalyzerFactories = new ArrayList<SpotAnalyzerFactory<?>>();
 
 	// Edge features
 
@@ -110,25 +110,25 @@ public class Settings {
 	/** The {@link TrackAnalyzer}s that will be used to compute track features.
 	 * They are ordered in a {@link List} in case some analyzers requires the results
 	 * of another analyzer to proceed. */
-	protected List<TrackAnalyzer> trackAnalyzers = new ArrayList<TrackAnalyzer>(); 
+	protected List<TrackAnalyzer> trackAnalyzers = new ArrayList<TrackAnalyzer>();
 
-		
-	
+
+
 	/*
 	 * METHODS
 	 */
-	
-	public void setFrom(ImagePlus imp) {
+
+	public void setFrom(final ImagePlus imp) {
 		// Source image
 		this.imp = imp;
-		
+
 		if (null == imp) {
 			return; // we leave field default values
 		}
-		
+
 		// File info
-		this.imageFileName = imp.getFileInfo().fileName;
-		this.imageFolder = imp.getFileInfo().directory;
+		this.imageFileName = imp.getOriginalFileInfo().fileName;
+		this.imageFolder = imp.getOriginalFileInfo().directory;
 		// Image size
 		this.width = imp.getWidth();
 		this.height = imp.getHeight();
@@ -138,17 +138,17 @@ public class Settings {
 		this.dy = (float) imp.getCalibration().pixelHeight;
 		this.dz = (float) imp.getCalibration().pixelDepth;
 		this.dt = (float) imp.getCalibration().frameInterval;
-		
+
 		if (dt == 0) {
 			dt = 1;
 		}
-		
+
 		// Crop cube
 		this.zstart = 0;
 		this.zend = imp.getNSlices()-1;
-		this.tstart = 0; 
+		this.tstart = 0;
 		this.tend = imp.getNFrames()-1;
-		Roi roi = imp.getRoi();
+		final Roi roi = imp.getRoi();
 		if (roi == null) {
 			this.xstart = 0;
 			this.xend = width-1;
@@ -156,32 +156,32 @@ public class Settings {
 			this.yend = height-1;
 			this.polygon = null;
 		} else {
-			Rectangle boundingRect = roi.getBounds();
-			this.xstart = boundingRect.x; 
+			final Rectangle boundingRect = roi.getBounds();
+			this.xstart = boundingRect.x;
 			this.xend = boundingRect.width;
 			this.ystart = boundingRect.y;
 			this.yend = boundingRect.height+boundingRect.y;
 			this.polygon = roi.getPolygon();
-			
+
 		}
 		// The rest is left to the user
 	}
-	
+
 	/*
 	 * METHODS
 	 */
-	
+
 	/**
 	 * Returns a string description of the target image.
 	 */
 	public String toStringImageInfo() {
-		StringBuilder str = new StringBuilder(); 
-		
+		final StringBuilder str = new StringBuilder();
+
 		str.append("Image data:\n");
 		if (null == imp) {
 			str.append("Source image not set.\n");
 		} else {
-			str.append("For the image named: "+imp.getTitle() + ".\n");			
+			str.append("For the image named: "+imp.getTitle() + ".\n");
 		}
 		if (imageFileName == null || imageFileName == "") {
 			str.append("Not matching any file.\n");
@@ -193,7 +193,7 @@ public class Settings {
 				str.append("in folder: "+imageFolder + "\n");
 			}
 		}
-		
+
 		str.append("Geometry:\n");
 		str.append(String.format("  X = %4d - %4d, dx = %g\n", xstart, xend, dx));
 		str.append(String.format("  Y = %4d - %4d, dy = %g\n", ystart, yend, dy));
@@ -202,41 +202,41 @@ public class Settings {
 
 		return str.toString();
 	}
-	
+
 	public String toStringFeatureAnalyzersInfo() {
-		StringBuilder str = new StringBuilder();
-		
+		final StringBuilder str = new StringBuilder();
+
 		if (spotAnalyzerFactories.isEmpty()) {
 			str.append("No spot feature analyzers.\n");
 		} else {
 			str.append("Spot feature analyzers:\n");
 			prettyPrintFeatureAnalyzer(spotAnalyzerFactories, str);
 		}
-		
+
 		if (edgeAnalyzers.isEmpty()) {
 			str.append("No edge feature analyzers.\n");
 		} else {
 			str.append("Edge feature analyzers:\n");
 			prettyPrintFeatureAnalyzer(edgeAnalyzers, str);
 		}
-		
+
 		if (trackAnalyzers.isEmpty()) {
 			str.append("No track feature analyzers.\n");
 		} else {
 			str.append("Track feature analyzers:\n");
 			prettyPrintFeatureAnalyzer(trackAnalyzers, str);
 		}
-		
+
 		return str.toString();
 	}
-	
-	
+
+
 	@Override
 	public String toString() {
-		StringBuilder str = new StringBuilder(); 
-		
+		final StringBuilder str = new StringBuilder();
+
 		str.append(toStringImageInfo());
-		
+
 		str.append('\n');
 		str.append("Spot detection:\n");
 		if (null == detectorFactory) {
@@ -251,10 +251,10 @@ public class Settings {
 				str.append('\n');
 			}
 		}
-		
+
 		str.append('\n');
 		str.append(toStringFeatureAnalyzersInfo());
-		
+
 		str.append('\n');
 		str.append("Initial spot filter:\n");
 		if (null == initialSpotFilterValue) {
@@ -269,11 +269,11 @@ public class Settings {
 			str.append("No spot feature filters.\n");
 		} else {
 			str.append("Set with "+spotFilters.size()+" spot feature filters:\n");
-			for (FeatureFilter featureFilter : spotFilters) {
+			for (final FeatureFilter featureFilter : spotFilters) {
 				str.append(" - "+featureFilter + "\n");
 			}
 		}
-		
+
 		str.append('\n');
 		str.append("Particle linking:\n");
 		if (null == tracker) {
@@ -288,21 +288,21 @@ public class Settings {
 				str.append('\n');
 			}
 		}
-		
+
 		str.append('\n');
 		str.append("Track feature filters:\n");
 		if (trackFilters == null || trackFilters.size() == 0) {
 			str.append("No track feature filters.\n");
 		} else {
 			str.append("Set with "+trackFilters.size()+" track feature filters:\n");
-			for (FeatureFilter featureFilter : trackFilters) {
+			for (final FeatureFilter featureFilter : trackFilters) {
 				str.append(" - "+featureFilter + "\n");
 			}
 		}
-		
+
 		return str.toString();
 	}
-	
+
 	public boolean checkValidity() {
 		if (null == imp) {
 			errorMessage = "The source image is null.\n";
@@ -330,22 +330,22 @@ public class Settings {
 		}
 		return true;
 	}
-	
+
 	public String getErrorMessage() {
 		return errorMessage;
 	}
-	
+
 	/*
 	 * SPOT FEATURES
 	 */
-	
+
 	/**
 	 * Remove any {@link SpotAnalyzerFactory} to this object.
 	 */
 	public void clearSpotAnalyzerFactories() {
 		spotAnalyzerFactories.clear();
 	}
-	
+
 	/**
 	 * Returns a copy of the list of {@link SpotAnalyzerFactory}s configured in this settings object.
 	 * They are returned in an ordered list, to enforce processing order in case some
@@ -355,44 +355,44 @@ public class Settings {
 	public List<SpotAnalyzerFactory<?>> getSpotAnalyzerFactories() {
 		return new ArrayList<SpotAnalyzerFactory<?>>(spotAnalyzerFactories);
 	}
-	
+
 	/**
 	 * Adds a {@link SpotAnalyzerFactory} to the {@link List} of spot analyzers configured.
 	 * @param spotAnalyzer the {@link SpotAnalyzer} to add, at the end of the list.
 	 */
-	public void addSpotAnalyzerFactory(SpotAnalyzerFactory<?> spotAnalyzer) {
+	public void addSpotAnalyzerFactory(final SpotAnalyzerFactory<?> spotAnalyzer) {
 		spotAnalyzerFactories.add(spotAnalyzer);
-	}	
+	}
 
 	/**
 	 * Adds a {@link SpotAnalyzerFactory} to the {@link List} of spot analyzers configured,
-	 * at the specified index. 
+	 * at the specified index.
 	 * @param spotAnalyzer the {@link SpotAnalyzer} to add, at the specified index in the list.
 	 */
-	public void addSpotAnalyzerFactory(int index, SpotAnalyzerFactory<?> spotAnalyzer) {
+	public void addSpotAnalyzerFactory(final int index, final SpotAnalyzerFactory<?> spotAnalyzer) {
 		spotAnalyzerFactories.add(index, spotAnalyzer);
 	}
-	
+
 	/**
-	 * Removes the specified {@link SpotAnalyzerFactory} from the analyzers configured.  
+	 * Removes the specified {@link SpotAnalyzerFactory} from the analyzers configured.
 	 * @param spotAnalyzer the {@link SpotAnalyzerFactory} to remove.
 	 * @return  true if the specified {@link SpotAnalyzerFactory} was in the list and was removed.
 	 */
-	public boolean removeSpotAnalyzerFactory(SpotAnalyzerFactory<?> spotAnalyzer) {
+	public boolean removeSpotAnalyzerFactory(final SpotAnalyzerFactory<?> spotAnalyzer) {
 		return spotAnalyzerFactories.remove(spotAnalyzer);
 	}
 
 	/*
 	 * EDGE FEATURE ANALYZERS
 	 */
-	
+
 	/**
 	 * Remove any {@link EdgeAnalyzer} to this object.
 	 */
 	public void clearEdgeAnalyzers() {
 		edgeAnalyzers.clear();
 	}
-	
+
 	/**
 	 * Returns a copy of the list of {@link EdgeAnalyzer}s configured in this settings object.
 	 * They are returned in an ordered list, to enforce processing order in case some
@@ -402,44 +402,44 @@ public class Settings {
 	public List<EdgeAnalyzer> getEdgeAnalyzers() {
 		return new ArrayList<EdgeAnalyzer>(edgeAnalyzers);
 	}
-	
+
 	/**
 	 * Adds a {@link EdgeAnalyzer} to the {@link List} of edge analyzers configured.
 	 * @param edgeAnalyzer the {@link EdgeAnalyzer} to add, at the end of the list.
 	 */
-	public void addEdgeAnalyzer(EdgeAnalyzer edgeAnalyzer) {
+	public void addEdgeAnalyzer(final EdgeAnalyzer edgeAnalyzer) {
 		edgeAnalyzers.add(edgeAnalyzer);
-	}	
+	}
 
 	/**
 	 * Adds a {@link EdgeAnalyzer} to the {@link List} of edge analyzers configured,
-	 * at the specified index. 
+	 * at the specified index.
 	 * @param edgeAnalyzer the {@link EdgeAnalyzer} to add, at the specified index in the list.
 	 */
-	public void addEdgeAnalyzer(int index, EdgeAnalyzer edgeAnalyzer) {
+	public void addEdgeAnalyzer(final int index, final EdgeAnalyzer edgeAnalyzer) {
 		edgeAnalyzers.add(index, edgeAnalyzer);
 	}
-	
+
 	/**
-	 * Removes the specified {@link EdgeAnalyzer} from the analyzers configured.  
+	 * Removes the specified {@link EdgeAnalyzer} from the analyzers configured.
 	 * @param edgeAnalyzer the {@link EdgeAnalyzer} to remove.
 	 * @return  true if the specified {@link EdgeAnalyzer} was in the list and was removed.
 	 */
-	public boolean removeEdgeAnalyzer(EdgeAnalyzer edgeAnalyzer) {
+	public boolean removeEdgeAnalyzer(final EdgeAnalyzer edgeAnalyzer) {
 		return edgeAnalyzers.remove(edgeAnalyzer);
 	}
 
 	/*
 	 * TRACK FEATURE ANALYZERS
 	 */
-	
+
 	/**
 	 * Remove any {@link TrackAnalyzer} to this object.
 	 */
 	public void clearTrackAnalyzers() {
 		trackAnalyzers.clear();
 	}
-	
+
 	/**
 	 * Returns a copy of the list of {@link TrackAnalyzer}s configured in this settings object.
 	 * They are returned in an ordered list, to enforce processing order in case some
@@ -449,33 +449,33 @@ public class Settings {
 	public List<TrackAnalyzer> getTrackAnalyzers() {
 		return new ArrayList<TrackAnalyzer>(trackAnalyzers);
 	}
-	
+
 	/**
 	 * Adds a {@link TrackAnalyzer} to the {@link List} of track analyzers configured.
 	 * @param trackAnalyzer the {@link TrackAnalyzer} to add, at the end of the list.
 	 */
-	public void addTrackAnalyzer(TrackAnalyzer trackAnalyzer) {
+	public void addTrackAnalyzer(final TrackAnalyzer trackAnalyzer) {
 		trackAnalyzers.add(trackAnalyzer);
-	}	
+	}
 
 	/**
 	 * Adds a {@link TrackAnalyzer} to the {@link List} of track analyzers configured,
-	 * at the specified index. 
+	 * at the specified index.
 	 * @param trackAnalyzer the {@link TrackAnalyzer} to add, at the specified index in the list.
 	 */
-	public void addTrackAnalyzer(int index, TrackAnalyzer trackAnalyzer) {
+	public void addTrackAnalyzer(final int index, final TrackAnalyzer trackAnalyzer) {
 		trackAnalyzers.add(index, trackAnalyzer);
 	}
-	
+
 	/**
-	 * Removes the specified {@link TrackAnalyzer} from the analyzers configured.  
+	 * Removes the specified {@link TrackAnalyzer} from the analyzers configured.
 	 * @param trackAnalyzer the {@link TrackAnalyzer} to remove.
 	 * @return  true if the specified {@link TrackAnalyzer} was in the list and was removed.
 	 */
-	public boolean removeTrackAnalyzer(TrackAnalyzer trackAnalyzer) {
+	public boolean removeTrackAnalyzer(final TrackAnalyzer trackAnalyzer) {
 		return trackAnalyzers.remove(trackAnalyzer);
 	}
-	
+
 	/*
 	 * FEATURE FILTERS
 	 */
@@ -501,7 +501,7 @@ public class Settings {
 		return spotFilters;
 	}
 
-	public void setSpotFilters(List<FeatureFilter> spotFilters) {
+	public void setSpotFilters(final List<FeatureFilter> spotFilters) {
 		this.spotFilters = spotFilters;
 	}
 
@@ -523,20 +523,20 @@ public class Settings {
 		return trackFilters;
 	}
 
-	public void setTrackFilters(List<FeatureFilter> trackFilters) {
+	public void setTrackFilters(final List<FeatureFilter> trackFilters) {
 		this.trackFilters = trackFilters;
 	}
 
-	
-	
+
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
-	private final void prettyPrintFeatureAnalyzer(List<? extends FeatureAnalyzer> analyzers, StringBuilder str) {
-		for (FeatureAnalyzer analyzer : analyzers) {
+
+	private final void prettyPrintFeatureAnalyzer(final List<? extends FeatureAnalyzer> analyzers, final StringBuilder str) {
+		for (final FeatureAnalyzer analyzer : analyzers) {
 			str.append(" - " + analyzer.getKey() +" provides: ");
-			for (String feature : analyzer.getFeatures()) {
+			for (final String feature : analyzer.getFeatures()) {
 				str.append(analyzer.getFeatureShortNames().get(feature) +", ");
 			}
 			str.deleteCharAt(str.length()-1);
@@ -548,7 +548,7 @@ public class Settings {
 			str.append('\n');
 		}
 	}
-	
-	
+
+
 
 }
