@@ -56,7 +56,7 @@ public class OverlayFusion
 			models.add( finalModel1 );
 			models.add( finalModel2 );
 		}
-
+		
 		for ( int tp = 1; tp <= ntimepoints; ++tp ) 
 		{
 			if ( useNearestNeighborInterpolation )
@@ -66,9 +66,13 @@ public class OverlayFusion
 		}
 		
 		final ImagePlus imp = new Concatenator().concatenateHyperstacks( cis, "Fused " + imp1.getShortTitle() + " & " + imp2.getShortTitle(), false );
-		
+
+		// get the right number of channels, slices and frames
+		final int numChannels = imp1.getNChannels() + imp2.getNChannels();
+		final int nSlices = cis[ 0 ].getNSlices();
+				
 		// Set the right dimensions
-		imp.setDimensions( 2, imp1.getNSlices(), imp1.getNFrames() );
+		imp.setDimensions( numChannels, nSlices, ntimepoints );
 		
 		// Copy calibration
 		imp.setCalibration( imp1.getCalibration() );
