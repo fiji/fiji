@@ -244,6 +244,11 @@ maven_update () {
 		fi
 		touch "$MAVEN_DOWNLOAD"
 	}
+	test $# = 0 ||
+	sh -$- "$MAVEN_HELPER" "$@"
+}
+
+maven_update () {
 	for gav in "$@"
 	do
 		artifactId="${gav#*:}"
@@ -290,7 +295,7 @@ EOF
 	*)
 		uptodate "$ARGV0" "$CWD/$LAUNCHER" ||
 		(cd $CWD &&
-		 sh bin/download-launchers.sh snapshot $platform)
+		 sh -$- bin/download-launchers.sh release $platform)
 		;;
 	esac
 	test -z "$FIJILAUNCHER" ||
@@ -320,6 +325,14 @@ do
 	*=*)
 		OPTIONS="$OPTIONS -D$1"
 		;;
+	--)
+		shift
+		break
+		;;
+	-*)
+		echo "Invalid option: $1" >&2
+		exit 1
+		;;
 	*)
 		break
 		;;
@@ -331,7 +344,7 @@ done
 
 if test $# = 0
 then
-	eval sh "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install
+	eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install
 	update_launcher
 else
 	for name in "$@"
@@ -342,7 +355,7 @@ else
 			continue
 			;;
 		clean)
-			eval sh \"$CWD/bin/ImageJ.sh\" --mini-maven \
+			eval sh -$- \"$CWD/bin/ImageJ.sh\" --mini-maven \
                                 "$OPTIONS" clean
 			continue
 			;;
@@ -352,11 +365,11 @@ else
 		artifactId="${artifactId%%-[0-9]*}"
 		case "$name" in
 		*-rebuild)
-			eval sh "$CWD/bin/ImageJ.sh" --mini-maven \
+			eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven \
 				"$OPTIONS" -DartifactId="$artifactId" clean
 			;;
 		esac
-		eval sh "$CWD/bin/ImageJ.sh" --mini-maven \
+		eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven \
 			"$OPTIONS" -DartifactId="$artifactId" install
 	done
 fi
