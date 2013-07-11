@@ -107,7 +107,7 @@ public class Main {
 	 */
 	public static void setup() {
 		runPlugInGently("fiji.util.RedirectErrAndOut", null);
-		new MenuRefresher().run(null);
+		new MenuRefresher().run();
 		if (IJ.getInstance() != null) {
 			new Thread() {
 				public void run() {

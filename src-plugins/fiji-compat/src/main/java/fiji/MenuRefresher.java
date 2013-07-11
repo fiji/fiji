@@ -10,7 +10,7 @@ import java.awt.MenuItem;
 import java.awt.event.KeyEvent;
 import java.util.Hashtable;
 
-public class MenuRefresher implements PlugIn {
+public class MenuRefresher implements PlugIn, Runnable {
 
 	/**
 	 * The entry point of the {@link PlugIn}.
@@ -20,6 +20,11 @@ public class MenuRefresher implements PlugIn {
 	 */
 	@Override
 	public void run(final String arg) {
+		run();
+	}
+
+	@Override
+	public void run() {
 		if (IJ.getInstance() != null) {
 			Menu help = Menus.getMenuBar().getHelpMenu();
 			for (int i = help.getItemCount() - 1; i >= 0; i--) {
