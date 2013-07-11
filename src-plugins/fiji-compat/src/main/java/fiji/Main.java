@@ -50,6 +50,12 @@ public class Main {
 		runPlugInGently(className, arg);
 	}
 
+	/**
+	 * Runs a plug-in with an optional argument.
+	 * 
+	 * @param className the plugin class
+	 * @param arg the argument (use "" if you do not want to pass anything)
+	 */
 	public static void runPlugInGently(String className, String arg) {
 		try {
 			Class<?> clazz = IJ.getClassLoader()
