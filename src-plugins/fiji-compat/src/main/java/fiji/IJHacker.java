@@ -32,6 +32,8 @@ public class IJHacker extends JavassistHelper {
 				return FijiTools.openFijiEditor(title, body);
 			}
 		});
+		// make sure to run some Fiji-specific stuff after Help>Refresh Menus, e.g. installing all scripts into the menu
+		LegacyExtensions.runAfterRefreshMenus(new MenuRefresher());
 	}
 
 }

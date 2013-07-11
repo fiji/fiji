@@ -79,9 +79,6 @@ public class MenuRefresher implements PlugIn, Runnable {
 						}
 			}
 		}
-		/* make sure "Update Menus" runs _this_ plugin */
-		commands.put("Update Menus", MenuRefresher.class.getName() + "(\"update\")");
-		commands.put("Refresh Menus", MenuRefresher.class.getName() + "(\"update\")");
 		commands.put("Compile and Run...", "fiji.Compile_and_Run");
 		// make sure "Edit>Options>Memory & Threads runs Fiji's plugin
 		commands.put("Memory & Threads...", "fiji.Memory");
