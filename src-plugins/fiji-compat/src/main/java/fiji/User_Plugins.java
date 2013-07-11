@@ -1,17 +1,14 @@
 package fiji;
 
-import ij.IJ;
 import ij.Menus;
 import ij.plugin.PlugIn;
 import imagej.legacy.CodeHacker;
 import imagej.legacy.LegacyInjector;
-import imagej.legacy.SwitchToModernMode;
 
 import java.awt.Menu;
 import java.awt.MenuBar;
 import java.awt.MenuContainer;
 import java.awt.MenuItem;
-import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -27,15 +24,22 @@ import java.util.jar.JarFile;
 
 /**
  * A class to find user plugins, i.e. plugins not inside Fiji.app/plugins/
- *
+ * 
  * This plugin looks through all files in a given directory (default:
  * $ROOT/user-plugins/, where $ROOT is the parent directory of
  * jars/ij-launcher.jar) and inserts the found plugins into a given menu
  * (default: Plugins>User).
+ * 
+ * @deprecated superseded by ImageJ2's {@link LegacyInjector} (which calls
+ *             {@link CodeHacker#addExtraPlugins()}.)
+ *
+ * @author Johannes Schindelin
  */
 public class User_Plugins implements PlugIn {
-	public String path, menuPath;
-	protected boolean stripPluginsPrefix;
+
+	private String path, menuPath;
+	private boolean stripPluginsPrefix;
+
 	/**
 	 * Default constructor
 	 */
@@ -70,69 +74,19 @@ public class User_Plugins implements PlugIn {
 	/**
 	 * Install the plugins now
 	 */
-	@SuppressWarnings("unchecked")
 	public void run(String arg) {
 		if ("update".equals(arg)) {
 			Menus.updateImageJMenus();
-			overrideCommands();
-			ClassLoader loader = IJ.getClassLoader();
-			if (loader != null && (loader instanceof FijiClassLoader))
-				return;
 		}
+		new MenuRefresher().run(arg);
 
-		installScripts();
 		installPlugins(path, "", menuPath);
-
-		SwitchToModernMode.registerMenuItem();
-
-		if (IJ.getInstance() != null) {
-			Menu help = Menus.getMenuBar().getHelpMenu();
-			for (int i = help.getItemCount() - 1; i >= 0; i--) {
-				MenuItem item = help.getItem(i);
-				String name = item.getLabel();
-				if (name.equals("Update Menus"))
-					item.setLabel("Refresh Menus");
-			}
-		}
-		overrideCommands();
-
-		SampleImageLoader.install();
-		Main.installRecentCommands();
-
-		// install '{' as short cut for the Script Editor
-		Menus.getShortcuts().put(KeyEvent.VK_OPEN_BRACKET, "Script Editor");
-		Menus.getShortcuts().put(200 + KeyEvent.VK_OPEN_BRACKET, "Script Editor");
-	}
-
-	@SuppressWarnings("unchecked")
-	private static void overrideCommands() {
-		if (!Menus.getCommands().containsKey("Install PlugIn...")) {
-			Menus.getCommands().put("Install PlugIn...", "fiji.PlugInInstaller");
-			if (IJ.getInstance() != null) {
-				Menu plugins = FijiTools.getMenu("Plugins");
-				if (plugins != null)
-					for (int i = 0; i < plugins.getItemCount(); i++)
-						if (plugins.getItem(i).getLabel().equals("-")) {
-							plugins.insert("Install PlugIn...", i);
-							plugins.getItem(i).addActionListener(IJ.getInstance());
-							break;
-						}
-			}
-		}
-		/* make sure "Update Menus" runs _this_ plugin */
-		Menus.getCommands().put("Update Menus",
-			"fiji.User_Plugins(\"update\")");
-		Menus.getCommands().put("Refresh Menus",
-			"fiji.User_Plugins(\"update\")");
-		Menus.getCommands().put("Compile and Run...",
-			"fiji.Compile_and_Run");
-		// make sure "Edit>Options>Memory & Threads runs Fiji's plugin
-		Menus.getCommands().put("Memory & Threads...", "fiji.Memory");
-
 	}
 
 	/**
 	 * Install the plugins (default path, default menu)
+	 * 
+	 * @deprecated
 	 */
 	public static void install() {
 		new User_Plugins().run(null);
@@ -150,17 +104,10 @@ public class User_Plugins implements PlugIn {
 
 	/**
 	 * Install the scripts in Fiji.app/plugins/
+	 * @deprecated Use {@link MenuRefresher#installScripts()} instead
 	 */
 	public static void installScripts() {
-		if (System.getProperty("jnlp") != null)
-			return;
-		runPlugIn("Refresh Javas");
-		String[] languages = {
-			"Jython", "JRuby", "Clojure", "BSH", "Javascript", "Scala"
-		};
-		for (int i = 0; i < languages.length; i++)
-			runPlugIn("Refresh " + languages[i] + " Scripts");
-		runPlugIn("Refresh Macros");
+		MenuRefresher.installScripts();
 	}
 
 	/**
