@@ -55,8 +55,13 @@ if (isCommandLine) {
 } else {
 	importClass(Packages.ij.IJ);
 
+	if (typeof IJ == 'undefined') {
+		var IJ = Thread.currentThread().getContextClassLoader().loadClass('ij.IJ').newInstance();
+	}
+
 	var updaterClassName = "imagej.updater.gui.ImageJUpdater";
 }
+
 
 // make sure that the system property 'ij.dir' is set correctly
 if (System.getProperty("ij.dir") == null) {
