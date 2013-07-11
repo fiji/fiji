@@ -142,11 +142,10 @@ public class User_Plugins implements PlugIn {
 	 * Run the command associated with a menu label if there is one
 	 *
 	 * @param menuLabel the label of the menu item to run
+	 * @deprecated Use {@link Main#runGently(String)} instead
 	 */
 	public static void runPlugIn(String menuLabel) {
-		String className = (String)Menus.getCommands().get(menuLabel);
-		if (className != null)
-			IJ.runPlugIn(className, null);
+		Main.runGently(menuLabel);
 	}
 
 	/**
