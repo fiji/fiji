@@ -20,10 +20,15 @@ public class Main {
 
 	public static void runUpdater() {
 		System.setProperty("fiji.main.checksUpdaterAtStartup", "true");
-		gentlyRunPlugIn("fiji.updater.UptodateCheck", "quick");
+		runPlugInGently("fiji.updater.UptodateCheck", "quick");
 	}
 
+	/** @deprecated use {@link #runPlugInGently(String, String)} instead */
 	public static void gentlyRunPlugIn(String className, String arg) {
+		runPlugInGently(className, arg);
+	}
+
+	public static void runPlugInGently(String className, String arg) {
 		try {
 			Class<?> clazz = IJ.getClassLoader()
 				.loadClass(className);
@@ -38,7 +43,7 @@ public class Main {
 	}
 
 	public static void installRecentCommands() {
-		gentlyRunPlugIn("fiji.util.Recent_Commands", "install");
+		runPlugInGently("fiji.util.Recent_Commands", "install");
 	}
 
 	private static boolean setAWTAppClassName(Class<?> appClass) {
@@ -73,7 +78,7 @@ public class Main {
 	 * command line arguments are parsed.
 	 */
 	public static void setup() {
-		gentlyRunPlugIn("fiji.util.RedirectErrAndOut", null);
+		runPlugInGently("fiji.util.RedirectErrAndOut", null);
 		new User_Plugins().run(null);
 		if (IJ.getInstance() != null) {
 			new Thread() {
