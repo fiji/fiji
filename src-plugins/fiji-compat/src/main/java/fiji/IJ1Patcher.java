@@ -48,7 +48,7 @@ public class IJ1Patcher implements Runnable {
 			}
 		} catch (NoClassDefFoundError e) {
 			// Deliberately ignored - in some cases
-			// javassist can not be found, and we should
+			// javassist or ImageJ2 can not be found, and we should
 			// continue anyway.
 		}
 	}
