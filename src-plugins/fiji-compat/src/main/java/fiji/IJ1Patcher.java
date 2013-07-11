@@ -1,6 +1,11 @@
 package fiji;
 
+import java.io.File;
+
 import imagej.legacy.DefaultLegacyService;
+import imagej.legacy.LegacyExtensions;
+import imagej.legacy.LegacyExtensions.LegacyEditorPlugin;
+import imagej.util.AppUtils;
 
 /**
  * Patch ij.jar using Javassist, handle headless mode, too.
@@ -16,7 +21,23 @@ public class IJ1Patcher implements Runnable {
 		if (alreadyPatched || "false".equals(System.getProperty("patch.ij1"))) return;
 		alreadyPatched = true;
 		try {
-			new IJHacker().run();
+			LegacyExtensions.setAppName("(Fiji Is Just) ImageJ");
+			LegacyExtensions.setIcon(new File(AppUtils.getBaseDirectory(), "images/icon.png"));
+			LegacyExtensions.setLegacyEditor(new LegacyEditorPlugin() {
+
+				@Override
+				public boolean open(File path) {
+					return FijiTools.openFijiEditor(path);
+				}
+
+				@Override
+				public boolean create(String title, String body) {
+					return FijiTools.openFijiEditor(title, body);
+				}
+			});
+			// make sure to run some Fiji-specific stuff after Help>Refresh Menus, e.g. installing all scripts into the menu
+			LegacyExtensions.runAfterRefreshMenus(new MenuRefresher());
+
 			try {
 				// make sure that ImageJ2's LegacyInjector runs
 				DefaultLegacyService.preinit();
@@ -24,11 +45,6 @@ public class IJ1Patcher implements Runnable {
 				e.printStackTrace();
 				// ImageJ2 not installed
 				System.err.println("Did not find DefaultLegacyService class: " + e);
-			}
-			try {
-				JavassistHelper.defineClasses();
-			} catch (Exception e) {
-				e.printStackTrace();
 			}
 		} catch (NoClassDefFoundError e) {
 			// Deliberately ignored - in some cases
