@@ -3383,10 +3383,19 @@ public class FeatureStack
 	{
 		final int extra = useNeighbors ? 8 : 0;
 		
-		double[] values = new double[ getSize() + 1 + extra ];
+		final double[] values = new double[ getSize() + 1 + extra ];
 		int n = 0;
-		for (int z=1; z<=getSize(); z++, n++)		
-			values[z-1] = getProcessor(z).getPixelValue(x, y);
+		
+		if( colorFeatures == false)
+		{
+			for (int z=1; z<=getSize(); z++, n++)		
+				values[ z-1 ] = getProcessor( z ).getf( x, y );
+		}
+		else
+		{
+			for (int z=1; z<=getSize(); z++, n++)		
+				values[ z-1 ] = getProcessor( z ).getPixelValue( x, y );
+		}
 		
 		
 		// Test: add neighbors of original image
@@ -3405,6 +3414,51 @@ public class FeatureStack
 		values[values.length-1] = (double) classValue;
 		
 		return new DenseInstance(1.0, values);
+	}
+	
+	/**
+	 * Create instance (feature vector) of a specific coordinate in place.
+	 * The input instance needs to have a data set assigned.
+	 * 
+	 * @param x x- axis coordinate
+	 * @param y y- axis coordinate
+	 * @param classValue class value to be assigned
+	 * @param ins instance to be filled
+	 */
+	public void createInstanceInPlace(
+			int x, 
+			int y, 
+			int classValue,
+			DenseInstance ins)
+	{		
+		int n = 0;
+		
+		if( colorFeatures == false)
+		{
+			for (int z=1; z<=getSize(); z++, n++)		
+				ins.setValue( z-1, getProcessor( z ).getf( x, y ) );
+		}
+		else
+		{
+			for (int z=1; z<=getSize(); z++, n++)		
+				ins.setValue( z-1, getProcessor( z ).getPixelValue( x, y ) );
+		}
+		
+		
+		// Test: add neighbors of original image
+		if( useNeighbors )
+		{
+			for(int i=-1;  i < 2; i++)
+				for(int j = -1; j < 2; j++)
+				{
+					if(i==0 && j==0)
+						continue;				
+					ins.setValue( n, getPixelMirrorConditions(getProcessor(1), x+i, y+j) );
+					n++;
+				}
+		}
+		// Assign class		
+		ins.setClassValue(classValue);		
 	}
 	
 	/**
