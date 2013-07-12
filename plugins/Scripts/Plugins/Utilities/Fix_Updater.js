@@ -10,13 +10,16 @@ importClass(Packages.java.io.File);
 importClass(Packages.java.net.URL);
 importClass(Packages.java.net.URLClassLoader);
 
-baseURL = "http://update.imagej.net/jars/";
+baseURL = 'http://update.imagej.net/jars/';
 jars = [
-	"ij-ui-swing-updater-2.0.0-SNAPSHOT.jar-20121106224844",
-	"ij-updater-core-2.0.0-SNAPSHOT.jar-20121108211844",
-	"ij-core-2.0.0-SNAPSHOT.jar-20121108211844",
-	"eventbus-1.4.jar-20120404210913",
-	"sezpoz-1.9.jar-20120404210913"
+	'ij-ui-swing-updater-2.0.0-beta-7.jar-20130620192406',
+	'miglayout-3.7.3.1-swing.jar-20120404210913',
+	'ij-updater-core-2.0.0-beta-7.jar-20130620192406',
+	'ij-core-2.0.0-beta-7.jar-20130620192406',
+	'scijava-common-1.4.0.jar-20130620192406',
+	'sezpoz-1.9-imagej.jar-20130508011618',
+	'eventbus-1.4.jar-20120404210913',
+	'tools-1.4.2.jar-20120802184342'
 ];
 
 urls = [];
@@ -55,8 +58,13 @@ if (isCommandLine) {
 } else {
 	importClass(Packages.ij.IJ);
 
+	if (typeof IJ == 'undefined') {
+		var IJ = Thread.currentThread().getContextClassLoader().loadClass('ij.IJ').newInstance();
+	}
+
 	var updaterClassName = "imagej.updater.gui.ImageJUpdater";
 }
+
 
 // make sure that the system property 'ij.dir' is set correctly
 if (System.getProperty("ij.dir") == null) {
