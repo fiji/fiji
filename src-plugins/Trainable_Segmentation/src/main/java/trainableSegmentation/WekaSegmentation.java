@@ -5140,6 +5140,13 @@ public class WekaSegmentation {
 				final int sliceSize = width * height;
 				final int numClasses = dataInfo.numClasses();
 
+				// Create one "instance" (Weka feature vector) which values will
+				// be filled on each iteration
+				final int numAttributes = fsa.getNumOfFeatures();
+				final int extra = fsa.useNeighborhood() ? 8 : 0;
+				DenseInstance ins = new DenseInstance(numAttributes + extra + 1);
+				ins.setDataset(dataInfo);
+				
 				if (probabilityMaps)
 					classificationResult = new double[numClasses][numInstances];
 				else
@@ -5161,8 +5168,7 @@ public class WekaSegmentation {
 						final int localPos = absolutePos - slice * sliceSize;
 						final int x = localPos % width;
 						final int y = localPos / width;
-						DenseInstance ins = fsa.get( slice ).createInstance(x, y, 0);
-						ins.setDataset(dataInfo);
+						fsa.get( slice ).createInstanceInPlace( x, y, 0, ins );						
 						
 						if (probabilityMaps)
 						{							
