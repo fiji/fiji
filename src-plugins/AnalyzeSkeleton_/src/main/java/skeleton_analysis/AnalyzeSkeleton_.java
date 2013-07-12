@@ -621,10 +621,12 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			while (vit.hasNext())
 			{
 				Vertex v = vit.next();
-				if (v.getBranches().size() == 1)
+				// Check if the vertex is an end point
+				if (v.getBranches().size() == 1 && isEndPoint( v.getPoints().get( 0 ) ) )
 				{
 					if(debug)
 						IJ.log("Pruning branch starting at " + v.getPoints().get(0));
+					
 					// Remove end point voxels
 					ArrayList<Point> points = v.getPoints();
 					final int nPoints = points.size();
