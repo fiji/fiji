@@ -33,6 +33,7 @@
 
 # MacOSX #
 .DS_Store
+/Contents/Resources/ImageJ.icns
 
 # Windows #
 /bin/RCEDIT.exe
@@ -367,39 +368,49 @@ hs_err*.log
 /jars/xml-apis-[0-9]*.jar
 
 # ImageJ2 #
+/jars/commons-lang3-[0-9]*.jar
 /jars/eventbus-[0-9]*.jar
 /jars/ij-app-[0-9]*.jar
 /jars/ij-commands-[0-9]*.jar
 /jars/ij-core-[0-9]*.jar
 /jars/ij-data-[0-9]*.jar
-/jars/ij-ext-swing-[0-9]*.jar
 /jars/ij-ext-[0-9]*.jar
+/jars/ij-ext-swing-[0-9]*.jar
 /jars/ij-io-[0-9]*.jar
 /jars/ij-legacy-[0-9]*.jar
 /jars/ij-options-[0-9]*.jar
-/jars/ij-platform-macosx-[0-9]*.jar
-/jars/ij-platform-[0-9]*.jar
+/jars/ij-platforms-[0-9]*.jar
 /jars/ij-plugins-app-[0-9]*.jar
 /jars/ij-plugins-data-[0-9]*.jar
 /jars/ij-plugins-debug-[0-9]*.jar
 /jars/ij-plugins-display-[0-9]*.jar
 /jars/ij-plugins-misc-[0-9]*.jar
+/jars/ij-scripting-beanshell-[0-9]*.jar
+/jars/ij-scripting-java-[0-9]*.jar
+/jars/ij-text-[0-9]*.jar
 /jars/ij-tools-[0-9]*.jar
+/jars/ij-ui-[0-9]*.jar
 /jars/ij-ui-common-awt-[0-9]*.jar
+/jars/ij-ui-swing-[0-9]*.jar
 /jars/ij-ui-swing-base-[0-9]*.jar
+/jars/ij-ui-swing-commands-[0-9]*.jar
 /jars/ij-ui-swing-plugins-[0-9]*.jar
+/jars/ij-ui-swing-script-editor-[0-9]*.jar
 /jars/ij-ui-swing-sdi-[0-9]*.jar
 /jars/ij-ui-swing-tools-[0-9]*.jar
 /jars/ij-ui-swing-updater-[0-9]*.jar
-/jars/ij-ui-[0-9]*.jar
 /jars/ij-updater-core-[0-9]*.jar
 /jars/ij-updater-ssh-[0-9]*.jar
+/jars/ij-updater-webdav-[0-9]*.jar
 /jars/ij-util-awt-[0-9]*.jar
+/jars/ij-util-swing-[0-9]*.jar
 /jars/jhotdraw-[0-9]*.jar
+/jars/markdownj-[0-9]*.jar
 /jars/miglayout-[0-9]*.jar
 /jars/object-inspector-[0-9]*.jar
 /jars/sezpoz-[0-9]*.jar
 /jars/velocity-[0-9]*.jar
+/plugins/readme.txt
 
 # Retrotranslator #
 /jars/backport-util-concurrent.jar
