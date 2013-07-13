@@ -7,8 +7,12 @@ package fiji;
  */
 
 public class IJ1Patcher implements Runnable {
+	private static boolean alreadyPatched;
+
 	@Override
 	public void run() {
+		if (alreadyPatched || "false".equals(System.getProperty("patch.ij1"))) return;
+		alreadyPatched = true;
 		try {
 			String headless = System.getProperty("java.awt.headless");
 			if ("true".equalsIgnoreCase(headless))

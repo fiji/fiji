@@ -39,6 +39,10 @@ public class Main {
 	protected Image icon;
 	protected boolean debug;
 
+	static {
+		new IJ1Patcher().run();
+	}
+
 	public static void runUpdater() {
 		System.setProperty("fiji.main.checksUpdaterAtStartup", "true");
 		gentlyRunPlugIn("fiji.updater.UptodateCheck", "quick");
