@@ -121,8 +121,7 @@ public class WekaSegmentation {
 	private ImagePlus classifiedImage;
 	/** features to be used in the training */
 	private FeatureStackArray featureStackArray = null;
-	/** set of instances for the whole training image */
-	private Instances wholeImageData;
+
 	/** set of instances from loaded data (previously saved segmentation) */
 	private Instances loadedTrainingData = null;
 	/** set of instances from the user's traces */
@@ -134,8 +133,7 @@ public class WekaSegmentation {
 
 	/** default classifier (Fast Random Forest) */
 	private FastRandomForest rf;
-	/** flag to update the whole set of instances (used when there is any change on the features or the classes) */
-	private boolean updateWholeData = false;
+
 	/** flag to update the feature stack (used when there is any change on the features) */
 	private boolean updateFeatures = false;
 	
@@ -419,7 +417,6 @@ public class WekaSegmentation {
 
 		// increase number of available classes
 		numOfClasses ++;
-		updateWholeData = true;
 	}
 
 	/**
@@ -431,7 +428,6 @@ public class WekaSegmentation {
 	public void setClassLabel(int classNum, String label) 
 	{
 		getClassLabels()[classNum] = label;
-		updateWholeData = true;
 	}
 
 	/**
@@ -1921,7 +1917,6 @@ public class WekaSegmentation {
 		featureStackToUpdateTest = new boolean[trainingImage.getImageStackSize()];
 		Arrays.fill(featureStackToUpdateTest, true);
 		updateFeatures = true;
-		updateWholeData = true;
 
 		// Remove current classification result image
 		classifiedImage = null;
@@ -2674,9 +2669,6 @@ public class WekaSegmentation {
 			this.featureNames.add(loadedTrainingData.attribute(i).name());
 			IJ.log((i+1) + ": " + this.featureNames.get(i));
 		}
-
-		// force data (ARFF) update
-		this.updateWholeData = true;
 
 		return true;
 	}
@@ -3748,7 +3740,7 @@ public class WekaSegmentation {
 			Arrays.fill(featureStackToUpdateTrain, false);
 			filterFeatureStackByList();
 			updateFeatures = false;
-			updateWholeData = true;
+
 			long end = System.currentTimeMillis();
 			IJ.log("Feature stack array is now updated (" + featureStackArray.getSize() 
 					+ " slice(s) with " + featureStackArray.getNumOfFeatures() 
@@ -4669,7 +4661,7 @@ public class WekaSegmentation {
 	 * 
 	 * @param classify flag to get labels or probability maps (false = labels)
 	 */
-	public void applyClassifier(boolean classify)
+	public void applyClassifier( boolean classify )
 	{
 		if( Thread.currentThread().isInterrupted() )
 		{
@@ -4686,7 +4678,7 @@ public class WekaSegmentation {
 	 * auto-detection.
 	 * @param classify
 	 */
-	public void applyClassifier(int numThreads, boolean classify)
+	public void applyClassifier( int numThreads, boolean classify )
 	{
 		if( Thread.currentThread().isInterrupted() )
 		{
@@ -4721,24 +4713,16 @@ public class WekaSegmentation {
 			Arrays.fill(featureStackToUpdateTest, false);
 			filterFeatureStackByList();
 			updateFeatures = false;
-			updateWholeData = true;
+
 			long end = System.currentTimeMillis();
 			IJ.log("Feature stack array is now updated (" + featureStackArray.getSize() 
 					+ " slice(s) with " + featureStackArray.getNumOfFeatures() 
 					+ " features, took " + (end-start) + "ms).");
 		}
 		
-		/*
-		if(updateWholeData)
-		{			
-			wholeImageData = updateWholeImageData();
-			if( null == wholeImageData)
-				return;
-		}
-*/
-		IJ.log("Classifying whole image using " + numThreads + " threads...");
+		IJ.log("Classifying whole image using " + numThreads + " thread(s)...");
 		try{
-			classifiedImage = applyClassifier(featureStackArray, numThreads, classify);
+			classifiedImage = applyClassifier( featureStackArray, numThreads, classify );
 		}
 		catch(Exception ex)
 		{
@@ -4834,8 +4818,6 @@ public class WekaSegmentation {
 			exe.shutdown();
 		}
 		
-		// Set the whole data update to false after classification
-		updateWholeData = false;
 		return wholeImageData;
 	}
 	
