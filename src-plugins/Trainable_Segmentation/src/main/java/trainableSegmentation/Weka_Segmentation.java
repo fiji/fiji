@@ -427,6 +427,7 @@ public class Weka_Segmentation implements PlugIn
 					}
 					else if(e.getSource() == settingsButton){
 						showSettingsDialog();
+						win.updateButtonsEnabling();
 					}
 					else if(e.getSource() == wekaButton){
 						// Macro recording
@@ -1108,8 +1109,8 @@ public class Weka_Segmentation implements PlugIn
 				saveClassifierButton.setEnabled( win.trainingComplete );
 				overlayButton.setEnabled(resultExists);
 				resultButton.setEnabled(resultExists);
-				plotButton.setEnabled(resultExists);
 				
+				plotButton.setEnabled( win.trainingComplete );				
 				probabilityButton.setEnabled( win.trainingComplete );
 
 				//newImageButton.setEnabled(true);
