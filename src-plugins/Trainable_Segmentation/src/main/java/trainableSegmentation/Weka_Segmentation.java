@@ -2195,7 +2195,12 @@ public class Weka_Segmentation implements PlugIn
 	    		return false;
 	    	}
 	    	
+	    	// Assing new classifier
 	    	wekaSegmentation.setClassifier( cls );
+	    	
+	    	// Set the training flag to false  
+	    	win.trainingComplete = false;
+	    	
 	    	// Macro recording
 			record(SET_CLASSIFIER, new String[] { c.getClass().getName(), options} );
 	    		    	
