@@ -2,38 +2,14 @@ package fiji;
 
 import fiji.gui.FileDialogDecorator;
 import fiji.gui.JFileChooserDecorator;
-
 import ij.IJ;
 import ij.ImageJ;
-
+import ij.Menus;
 import ij.plugin.PlugIn;
 
-import java.awt.AWTEvent;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dialog;
-import java.awt.Frame;
 import java.awt.Image;
-import java.awt.Label;
 import java.awt.Toolkit;
-import java.awt.Window;
-
-import java.awt.image.ImageProducer;
-
-import java.awt.event.AWTEventListener;
-import java.awt.event.WindowEvent;
-
-import java.io.File;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
-import java.net.URL;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.WeakHashMap;
 
 public class Main {
 	protected Image icon;
@@ -45,12 +21,44 @@ public class Main {
 
 	public static void runUpdater() {
 		System.setProperty("fiji.main.checksUpdaterAtStartup", "true");
-		gentlyRunPlugIn("fiji.updater.UptodateCheck", "quick");
+		runPlugInGently("fiji.updater.UptodateCheck", "quick");
 	}
 
+	/**
+	 * Runs the command associated with a menu label if there is one.
+	 *
+	 * @param menuLabel the label of the menu item to run
+	 */
+	public static void runGently(String menuLabel) {
+		runGently(menuLabel, "");
+	}
+
+	/**
+	 * Runs the command associated with a menu label if there is one.
+	 *
+	 * @param menuLabel the label of the menu item to run
+	 * @param arg the arg to pass to the plugin's run() (or setup()) method
+	 */
+	public static void runGently(String menuLabel, final String arg) {
+		String className = (String)Menus.getCommands().get(menuLabel);
+		if (className != null)
+			IJ.runPlugIn(className, null);
+	}
+
+	/** @deprecated use {@link #runPlugInGently(String, String)} instead */
 	public static void gentlyRunPlugIn(String className, String arg) {
+		runPlugInGently(className, arg);
+	}
+
+	/**
+	 * Runs a plug-in with an optional argument.
+	 * 
+	 * @param className the plugin class
+	 * @param arg the argument (use "" if you do not want to pass anything)
+	 */
+	public static void runPlugInGently(String className, String arg) {
 		try {
-			Class clazz = IJ.getClassLoader()
+			Class<?> clazz = IJ.getClassLoader()
 				.loadClass(className);
 			if (clazz != null) {
 				PlugIn plugin = (PlugIn)clazz.newInstance();
@@ -63,7 +71,7 @@ public class Main {
 	}
 
 	public static void installRecentCommands() {
-		gentlyRunPlugIn("fiji.util.Recent_Commands", "install");
+		runPlugInGently("fiji.util.Recent_Commands", "install");
 	}
 
 	private static boolean setAWTAppClassName(Class<?> appClass) {
@@ -98,8 +106,8 @@ public class Main {
 	 * command line arguments are parsed.
 	 */
 	public static void setup() {
-		gentlyRunPlugIn("fiji.util.RedirectErrAndOut", null);
-		new User_Plugins().run(null);
+		runPlugInGently("fiji.util.RedirectErrAndOut", null);
+		new MenuRefresher().run();
 		if (IJ.getInstance() != null) {
 			new Thread() {
 				public void run() {
