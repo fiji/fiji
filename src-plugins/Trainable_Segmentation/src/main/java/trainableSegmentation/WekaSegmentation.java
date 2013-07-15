@@ -5046,7 +5046,7 @@ public class WekaSegmentation {
 				e.printStackTrace();
 			}
 			
-			fu[i] = exe.submit(classifyInstances(fsa, dataInfo, first, size, classifierCopy, counter, probabilityMaps));
+			fu[i] = exe.submit( classifyInstances( fsa, dataInfo, first, size, classifierCopy, counter, probabilityMaps ) );
 		}
 
 		ScheduledExecutorService monitor = Executors.newScheduledThreadPool(1);
@@ -5170,7 +5170,7 @@ public class WekaSegmentation {
 						final int y = localPos / width;
 						fsa.get( slice ).createInstanceInPlace( x, y, 0, ins );						
 						
-						if (probabilityMaps)
+						if ( probabilityMaps )
 						{							
 							double[] prob = classifier.distributionForInstance( ins );
 							for(int k = 0 ; k < numClasses; k++)
