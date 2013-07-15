@@ -2,6 +2,7 @@ package fiji;
 
 import java.io.File;
 
+import imagej.ImageJ;
 import imagej.legacy.DefaultLegacyService;
 import imagej.legacy.LegacyExtensions;
 import imagej.legacy.LegacyExtensions.LegacyEditorPlugin;
@@ -41,6 +42,13 @@ public class IJ1Patcher implements Runnable {
 			try {
 				// make sure that ImageJ2's LegacyInjector runs
 				DefaultLegacyService.preinit();
+				// create an ImageJ2 context
+				new Thread() {
+					@Override
+					public void run() {
+						new ImageJ();
+					}
+				}.start();
 			} catch (final NoClassDefFoundError e) {
 				e.printStackTrace();
 				// ImageJ2 not installed
