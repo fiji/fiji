@@ -11,6 +11,8 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.lang.reflect.Field;
 
+import org.scijava.Context;
+
 public class Main {
 	protected Image icon;
 	protected boolean debug;
@@ -108,7 +110,17 @@ public class Main {
 	public static void setup() {
 		runPlugInGently("fiji.util.RedirectErrAndOut", null);
 		new MenuRefresher().run();
-		if (IJ.getInstance() != null) {
+		final Runnable getImageJContext = new Runnable() {
+			@Override
+			public void run() {
+				IJ.runPlugIn(Context.class.getName(), null);
+			}
+		};
+		if (IJ.getInstance() == null) {
+			new Thread(getImageJContext).start();
+		} else {
+			// create an ImageJ2 context
+			java.awt.EventQueue.invokeLater(getImageJContext);
 			new Thread() {
 				public void run() {
 					/*
