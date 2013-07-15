@@ -69,6 +69,7 @@ import weka.classifiers.trees.RandomForest;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
+import weka.core.Utils;
 
 import weka.core.pmml.PMMLFactory;
 import weka.core.pmml.PMMLModel;
@@ -5160,7 +5161,7 @@ public class WekaSegmentation {
 						}
 						else
 						{
-							classificationResult[0][i] = classifier.classifyInstance( ins );
+							classificationResult[0][i] = Utils.maxIndex( classifier.distributionForInstance( ins ) );
 						}
 
 					}catch(Exception e){
