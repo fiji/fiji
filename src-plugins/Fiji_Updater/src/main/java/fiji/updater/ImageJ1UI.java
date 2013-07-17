@@ -11,6 +11,7 @@ import ij.macro.Interpreter;
  * instead.
  *
  * @author Johannes Schindelin
+ * @deprecated use ij-updater-core directly
  */
 public class ImageJ1UI implements UI {
 
