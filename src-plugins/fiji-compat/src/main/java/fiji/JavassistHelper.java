@@ -1,9 +1,5 @@
 package fiji;
 
-/**
- * A helper to use Javassist effectively
- */
-
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -35,6 +31,11 @@ import javassist.bytecode.MethodInfo;
 import javassist.bytecode.Opcode;
 import javassist.expr.MethodCall;
 
+/**
+ * A helper to use Javassist effectively
+ *
+ * @deprecated use {@link imagej.legacy.CodeHacker} instead
+ */
 public abstract class JavassistHelper implements Runnable {
 
 	protected Set<String> classNames = new HashSet<String>();
