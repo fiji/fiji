@@ -83,7 +83,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
     /* Curve Fitting, Results and Descriptors */
     private static boolean fitCurve = true;
-    private static final String[] DEGREES = { "4th degree", "5th degree", "6th degree", "7th degree", "8th degree" };
+    private static final String[] DEGREES = { "4th degree", "5th degree", "6th degree", "7th degree", "8th degree", "Best fitting degree" };
     private static final String SHOLLTABLE = "Sholl Results";
     private static double[] centroid;
 
@@ -98,7 +98,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     private static double endRadius   = 100.0;
     private static double stepRadius  = 1;
     private static double incStep     = 0;
-    private static int polyChoice     = 1;
+    private static int polyChoice     = 3;
     private static boolean verbose;
     private static boolean mask;
     public static int maskBackground = 228;
@@ -336,11 +336,14 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             savePlot(plotN, SHOLL_N);
 
         }
+
+        final String normalizerString = is3D ? NORMS3D[normChoice] : NORMS2D[normChoice];
+        final String distanceString = is3D ? "3D distance" : "2D distance";
+
         if (shollNS) {
 
 			final Plot plotNS = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_NS] +") for "+ imgTitle,
-                    is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
-                    "Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]),
+					distanceString +" ("+ unit +")", "Inters./"+ normalizerString,
                     valuesNS, SHOLL_NS);
             if (fitCurve)
                 fvaluesNS = getFittedProfile(valuesNS, SHOLL_NS, statsTable, plotNS);
@@ -350,8 +353,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		if (shollSLOG) {
 
 			final Plot plotSLOG = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_SLOG] +") for "+ imgTitle,
-                    is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
-                    "log(Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]) +")",
+					distanceString +" ("+ unit +")", "log(Inters./"+ normalizerString +")",
                     valuesSLOG, SHOLL_SLOG);
             if (fitCurve)
                 plotRegression(valuesSLOG, plotSLOG, statsTable, SHOLL_TYPES[SHOLL_SLOG]);
@@ -361,8 +363,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		if (shollLOG) {
 
 			final Plot plotLOG = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_LOG] +") for "+ imgTitle,
-                    is3D ? "log(3D distance)" : "log(2D distance)",
-                    "log(Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]) +")",
+                    "log("+ distanceString +")", "log(Inters./"+ normalizerString +")",
                     valuesLOG, SHOLL_LOG);
             if (fitCurve)
                 //fvaluesLOG = getFittedProfile(valuesLOG, SHOLL_LOG, statsTable, plotLOG);
@@ -384,7 +385,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             rt.incrementCounter();
             rt.addValue("Radius", valuesN[i][0]);
             rt.addValue("Inters.", valuesN[i][1]);
-            rt.addValue("Norm Inters.", valuesNS[i][1]);
+            rt.addValue("Norm Inters. ("+ normalizerString +")", valuesNS[i][1]);
             rt.addValue("log(Radius)", valuesLOG[i][0]);
             rt.addValue("log(Norm Inters.)", valuesLOG[i][0]);
 
@@ -473,6 +474,11 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 				cf.doFit(CurveFitter.POLY7, false);
 			} else if (DEGREES[polyChoice].startsWith("8")) {
 				cf.doFit(CurveFitter.POLY8, false);
+			} else {
+				IJ.showStatus("Choosing polynomial of best fit...");
+	    		if (verbose)
+	    			IJ.log("Choosing polynomial of best fit for "+ imgTitle +"...");
+				cf.doFit(getBestPolyFit(x,y), false);
 			}
 		} else if (method == SHOLL_NS) {
 			cf.doFit(CurveFitter.POWER, false);
@@ -548,7 +554,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			plotLabel.append("\nCV= "+ IJ.d2s(cv, 2));
 			plotLabel.append("\nCR= "+ IJ.d2s(cr, 2));
 			plotLabel.append("\nMV= "+ IJ.d2s(mv, 2));
-			plotLabel.append("\n" + DEGREES[polyChoice]);
+			plotLabel.append("\n"+ (parameters.length-2) + "th degree");
 
 			rt.addValue("Critical value", cv);
 			rt.addValue("Critical radius", cr);
@@ -589,6 +595,34 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         return values;
 
+    }
+
+
+    /** Guesses the polynomial of best fit by comparison of coefficient of determination */
+    static private int getBestPolyFit(final double x[], final double[] y) {
+
+    	final int[] polyList = { CurveFitter.POLY4, CurveFitter.POLY5, CurveFitter.POLY6,
+    							 CurveFitter.POLY7, CurveFitter.POLY8 };
+
+    	int bestFit = 0;
+    	double bestRSquared = 0.0;
+    	final double[] listRSquared = new double[polyList.length];
+
+    	for (int i=0; i<polyList.length; i++) {
+
+    		final CurveFitter cf = new CurveFitter(x, y);
+    		cf.doFit(polyList[i], false);
+    		listRSquared[i] = cf.getRSquared();
+    		if (listRSquared[i] > bestRSquared) {
+    			bestRSquared = listRSquared[i];
+    			bestFit = i;
+    		}
+    		if (verbose)
+    			IJ.log( CurveFitter.fitList[polyList[i]] +": R^2= "+ IJ.d2s(listRSquared[i], 5) );
+
+    	}
+
+    	return polyList[bestFit];
     }
 
 
@@ -657,7 +691,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         gd.addMessage("IV. Sholl Methods:", headerFont);
         gd.setInsets(0, xIndent/2, 2);
         gd.addMessage("Profiles Without Normalization:");
-        gd.setInsets(0, 2*xIndent, 0);
+        gd.setInsets(0, xIndent, 0);
         gd.addCheckbox("Linear", shollN);
         gd.setInsets(0, 0, 0);
         gd.addChoice("Polynomial", DEGREES, DEGREES[polyChoice]);
@@ -1490,7 +1524,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
 		// Calculate the smallest circle/sphere enclosing the arbor
 		final double lastR = x[size-1];
-		final double field = is3D ? Math.PI*4/3*lastR*lastR*lastR : Math.PI*lastR*lastR;
+		//final double field = is3D ? Math.PI*4/3*lastR*lastR*lastR : Math.PI*lastR*lastR;
 
 		// Calculate ramification index, the maximum of intersection divided by the n.
 		// of primary branches, assumed to be the n. intersections at starting radius
@@ -1524,7 +1558,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		rt.addValue("Centroid inters.", centroid[1]);
 
 		rt.addValue("Enclosing radius", lastR);
-		rt.addValue("Enclosed field", field);
+		//rt.addValue("Enclosed field", field);
 		rt.show(SHOLLTABLE);
 		return rt;
 
@@ -1553,8 +1587,8 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
                     else
                         transValues[i][1] = y / (Math.PI * x * 2); // Length of circumference
                 } else if (normChoice==ANNULUS_NORM) {
-                	double r1 = x - stepRadius/2;
-                	double r2 = x + stepRadius/2;
+                	final double r1 = x - stepRadius/2;
+                	final double r2 = x + stepRadius/2;
                     if (is3D)
                         transValues[i][1] = y / ( Math.PI * 4/3 * (r2*r2*r2 - r1*r1*r1) ); // Volume of spherical shell
                     else

@@ -18,8 +18,9 @@ Version 3.1 (June 2013) [latest]
     - Sholl decay is calculated using the full rage of data or values within percentiles
       10 and 90, which usually provides a better fit. However, Sholl decay is only
       calculated when logarithmic methods are chosen (v2.2 behavior)
-    - Normalization can be performed against: Area of circel/Volume of shere, Perimeter of
-      circumference/Surface of sphere or Area of annulus/Volume of spheric shell.
+    - Plugin can now predict (or at leat try) the polynomial of best aproximation
+    - Normalization can be performed against: Area of circel/Volume of sphere, Perimeter
+      of circumference/Surface of sphere or Area of annulus/Volume of spheric shell.
     - Made main dialog more intuitive. This may brake previous macros created with the
       Macro Recorder
     - Barycenter and other descriptors are highlighted on plot
