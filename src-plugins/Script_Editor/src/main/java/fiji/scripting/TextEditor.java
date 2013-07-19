@@ -6,6 +6,7 @@ import fiji.scripting.java.Refresh_Javas;
 
 import ij.IJ;
 import ij.WindowManager;
+import ij.Prefs;
 
 import ij.gui.GenericDialog;
 
@@ -22,6 +23,9 @@ import java.awt.Toolkit;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -39,6 +43,8 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintWriter;
+
+import java.lang.Integer;
 
 import java.net.URL;
 
@@ -108,7 +114,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	protected int tabsMenuTabsStart;
 	protected Set<JMenuItem> tabsMenuItems;
 	protected FindAndReplaceDialog findDialog;
-	protected JCheckBoxMenuItem autoSave, showDeprecation, wrapLines;
+	protected JCheckBoxMenuItem autoSave, showDeprecation, wrapLines, tabsEmulated;
 	protected JTextArea errorScreen = new JTextArea();
 
 	protected final String templateFolder = "templates/";
@@ -118,10 +124,20 @@ public class TextEditor extends JFrame implements ActionListener,
 	protected Position compileStartPosition;
 	protected ErrorHandler errorHandler;
 
+	public static final String TAB_SIZE_PREFS = "script.editor.TabSize";
+	public static final String FONT_SIZE_PREFS = "script.editor.FontSize";
+	public static final String LINE_WRAP_PREFS = "script.editor.WrapLines";
+	public static final String TABS_EMULATED_PREFS = "script.editor.TabsEmulated";
+	public static final String WINDOW_HEIGHT = "script.editor.height";
+	public static final String WINDOW_WIDTH = "script.editor.width";
+	public static final int DEFAULT_TAB_SIZE = 4;
+	
+	
 	public TextEditor(String path) {
 		super("Script Editor");
 		WindowManager.addWindow(this);
-
+		loadPreferences();
+		
 		// Initialize menu
 		int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 		int shift = ActionEvent.SHIFT_MASK;
@@ -211,13 +227,13 @@ public class TextEditor extends JFrame implements ActionListener,
 		buttonGroup.add(chooseFontSize);
 		fontSizeMenu.add(chooseFontSize);
 		edit.add(fontSizeMenu);
-
+		
 		// Add tab size adjusting menu
 		tabSizeMenu = new JMenu("Tab sizes");
 		tabSizeMenu.setMnemonic(KeyEvent.VK_T);
 		ButtonGroup bg = new ButtonGroup();
 		for (final int size : new int[] { 2, 4, 8 }) {
-			JRadioButtonMenuItem item = new JRadioButtonMenuItem("" + size, size == 8);
+			JRadioButtonMenuItem item = new JRadioButtonMenuItem("" + size);
 			item.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent event) {
 					getEditorPane().setTabSize(size);
@@ -235,13 +251,26 @@ public class TextEditor extends JFrame implements ActionListener,
 		tabSizeMenu.add(chooseTabSize);
 		edit.add(tabSizeMenu);
 
+		
 		wrapLines = new JCheckBoxMenuItem("Wrap lines");
 		wrapLines.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				getEditorPane().setLineWrap(wrapLines.getState());
+				savePreferences();
 			}
 		});
 		edit.add(wrapLines);
+
+		// Add Tab inserts as spaces
+		tabsEmulated = new JCheckBoxMenuItem("Tab key inserts spaces");
+		tabsEmulated.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				getEditorPane().setTabsEmulated(tabsEmulated.getState());
+				savePreferences();
+			}
+		});
+		edit.add(tabsEmulated);
+		
 		edit.addSeparator();
 
 		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
@@ -471,13 +500,25 @@ public class TextEditor extends JFrame implements ActionListener,
 		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
 		findDialog = new FindAndReplaceDialog(this);
 
+		// Save the size of the window in the preferences
+		addComponentListener(new ComponentAdapter() {
+			public void componentResized(ComponentEvent e) {
+		    	savePreferences();
+		    }
+		});
+	
+	    
 		setLocationRelativeTo(null); // center on screen
 
 		open(path);
 
+		
 		final EditorPane editorPane = getEditorPane();
-		if (editorPane != null)
+	
+		if (editorPane != null){
+		
 			editorPane.requestFocus();
+		}
 	}
 
 	public TextEditor(String title, String text) {
@@ -505,7 +546,34 @@ public class TextEditor extends JFrame implements ActionListener,
 			setTitle();
 		}
 	}
+	
 
+	/** 
+	 * Loads the preferences for the JFrame from file
+	 */
+	public void loadPreferences() {
+		Dimension dim = getSize();
+		setPreferredSize(
+			new Dimension(
+				(int) Prefs.get(WINDOW_WIDTH, dim.width),
+				(int) Prefs.get(WINDOW_HEIGHT, dim.height) ) );
+	}
+	
+	/**
+	 * Retrieves and saves the preferences to the persistent store
+	 */
+	public void savePreferences(){
+		EditorPane pane = getEditorPane();
+		Prefs.set(TAB_SIZE_PREFS, pane.getTabSize());
+		Prefs.set(FONT_SIZE_PREFS, pane.getFontSize());
+		Prefs.set(LINE_WRAP_PREFS, pane.getLineWrap());
+		Prefs.set(TABS_EMULATED_PREFS, pane.getTabsEmulated());
+		Dimension dim  = getSize();
+		Prefs.set(WINDOW_HEIGHT,dim.height);
+		Prefs.set(WINDOW_WIDTH, dim.width);
+		Prefs.savePreferences();
+	}
+	
 	final public RSyntaxTextArea getTextArea() {
 		return getEditorPane();
 	}
@@ -1032,7 +1100,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 		return false;
 	}
-
+	
 	public Tab getTab() {
 		int index = tabbed.getSelectedIndex();
 		if (index < 0)
@@ -1043,7 +1111,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	public Tab getTab(int index) {
 		return (Tab)tabbed.getComponentAt(index);
 	}
-
+	
 	public class Tab extends JSplitPane {
 
 		protected final EditorPane editorPane = new EditorPane(TextEditor.this);
@@ -1136,8 +1204,23 @@ public class TextEditor extends JFrame implements ActionListener,
 
 			super.setTopComponent(editorPane.embedWithScrollbars());
 			super.setBottomComponent(bottom);
+			
+			loadPreferences();
 		}
 
+	    /**
+	     * Loads the preferences for the Tab from ij.Prefs and apply them
+	     */
+		public void loadPreferences() {
+			editorPane.setTabSize((int) Prefs.get(TAB_SIZE_PREFS, 
+				DEFAULT_TAB_SIZE));
+			editorPane.setFontSize((int) Prefs.get(FONT_SIZE_PREFS,
+				editorPane.getFontSize()));
+			editorPane.setLineWrap(Prefs.get(LINE_WRAP_PREFS,
+				editorPane.getLineWrap()));
+			editorPane.setTabsEmulated(Prefs.get(TABS_EMULATED_PREFS,
+				editorPane.getTabsEmulated()));
+		}
 		/** Invoke in the context of the event dispatch thread. */
 		private void prepare() {
 			editorPane.setEditable(false);
@@ -1676,8 +1759,10 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	protected void updateTabAndFontSize(boolean setByLanguage) {
 		EditorPane pane = getEditorPane();
-		if (setByLanguage)
-			pane.setTabSize(pane.currentLanguage.menuLabel.equals("Python") ? 4 : 8);
+	
+		// if (setByLanguage)
+        //     pane.setTabSize(pane.currentLanguage.menuLabel.equals("Python") ? 4 : 8);
+		
 		int tabSize = pane.getTabSize();
 		boolean defaultSize = false;
 		for (int i = 0; i < tabSizeMenu.getItemCount(); i++) {
@@ -1709,6 +1794,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			}
 		}
 		wrapLines.setState(pane.getLineWrap());
+		tabsEmulated.setState(pane.getTabsEmulated());
+		savePreferences();
 	}
 
 	public void setFileName(String baseName) {
