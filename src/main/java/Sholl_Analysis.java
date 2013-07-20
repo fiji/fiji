@@ -103,6 +103,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     private static boolean mask;
     public static int maskBackground = 228;
     private static boolean save;
+    private static boolean isCSV = false;
 
     /* Common variables */
     private static String unit = "pixels";
@@ -147,158 +148,188 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     // of a "stair" of target pixels (see countSinglePixels)
     private static boolean doSpikeSupression = true;
 
+	private static double[] radii;
+	private static double[] counts;
+
     public void run( final String arg) {
 
         if (IJ.versionLessThan("1.46h"))
             return;
 
-        // Get current image and its ImageProcessor. Make sure image is the right
-        // type, reminding the user that the analysis is performed on segmented cells
         final ImagePlus img = WindowManager.getCurrentImage();
-        final ImageProcessor ip = getValidProcessor(img);
-        if (ip==null)
-            return;
 
-        // Set the 2D/3D Sholl flag
-        final int depth = img.getNSlices();
-        is3D = depth > 1;
+		// Initialize center coordinates (in pixel units) and N. of samples
+		int x, y, z;
+		final Calibration cal;
 
-        imgTitle = img.getShortTitle();
+		isCSV = IJ.altKeyDown();
 
-        // Get image calibration. Stacks are likely to have anisotropic voxels
-        // with large z-steps. It is unlikely that lateral dimensions will differ
-        final Calibration cal = img.getCalibration();
-        if (cal.scaled()) {
-            vxWH = Math.sqrt(cal.pixelWidth * cal.pixelHeight);
-            vxD  = cal.pixelDepth;
-            unit = cal.getUnits();
-        } else {
-            vxWH = vxD = 1; unit = "pixels";
-        }
-        vxSize = (is3D) ? Math.cbrt(vxWH*vxWH*vxD) : vxWH;
+		if (isCSV) {
 
-        // Initialize center coordinates (in pixel units)
-        int x, y;
-        final int z = img.getCurrentSlice();
+			final ResultsTable rt = ResultsTable.getResultsTable();
+			if (rt==null || rt.getCounter()==0) {
+				sError("The Results table is empty");
+				return;
+			}
 
-        // Get parameters from current ROI. Prompt for one if none exists
-        Roi roi = img.getRoi();
-        final boolean validRoi = roi!=null && (roi.getType()==Roi.LINE || roi.getType()==Roi.POINT);
+			if (!csvPrompt(rt))
+				return;
 
-        if (!IJ.macroRunning() && !validRoi) {
-            img.killRoi();
-            Toolbar.getInstance().setTool("line");
-            final WaitForUserDialog wd = new WaitForUserDialog(
-                              "Please define the largest Sholl radius by creating\n"
-                            + "a straight line starting at the center of analysis.\n"
-                            + "(Hold down \"Shift\" to draw an orthogonal radius)\n \n"
-                            + "Alternatively, define the focus of the arbor using\n"
-                            + "the Point Selection Tool.");
-            wd.show();
-            if (wd.escPressed())
-                return;
-            roi = img.getRoi();
-        }
+			fitCurve = true;
+			x = (int)Double.NaN;
+			y = (int)Double.NaN;
+			z = (int)Double.NaN;
+			cal = null; unit = "N.A.";
+			imgTitle = "Imported data";
 
-        // Initialize angle of the line roi (if any). It will become positive
-        // if a line (chord) exists.
-        double chordAngle = -1.0;
+		} else {
 
-        // Line: Get center coordinates, length and angle of chord
-        if (roi!=null && roi.getType()==Roi.LINE) {
+			// Make sure image is of the right type, reminding the user
+			// that the analysis is performed on segmented cells
+			final ImageProcessor ip = getValidProcessor(img);
+			if (ip==null)
+				return;
 
-            final Line chord = (Line) roi;
-            x = chord.x1;
-            y = chord.y1;
-            endRadius = vxSize * chord.getRawLength();
-            chordAngle = Math.abs(chord.getAngle(x, y, chord.x2, chord.y2));
+			// Set the 2D/3D Sholl flag
+			final int depth = img.getNSlices();
+			is3D = depth > 1;
 
-        // Point: Get center coordinates (x,y)
-        } else if (roi != null && roi.getType() == Roi.POINT) {
+			imgTitle = img.getShortTitle();
 
-            final PointRoi point = (PointRoi) roi;
-            final Rectangle rect = point.getBounds();
-            x = rect.x;
-            y = rect.y;
+			// Get image calibration. Stacks are likely to have anisotropic voxels
+			// with large z-steps. It is unlikely that lateral dimensions will differ
+			cal = img.getCalibration();
+			if (cal.scaled()) {
+				vxWH = Math.sqrt(cal.pixelWidth * cal.pixelHeight);
+				vxD  = cal.pixelDepth;
+				unit = cal.getUnits();
+			} else {
+				vxWH = vxD = 1; unit = "pixels";
+			}
+			vxSize = (is3D) ? Math.cbrt(vxWH*vxWH*vxD) : vxWH;
 
-        // Not a proper ROI type
-        } else {
-            sError("Straight Line or Point selection required.");
-            return;
-        }
+			z = img.getCurrentSlice();
 
-        // Show the plugin dialog: Update parameters with user input and
-        // retrieve if analysis will be restricted to a hemicircle/hemisphere
-        if(!showDialog(chordAngle, is3D))
-            return;
+			// Get parameters from current ROI. Prompt for one if none exists
+			Roi roi = img.getRoi();
+			final boolean validRoi = roi!=null && (roi.getType()==Roi.LINE || roi.getType()==Roi.POINT);
 
-        // Impose valid parameters
-        final int wdth = ip.getWidth();
-        final int hght = ip.getHeight();
-        final double dx, dy, dz, maxEndRadius;
+			if (!IJ.macroRunning() && !validRoi) {
+				img.killRoi();
+				Toolbar.getInstance().setTool("line");
+				final WaitForUserDialog wd = new WaitForUserDialog(
+								"Please define the largest Sholl radius by creating\n"
+								+ "a straight line starting at the center of analysis.\n"
+								+ "(Hold down \"Shift\" to draw an orthogonal radius)\n \n"
+								+ "Alternatively, define the focus of the arbor using\n"
+								+ "the Point Selection Tool.");
+				wd.show();
+				if (wd.escPressed())
+					return;
+				roi = img.getRoi();
+			}
 
-        dx = ((orthoChord && trimBounds && quadString.equals(QUAD_WEST)) || x<=wdth/2)
-             ? (x-wdth)*vxWH : x*vxWH;
+			// Initialize angle of the line roi (if any). It will become positive
+			// if a line (chord) exists.
+			double chordAngle = -1.0;
 
-        dy = ((orthoChord && trimBounds && quadString.equals(QUAD_SOUTH)) || y<=hght/2)
-             ? (y-hght)*vxWH : y*vxWH;
+			// Line: Get center coordinates, length and angle of chord
+			if (roi!=null && roi.getType()==Roi.LINE) {
 
-        dz = (z<=depth/2) ? (z-depth)*vxD : z*vxD;
+				final Line chord = (Line) roi;
+				x = chord.x1;
+				y = chord.y1;
+				endRadius = vxSize * chord.getRawLength();
+				chordAngle = Math.abs(chord.getAngle(x, y, chord.x2, chord.y2));
 
-        maxEndRadius = Math.sqrt(dx*dx + dy*dy + dz*dz);
-        endRadius = Double.isNaN(endRadius) ? maxEndRadius : Math.min(endRadius, maxEndRadius);
-        stepRadius = Math.max(vxSize, Double.isNaN(incStep) ? 0 : incStep);
+			// Point: Get center coordinates (x,y)
+			} else if (roi != null && roi.getType() == Roi.POINT) {
 
-        // Calculate how many samples will be taken
-        final int size = (int) ((endRadius-startRadius)/stepRadius)+1;
+				final PointRoi point = (PointRoi) roi;
+				final Rectangle rect = point.getBounds();
+				x = rect.x;
+				y = rect.y;
 
-        // Exit if there are no samples
-        if (size<=1) {
-            sError(" Invalid Parameters: Starting radius must be smaller than\n"
-                 + "Ending radius and Radius step size must be within range!");
-            return;
-        }
+			// Not a proper ROI type
+			} else {
+				sError("Straight Line or Point selection required.");
+				return;
+			}
 
-        img.startTiming();
-        IJ.resetEscape();
+			// Show the plugin dialog: Update parameters with user input and
+			// retrieve if analysis will be restricted to a hemicircle/hemisphere
+			if(!bitmapPrompt(chordAngle, is3D))
+				return;
 
-        // Create arrays for radii (in physical units) and intersection counts
-        final double[] radii = new double[size];
-        double[] counts = new double[size];
+			// Impose valid parameters
+			final int wdth = ip.getWidth();
+			final int hght = ip.getHeight();
+			final double dx, dy, dz, maxEndRadius;
 
-        for (int i = 0; i < size; i++) {
-            radii[i] = startRadius + i*stepRadius;
-        }
+			dx = ((orthoChord && trimBounds && quadString.equals(QUAD_WEST)) || x<=wdth/2)
+				? (x-wdth)*vxWH : x*vxWH;
 
-        // Define boundaries of analysis according to orthogonal chords (if any)
-        final int xymaxradius = (int) Math.round(radii[size-1]/vxWH);
-        final int zmaxradius  = (int) Math.round(radii[size-1]/vxD);
+			dy = ((orthoChord && trimBounds && quadString.equals(QUAD_SOUTH)) || y<=hght/2)
+				? (y-hght)*vxWH : y*vxWH;
 
-        minX = Math.max(x-xymaxradius, 0);
-        maxX = Math.min(x+xymaxradius, wdth);
-        minY = Math.max(y-xymaxradius, 0);
-        maxY = Math.min(y+xymaxradius, hght);
-        minZ = Math.max(z-zmaxradius, 1);
-        maxZ = Math.min(z+zmaxradius, depth);
+			dz = (z<=depth/2) ? (z-depth)*vxD : z*vxD;
 
-        if (orthoChord && trimBounds) {
-            if (quadString.equals(QUAD_NORTH))
-                maxY = (int) Math.min(y + xymaxradius, y);
-            else if (quadString.equals(QUAD_SOUTH))
-                minY = (int) Math.max(y - xymaxradius, y);
-            else if (quadString.equals(QUAD_WEST))
-                minX = x;
-            else if (quadString.equals(QUAD_EAST))
-                maxX = x;
-        }
+			maxEndRadius = Math.sqrt(dx*dx + dy*dy + dz*dz);
+			endRadius = Double.isNaN(endRadius) ? maxEndRadius : Math.min(endRadius, maxEndRadius);
+			stepRadius = Math.max(vxSize, Double.isNaN(incStep) ? 0 : incStep);
 
-        // 2D: Analyze the data and return intersection counts with nSpans
-        // per radius. 3D: Analysis without nSpans
-        if (is3D) {
-            counts = analyze3D(x, y, z, radii, img);
-        } else {
-            counts = analyze2D(x, y, radii, vxSize, nSpans, binChoice, ip);
-        }
+			// Calculate how many samples will be taken
+			final int size = (int) ((endRadius-startRadius)/stepRadius)+1;
+
+			// Exit if there are no samples
+			if (size<=1) {
+				sError(" Invalid Parameters: Starting radius must be smaller than\n"
+					+ "Ending radius and Radius step size must be within range!");
+				return;
+			}
+
+			img.startTiming();
+			IJ.resetEscape();
+
+			// Create arrays for radii (in physical units) and intersection counts
+			radii = new double[size];
+			counts = new double[size];
+
+			for (int i = 0; i < size; i++) {
+				radii[i] = startRadius + i*stepRadius;
+			}
+
+			// Define boundaries of analysis according to orthogonal chords (if any)
+			final int xymaxradius = (int) Math.round(radii[size-1]/vxWH);
+			final int zmaxradius  = (int) Math.round(radii[size-1]/vxD);
+
+			minX = Math.max(x-xymaxradius, 0);
+			maxX = Math.min(x+xymaxradius, wdth);
+			minY = Math.max(y-xymaxradius, 0);
+			maxY = Math.min(y+xymaxradius, hght);
+			minZ = Math.max(z-zmaxradius, 1);
+			maxZ = Math.min(z+zmaxradius, depth);
+
+			if (orthoChord && trimBounds) {
+				if (quadString.equals(QUAD_NORTH))
+					maxY = (int) Math.min(y + xymaxradius, y);
+				else if (quadString.equals(QUAD_SOUTH))
+					minY = (int) Math.max(y - xymaxradius, y);
+				else if (quadString.equals(QUAD_WEST))
+					minX = x;
+				else if (quadString.equals(QUAD_EAST))
+					maxX = x;
+				}
+
+			// 2D: Analyze the data and return intersection counts with nSpans
+			// per radius. 3D: Analysis without nSpans
+			if (is3D) {
+				counts = analyze3D(x, y, z, radii, img);
+			} else {
+				counts = analyze2D(x, y, radii, vxSize, nSpans, binChoice, ip);
+			}
+
+		}
 
         IJ.showStatus("Preparing Results...");
 
@@ -414,7 +445,9 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		if (!validPath || (validPath && !hideSaved))
             rt.show(profileTable);
 
-        String exitmsg = "Done. ";
+		if (isCSV) return;
+
+		String exitmsg = "Done. ";
 
         // Create intersections mask, but check first if it is worth proceeding
         if (mask) {
@@ -573,7 +606,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
 	/**
      * Remove zeros from data. Zero intersections are problematic for logs and polynomials.
-	 * Long stretches of zeros (e.g., caused by discountinuous arbosr) often cause sharp
+	 * Long stretches of zeros (e.g., caused by discontinuous arbors) often cause sharp
 	 * "bumps" on the fitted curve. Setting zeros to NaN is not option as it would impact
 	 * the CurveFitter.
      */
@@ -583,11 +616,11 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         int i, j, nsize = 0;
 
         for (i=0; i<size; i++)
-            { if (ypoints[i] > 0.0) nsize++; }
+            { if (xpoints[i]>0.0 && ypoints[i]>0.0) nsize++; }
 
         final double[][] values = new double[nsize][2];
         for (i=0, j=0; i<size; i++) {
-            if (ypoints[i] > 0.0) {
+            if (xpoints[i]>0.0 && ypoints[i]>0.0) {
                 values[j][0] = xpoints[i];
                 values[j++][1] = ypoints[i];
             }
@@ -631,7 +664,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
      * to be trimmed from the analysis "None", "Above","Below", "Right" or "Left".
      * Returns null if dialog was canceled
      */
-    private boolean showDialog(final double chordAngle, final boolean is3D) {
+    private boolean bitmapPrompt(final double chordAngle, final boolean is3D) {
 
         final GenericDialog gd = new GenericDialog("Sholl Analysis v"+ VERSION);
 
@@ -838,6 +871,106 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         // Disable the OK button if no method is chosen
         return (shollN || shollNS || shollSLOG || shollLOG) ? true : false;
+
+    }
+
+
+    private boolean csvPrompt(final ResultsTable rt) {
+
+        final String[] headings = rt.getHeadings();
+        if (headings.length < 2) {
+            sError("Failed to import Results Table.\nA table with at least 2 columns is required");
+            return false;
+        }
+
+        final GenericDialog gd = new GenericDialog("Sholl Analysis v"+ VERSION +" (Tabular Data)");
+
+        final Font headerFont = new Font("SansSerif", Font.BOLD, 12);
+        final int xIndent = 40;
+
+        // Part I: Importing data
+        gd.setInsets(0, 0, 0);
+        gd.addMessage("I. Results Table Import Options:", headerFont);
+        gd.addChoice("Distance column:", headings, headings[0]);
+        gd.addChoice("Intersections column:", headings, headings[1]);
+        gd.setInsets(0, xIndent, 0);
+        gd.addCheckbox("3D data? (uncheck if 2D profile)", is3D);
+
+        // Part II: Indices and Curve Fitting
+        gd.setInsets(15, 0, 2);
+        gd.addMessage("II. Ramification Indices:", headerFont);
+        gd.addNumericField(" #_Primary branches", primaryBranches, 0);
+        gd.setInsets(0, xIndent, 0);
+        gd.addCheckbox("Infer from values in first row", inferPrimary);
+
+        // Part III: Sholl Methods
+        gd.setInsets(15, 0, 2);
+        gd.addMessage("III. Sholl Methods:", headerFont);
+        gd.setInsets(0, xIndent/2, 2);
+        gd.addMessage("Profiles Without Normalization:");
+        gd.setInsets(0, xIndent, 0);
+        gd.addCheckbox("Linear", shollN);
+        gd.setInsets(0, 0, 0);
+        gd.addChoice("Polynomial", DEGREES, DEGREES[polyChoice]);
+
+        gd.setInsets(8, xIndent/2, 2);
+        gd.addMessage("Normalized Profiles:");
+        gd.setInsets(0, xIndent, 0);
+        gd.addCheckboxGroup(1, 3,
+                            new String[]{SHOLL_TYPES[SHOLL_NS], SHOLL_TYPES[SHOLL_SLOG],SHOLL_TYPES[SHOLL_LOG]},
+                            new boolean[]{shollNS, shollSLOG, shollLOG});
+
+        final String[] norms = new String[NORMS3D.length];
+        for(int i=0; i<norms.length; i++) {
+            norms[i] = NORMS2D[i] +"/"+ NORMS3D[i];
+        }
+        gd.setInsets(2, 0, 0);
+        gd.addChoice("Normalizer", norms, norms[normChoice]);
+
+        gd.setInsets(15, 0, 2);
+        gd.addMessage("IV. Output Options:", headerFont);
+        gd.setInsets(0, xIndent, 0);
+        gd.addCheckbox("Show fitting details", verbose);
+        if (validPath) {
+            gd.setInsets(2, xIndent, 0);
+            gd.addCheckbox("Save results on image directory", save);
+            gd.setInsets(0, 2*xIndent, 0);
+            gd.addCheckbox("Do not display saved files", hideSaved);
+        }
+
+        gd.setHelpLabel("Online Help");
+        gd.addHelp(URL);
+        gd.showDialog();
+
+        if (gd.wasCanceled())
+            return false;
+
+        radii = rt.getColumnAsDoubles( gd.getNextChoiceIndex() );
+        counts = rt.getColumnAsDoubles( gd.getNextChoiceIndex() );
+        is3D = gd.getNextBoolean();
+
+        primaryBranches = (int)Math.max(1, gd.getNextNumber());
+        inferPrimary = gd.getNextBoolean();
+
+        shollN = gd.getNextBoolean();
+        polyChoice = gd.getNextChoiceIndex();
+        shollNS = gd.getNextBoolean();
+        shollSLOG = gd.getNextBoolean();
+        shollLOG = gd.getNextBoolean();
+        normChoice = gd.getNextChoiceIndex();
+
+        verbose = gd.getNextBoolean();
+        if (validPath) {
+            save = gd.getNextBoolean();
+            hideSaved = gd.getNextBoolean();
+        }
+
+        if ( !(shollN || shollNS || shollSLOG || shollLOG) ) {
+            sError("No method(s) chosen.\nAt least one analysis method must be chosen.");
+            return false;
+        }
+
+        return true;
 
     }
 
@@ -1533,15 +1666,15 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		rt.incrementCounter();
 		rt.setPrecision(getPrecision());
 		rt.addLabel("Image", rowLabel + " (" + unit + ")");
-		rt.addValue("Lower threshold", lowerT);
-		rt.addValue("Upper threshold", upperT);
-		rt.addValue("X center (px)", xc);
-		rt.addValue("Y center (px)", yc);
-		rt.addValue("Z center (slice)", zc);
-		rt.addValue("Starting radius", startRadius);
-		rt.addValue("Ending radius", endRadius);
-		rt.addValue("Radius step", stepRadius);
-		rt.addValue("Samples/radius", is3D ? 1 : nSpans);
+		rt.addValue("Lower threshold", isCSV ? Double.NaN : lowerT);
+		rt.addValue("Upper threshold", isCSV ? Double.NaN : upperT);
+		rt.addValue("X center (px)", isCSV ? Double.NaN : xc);
+		rt.addValue("Y center (px)", isCSV ? Double.NaN : yc);
+		rt.addValue("Z center (slice)", isCSV ? Double.NaN : zc);
+		rt.addValue("Starting radius", isCSV ? Double.NaN : startRadius);
+		rt.addValue("Ending radius", isCSV ? Double.NaN : endRadius);
+		rt.addValue("Radius step", isCSV ? Double.NaN : stepRadius);
+		rt.addValue("Samples/radius", (isCSV || is3D) ? 1 : nSpans);
 		rt.addValue("Intersecting radii", size);
 		rt.addValue("Sum inters.", sumY);
 		rt.addValue("Mean inters.", sumY/size);

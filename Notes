@@ -12,6 +12,8 @@ WISH LIST
 RELEASE NOTES
 =============
 Version 3.1 (June 2013) [latest]
+    - Hold dow "Alt" to analyze profiles obtained elsewhere, including those from Simple
+      Neurite Tracer, http://fiji.sc/Simple_Neurite_Tracer
     - Multiple profiles can be obtained at once
     - New descriptors: Median and Barycenter of linear Sholl (sampled profile)
     - Added a "batch mode" option that saves profiles without displaying them
