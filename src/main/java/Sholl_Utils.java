@@ -28,7 +28,7 @@ import java.awt.image.IndexColorModel;
 /** Simple auxiliary commands related to Sholl_Analysis */
 public class Sholl_Utils implements PlugIn {
 
-    private static final String BUILD = " 2013.06";
+    private static final String BUILD = " 2013.07";
     private static final String SRC_URL = "https://github.com/tferr/ASA";
     private static final String DOC_URL = "http://fiji.sc/Sholl_Analysis";
     private static int background = Sholl_Analysis.maskBackground;

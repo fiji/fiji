@@ -19,6 +19,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Prefs;
 import ij.WindowManager;
+import ij.io.OpenDialog;
 import ij.gui.*;
 import ij.measure.Calibration;
 import ij.measure.CurveFitter;
@@ -84,6 +85,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     /* Curve Fitting, Results and Descriptors */
     private static boolean fitCurve = true;
     private static final String[] DEGREES = { "4th degree", "5th degree", "6th degree", "7th degree", "8th degree", "Best fitting degree" };
+    private static final int SMALLEST_DATASET = 6;
     private static final String SHOLLTABLE = "Sholl Results";
     private static double[] centroid;
 
@@ -166,10 +168,23 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
 		if (isCSV) {
 
-			final ResultsTable rt = ResultsTable.getResultsTable();
+			ResultsTable rt = ResultsTable.getResultsTable();
 			if (rt==null || rt.getCounter()==0) {
-				sError("The Results table is empty");
-				return;
+				try {
+					rt = ResultsTable.open("");
+					if (rt!=null) {
+						rt.show("Results");
+						validPath = true;
+						imgPath = OpenDialog.getLastDirectory();
+					} else	//user pressed "Cancel" in file prompt
+						return;
+				} catch(IOException e) {
+					sError(e.getMessage());
+					return;
+				}
+			} else {
+				imgPath = null;
+				validPath = false;
 			}
 
 			if (!csvPrompt(rt))
@@ -180,7 +195,6 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			y = (int)Double.NaN;
 			z = (int)Double.NaN;
 			cal = null; unit = "N.A.";
-			imgTitle = "Imported data";
 
 		} else {
 
@@ -343,7 +357,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             return;
         }
 
-        // Retrive stats on sampled data
+        // Retrieve stats on sampled data
         final ResultsTable statsTable = createStatsTable(imgTitle, x, y, z, valuesN);
 
         // Transform and fit data
@@ -468,7 +482,8 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
 	/**
      * Performs curve fitting, Appends the fitted curve to the Sholl plot, respective
-	 * descriptors to the summary table. Returns fitted values.
+	 * descriptors to the summary table. Returns fitted values or null if values.length
+	 * is less than SMALLEST_DATASET
      */
 	private static double[] getFittedProfile(final double[][] values, final int method,
 			final ResultsTable rt, final Plot plot) {
@@ -486,9 +501,9 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
 		// Abort curve fitting when dealing with small datasets that are prone to
 		// inflated coefficients of determination
-		if (fitCurve && size <= 6) {
-			fitCurve = false;
+		if (fitCurve && size <= SMALLEST_DATASET) {
 			IJ.log(longtitle +":\nCurve fitting not performed: Not enough data points");
+			return null;
 		}
 
 		 // Perform fitting
@@ -878,8 +893,9 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     private boolean csvPrompt(final ResultsTable rt) {
 
         final String[] headings = rt.getHeadings();
-        if (headings.length < 2) {
-            sError("Failed to import Results Table.\nA table with at least 2 columns is required");
+        if (headings.length<2 || rt.getCounter()<=SMALLEST_DATASET ) {
+            sError("Failed to import profile from "+ headings.length +"x"+ rt.getCounter() +" Results Table.\n"
+                    +"At least "+ (SMALLEST_DATASET+1) +" pairs of values are required for curve fitting.");
             return false;
         }
 
@@ -891,8 +907,9 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         // Part I: Importing data
         gd.setInsets(0, 0, 0);
         gd.addMessage("I. Results Table Import Options:", headerFont);
-        gd.addChoice("Distance column:", headings, headings[0]);
-        gd.addChoice("Intersections column:", headings, headings[1]);
+        gd.addStringField("Name of dataset", "Imported data", 20);
+        gd.addChoice("Distance column", headings, headings[0]);
+        gd.addChoice("Intersections column", headings, headings[1]);
         gd.setInsets(0, xIndent, 0);
         gd.addCheckbox("3D data? (uncheck if 2D profile)", is3D);
 
@@ -932,21 +949,22 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         gd.setInsets(0, xIndent, 0);
         gd.addCheckbox("Show fitting details", verbose);
         if (validPath) {
-            gd.setInsets(2, xIndent, 0);
-            gd.addCheckbox("Save results on image directory", save);
-            gd.setInsets(0, 2*xIndent, 0);
+            gd.setInsets(0, xIndent, 0);
+            gd.addCheckbox("Save results on directory of profile", save);
+            gd.setInsets(0, xIndent, 0);
             gd.addCheckbox("Do not display saved files", hideSaved);
         }
 
         gd.setHelpLabel("Online Help");
-        gd.addHelp(URL);
+        gd.addHelp(URL + "#Importing");
         gd.showDialog();
 
         if (gd.wasCanceled())
             return false;
 
-        radii = rt.getColumnAsDoubles( gd.getNextChoiceIndex() );
-        counts = rt.getColumnAsDoubles( gd.getNextChoiceIndex() );
+        imgTitle = gd.getNextString();
+        final int rColumn = gd.getNextChoiceIndex();
+        final int cColumn = gd.getNextChoiceIndex();
         is3D = gd.getNextBoolean();
 
         primaryBranches = (int)Math.max(1, gd.getNextNumber());
@@ -961,8 +979,21 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         verbose = gd.getNextBoolean();
         if (validPath) {
-            save = gd.getNextBoolean();
-            hideSaved = gd.getNextBoolean();
+        	save = gd.getNextBoolean();
+        	hideSaved = gd.getNextBoolean();
+        }
+
+        if ( rColumn==cColumn ) {
+        	sError("\"Distance\" and \"Intersections\" columns cannot be the same.");
+        	return false;
+        }
+
+        counts = rt.getColumnAsDoubles(cColumn);
+        radii = rt.getColumnAsDoubles(rColumn);
+        stepRadius = rt.getValueAsDouble(rColumn, 1) - rt.getValueAsDouble(rColumn, 0);
+        if ( Double.isNaN(stepRadius) || stepRadius<=0 ) {
+			IJ.log("*** Warning: Could not determine radius step size for "+ imgTitle
+					+ "\n*** Normalizations involving "+ norms[norms.length-1] +" will not be relevant");
         }
 
         if ( !(shollN || shollNS || shollSLOG || shollLOG) ) {
@@ -1673,7 +1704,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		rt.addValue("Z center (slice)", isCSV ? Double.NaN : zc);
 		rt.addValue("Starting radius", isCSV ? Double.NaN : startRadius);
 		rt.addValue("Ending radius", isCSV ? Double.NaN : endRadius);
-		rt.addValue("Radius step", isCSV ? Double.NaN : stepRadius);
+		rt.addValue("Radius step", stepRadius);
 		rt.addValue("Samples/radius", (isCSV || is3D) ? 1 : nSpans);
 		rt.addValue("Intersecting radii", size);
 		rt.addValue("Sum inters.", sumY);
@@ -1827,7 +1858,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			end   = (int)(end-start);
 
 			// Do not proceed if there are not enough points
-			if (end <= 6)
+			if (end <= SMALLEST_DATASET)
 				return;
 
 			final double[] xtrimmed = Arrays.copyOfRange(x, start, end);

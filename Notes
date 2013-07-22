@@ -2,8 +2,6 @@ Sholl Analysis, http://fiji.sc/Sholl_Analysis/
 
 WISH LIST
 =========
-    - Perform curve fitting and compute descriptors from linear profiles obtained
-      elsewhere (perhaps by importing .csv files?)
     - Obtain a mask for every chosen method (slices of an ImageStack?)
     - Fix dialog prompt: Can become higher than 700px and may not be displayed on netbooks
 
@@ -11,7 +9,7 @@ WISH LIST
 
 RELEASE NOTES
 =============
-Version 3.1 (June 2013) [latest]
+Version 3.1 (July 2013) [latest]
     - Hold dow "Alt" to analyze profiles obtained elsewhere, including those from Simple
       Neurite Tracer, http://fiji.sc/Simple_Neurite_Tracer
     - Multiple profiles can be obtained at once
