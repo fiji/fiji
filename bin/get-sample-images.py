@@ -22,7 +22,7 @@ import urllib
 # force initialization
 IJ.runMacro("", "")
 
-menu = User_Plugins.getMenuItem('File>Open Samples')
+menu = FijiTools.getMenuItem('File>Open Samples')
 commands = Menus.getCommands()
 plugin = 'ij.plugin.URLOpener("'
 samples = System.getProperty('ij.dir') + '/samples'

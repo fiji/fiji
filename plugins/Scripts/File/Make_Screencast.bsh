@@ -140,7 +140,7 @@ startScreencast(options) {
 
 	ij = options.interactive ? IJ.getInstance() : null;
 	if (ij != null) {
-		item = User_Plugins.getMenuItem("File>Make Screencast");
+		item = FijiTools.getMenuItem("File>Make Screencast");
 		listeners = item.getActionListeners();
 		for (ActionListener listener : listeners)
 			item.removeActionListener(listener);
