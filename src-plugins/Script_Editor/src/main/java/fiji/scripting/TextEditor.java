@@ -107,7 +107,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
 		  chooseFontSize, chooseTabSize, gitGrep, loadToolsJar, openInGitweb,
 		  replaceTabsWithSpaces, replaceSpacesWithTabs, toggleWhiteSpaceLabeling,
-		  zapGremlins;
+		  zapGremlins, savePreferences;
 	protected RecentFilesMenuItem openRecent;
 	protected JMenu gitMenu, tabsMenu, fontSizeMenu, tabSizeMenu, toolsMenu, runMenu,
 		  whiteSpaceMenu;
@@ -256,7 +256,6 @@ public class TextEditor extends JFrame implements ActionListener,
 		wrapLines.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				getEditorPane().setLineWrap(wrapLines.getState());
-				savePreferences();
 			}
 		});
 		edit.add(wrapLines);
@@ -266,11 +265,12 @@ public class TextEditor extends JFrame implements ActionListener,
 		tabsEmulated.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				getEditorPane().setTabsEmulated(tabsEmulated.getState());
-				savePreferences();
 			}
 		});
 		edit.add(tabsEmulated);
 		
+		savePreferences = addToMenu(edit, "Save Preferences", 0, 0);
+
 		edit.addSeparator();
 
 		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
@@ -503,7 +503,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		// Save the size of the window in the preferences
 		addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent e) {
-		    	savePreferences();
+		    	saveWindowSizeToPrefs();
 		    }
 		});
 	
@@ -568,6 +568,17 @@ public class TextEditor extends JFrame implements ActionListener,
 		Prefs.set(FONT_SIZE_PREFS, pane.getFontSize());
 		Prefs.set(LINE_WRAP_PREFS, pane.getLineWrap());
 		Prefs.set(TABS_EMULATED_PREFS, pane.getTabsEmulated());
+		Prefs.savePreferences();
+	}
+	
+	/**
+	 * Saves the window size to  preferences.
+	 * Separated from savePreferences because we always want to save the
+	 * window size when it's resized, however, we don't want to
+	 * automatically save the font, tab size, etc. without the user
+	 * pressing "Save Preferences"
+	 */
+	public void saveWindowSizeToPrefs(){
 		Dimension dim  = getSize();
 		Prefs.set(WINDOW_HEIGHT,dim.height);
 		Prefs.set(WINDOW_WIDTH, dim.width);
@@ -901,6 +912,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			getTab().getScreen().setText("");
 		else if (source == zapGremlins)
 			zapGremlins();
+		else if (source == savePreferences)
+			savePreferences();
 		else if (source == autocomplete) {
 			try {
 				getEditorPane().autocomp.doCompletion();
@@ -1795,7 +1808,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 		wrapLines.setState(pane.getLineWrap());
 		tabsEmulated.setState(pane.getTabsEmulated());
-		savePreferences();
+	
 	}
 
 	public void setFileName(String baseName) {
