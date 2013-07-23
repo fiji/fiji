@@ -28,8 +28,7 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 	final int numViews;
 	final int numParalellStacks;
 	
-	//int angleIndicies[] = new int[]{ 0, 6, 7 };
-	public static int angleIndiciesStatic[] = null;
+	public static int[] angleIndiciesStatic = null;
 	public int[] angleIndicies = null;
 
 	public MappingFusionSequentialDifferentOutput( final ViewStructure viewStructure, final ViewStructure referenceViewStructure,
@@ -40,9 +39,6 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 		super( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
 
 		numViews = viewStructure.getNumViews();
-		
-		IJ.log( "numviews = " + numViews );
-		IJ.log( "numviews = " + viewStructure.getViews().size() );
 
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused images.");
