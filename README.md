@@ -19,7 +19,7 @@ At the moment, the following platforms are supported:
 - all platforms supporting Java and a POSIX shell, via bin/ImageJ.sh
 
 The setup should be as easy as unpacking the (portable) application and
-starting the Java wrapper.  The wrapper is a program that starts the Java
+starting the Java wrapper. The wrapper is a program that starts the Java
 machine hands-free, i.e. it sets the correct settings to start up ImageJ
 with the plugins directory and heap size set up for you.
 
@@ -31,32 +31,32 @@ Usage
 -----
 
 Fiji is meant to be distributed without source, to make the download as
-small as possible.  In the basic version, Fiji is a portable application,
+small as possible. In the basic version, Fiji is a portable application,
 i.e. it should run wherever you copy it.
 
-The starting point is the ImageJ launcher, which will launch Java, set up
-the environment, and call ImageJ.
+The starting point is the ImageJ launcher, which will launch Java, set
+up the environment, and call ImageJ.
 
 To pass arguments to ImageJ, just specify them on the command line.
 
-To pass arguments to the Java Virtual Machine, specify them on the command
-line, separating them from the ImageJ arguments (if any) with a `--`.
-In other words, if you want to override the memory setting, call Fiji
-like this:
+To pass arguments to the Java Virtual Machine, specify them on the
+command line, separating them from the ImageJ arguments (if any) with a
+`--`.  In other words, if you want to override the memory setting, call
+Fiji like this:
 
 	$ ./ImageJ-linux32 -Xmx128m --
 
 Open Source
 -----------
 
-We are dedicated to open source.  Not only does open source allow other
+We are dedicated to open source. Not only does open source allow other
 developers to port the application to new platforms that the original
 authors did not begin to think of, it permits others to use the program
 in totally new ways, and enhance it in all imaginable ways.
 
 Therefore, Fiji is licensed under the GNU Public License, version 2 (of
 course, this license only applies to Fiji: the build system and the Java
-wrapper).  Not version 3, because we think that it is not our job to
+wrapper). Not version 3, because we think that it is not our job to
 educate everybody to be a decent person; that's every person's own job.
 
 In the same vein, Fiji will contain only Open Source software, unless
@@ -104,10 +104,10 @@ See also http://fiji.sc/Contributors
 Thanks
 ------
 
-Our first and foremost thanks go to Wayne Rasband, who is not only a very
-dedicated developer; he also fosters an active and friendly community
-around ImageJ.
+Our first and foremost thanks go to Wayne Rasband, who is not only a
+very dedicated developer; he also fosters an active and friendly
+community around ImageJ.
 
 The rest of our thanks go to everybody who helped this project prosper.
 
-Oh, and Fiji is also an island.  We just wanted to let you know.
+Oh, and Fiji is also an island. We just wanted to let you know.
