@@ -16,6 +16,7 @@ At the moment, the following platforms are supported:
 - MacOSX-PowerPC
 - MacOSX-x86
 - MacOSX-x86_64
+- all platforms supporting Java and a POSIX shell, via bin/ImageJ.sh
 
 The setup should be as easy as unpacking the (portable) application and
 starting the Java wrapper.  The wrapper is a program that starts the Java
