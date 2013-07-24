@@ -2,12 +2,17 @@
 
 package landmarks;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 import ij.ImagePlus;
-import util.BatchOpener;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.Enumeration;
 
 import org.junit.Test;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
+
+import util.BatchOpener;
 
 public class TestLoading {
 
@@ -36,20 +41,20 @@ public class TestLoading {
 		NamedPointSet testNPS = null;
 
 		try {
-			testNPS = NamedPointSet.fromFile( "tests/sample-data/CantonF41c-reduced.tif.points.xml" );
+			testNPS = NamedPointSet.fromFile( getTestResourcePath( "tests/sample-data/CantonF41c-reduced.tif.points.xml" ) );
 		} catch( NamedPointSet.PointsFileException e ) {
 			assertTrue( false );
 		}
 		assertTrue( testNPS.equals(nps) );
 
 		try {
-			testNPS = NamedPointSet.forImage( "tests/sample-data/CantonF41c-reduced.tif" );
+			testNPS = NamedPointSet.forImage( getTestResourcePath( "tests/sample-data/CantonF41c-reduced.tif" ) );
 		} catch( NamedPointSet.PointsFileException e ) {
 			assertTrue( false );
 		}
 		assertTrue( testNPS.equals(nps) );
 
-		ImagePlus imagePlus = BatchOpener.openFirstChannel( "tests/sample-data/CantonF41c-reduced.tif" );
+		ImagePlus imagePlus = BatchOpener.openFirstChannel( getTestResourcePath( "tests/sample-data/CantonF41c-reduced.tif" ) );
 		try {
 			testNPS = NamedPointSet.forImage( imagePlus );
 		} catch( NamedPointSet.PointsFileException e ) {
@@ -81,20 +86,20 @@ public class TestLoading {
 		NamedPointSet testNPS = null;
 
 		try {
-			testNPS = NamedPointSet.fromFile( "tests/sample-data/tidied-mhl-62yxUAS-lacZ0-reduced.tif.points.R" );
+			testNPS = NamedPointSet.fromFile( getTestResourcePath( "tests/sample-data/tidied-mhl-62yxUAS-lacZ0-reduced.tif.points.R" ) );
 		} catch( NamedPointSet.PointsFileException e ) {
 			assertTrue( false );
 		}
 		assertTrue( testNPS.equals(nps) );
 
 		try {
-			testNPS = NamedPointSet.forImage( "tests/sample-data/tidied-mhl-62yxUAS-lacZ0-reduced.tif" );
+			testNPS = NamedPointSet.forImage( getTestResourcePath( "tests/sample-data/tidied-mhl-62yxUAS-lacZ0-reduced.tif" ) );
 		} catch( NamedPointSet.PointsFileException e ) {
 			assertTrue( false );
 		}
 		assertTrue( testNPS.equals(nps) );
 
-		ImagePlus imagePlus = BatchOpener.openFirstChannel( "tests/sample-data/tidied-mhl-62yxUAS-lacZ0-reduced.tif" );
+		ImagePlus imagePlus = BatchOpener.openFirstChannel( getTestResourcePath( "tests/sample-data/tidied-mhl-62yxUAS-lacZ0-reduced.tif" ) );
 		try {
 			testNPS = NamedPointSet.forImage( imagePlus );
 		} catch( NamedPointSet.PointsFileException e ) {
@@ -145,7 +150,7 @@ public class TestLoading {
 
 		/*
 		try {
-			testNPS = NamedPointSet.fromFile( "tests/sample-data/71yAAeastmost.labels.points" );
+			testNPS = NamedPointSet.fromFile( getTestResourcePath( "tests/sample-data/71yAAeastmost.labels.points" ) );
 		} catch( NamedPointSet.PointsFileException e ) {
 			assertTrue( false );
 		}
@@ -153,13 +158,13 @@ public class TestLoading {
 		*/
 
 		try {
-			testNPS = NamedPointSet.forImage( "tests/sample-data/71yAAeastmost.labels" );
+			testNPS = NamedPointSet.forImage( getTestResourcePath( "tests/sample-data/71yAAeastmost.labels" ) );
 		} catch( NamedPointSet.PointsFileException e ) {
 			assertTrue( false );
 		}
 		assertTrue( testNPS.equals(nps) );
 
-		ImagePlus imagePlus = BatchOpener.openFirstChannel( "tests/sample-data/71yAAeastmost.labels" );
+		ImagePlus imagePlus = BatchOpener.openFirstChannel( getTestResourcePath( "tests/sample-data/71yAAeastmost.labels" ) );
 		try {
 			testNPS = NamedPointSet.forImage( imagePlus );
 		} catch( NamedPointSet.PointsFileException e ) {
@@ -167,4 +172,48 @@ public class TestLoading {
 		}
 		assertTrue( testNPS.equals(nps) );
 	}
+
+	/**
+	 * Returns the path to a plain file in the test resources.
+	 * <p>
+	 * This function uses JUnit's {@link Assume} functionality to skip the test
+	 * if the specified resource could not be found.
+	 * </p>
+	 * 
+	 * @param relativePath
+	 *            the relative path of the file
+	 * @return the file
+	 */
+	public static String getTestResourcePath( final String relativePath ) {
+		return getTestResourcePath( TestLoading.class, relativePath );
+	}
+
+	/**
+	 * Returns the path to a plain file in the test resources.
+	 * <p>
+	 * This function uses JUnit's {@link Assume} functionality to skip the test
+	 * if the specified resource could not be found.
+	 * </p>
+	 * 
+	 * @param clazz
+	 *            the class whose class loader should be used to find the
+	 *            resource
+	 * @param relativePath
+	 *            the relative path of the file
+	 * @return the file
+	 */
+	public static String getTestResourcePath( final Class<?> clazz, final String relativePath ) {
+		try {
+			final Enumeration<URL> urls = clazz.getClassLoader().getResources( relativePath );
+			while ( urls.hasMoreElements() ) {
+				final URL url = urls.nextElement();
+				if ( "file".equals(url.getProtocol() ) ) return url.getPath();
+			}
+		} catch (IOException e) {
+			// ignore
+		}
+		assumeTrue( false ); // skip test if resource was not found
+		return null; // unreachable, really
+	}
+
 }
