@@ -29,7 +29,7 @@ You may contact Albert Cardona at acardona at ini phys ethz ch.
 
 package common;
 
-import fiji.User_Plugins;
+import fiji.FijiTools;
 
 import ij.IJ;
 import ij.ImageJ;
@@ -117,7 +117,7 @@ abstract public class RefreshScripts implements PlugIn {
 	 * add it from this method.
 	 *
 	 * Unfortunately, we cannot use the getMenu() method of ij.Menus.
-	 * Fortunately, we can use fiji.User_Plugins' getMenuItem() method.
+	 * Fortunately, we can use fiji.FijiTools' getMenuItem() method.
 	 */
 	private void maybeAddFile(String topLevelDirectory, String subDirectory, String filename) {
 		if (verbose) {
@@ -152,7 +152,7 @@ abstract public class RefreshScripts implements PlugIn {
 				String menuPath = "Plugins>" + subDirectory.replace(File.separator.charAt(0), '>').replace('_', ' ');
 				if (menuPath.startsWith(magicMenuPrefix))
 					menuPath = menuPath.substring(magicMenuPrefix.length());
-				Menu menu = (Menu)User_Plugins.getMenuItem(Menus.getMenuBar(), menuPath, true);
+				Menu menu = (Menu)FijiTools.getMenuItem(Menus.getMenuBar(), menuPath, true);
 				MenuItem item = new MenuItem(label);
 				menu.add(item);
 				item.addActionListener(IJ.getInstance());

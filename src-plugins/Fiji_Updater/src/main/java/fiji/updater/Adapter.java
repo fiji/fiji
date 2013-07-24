@@ -28,6 +28,7 @@ import javax.swing.JOptionPane;
  * ImageJ Update site, unless the classes can be found locally already.
  *
  * @author Johannes Schindelin
+ * @deprecated use ij-updater-core directly
  */
 public class Adapter {
 	public final static String JARS_PREFIX = "http://update.imagej.net/jars/";

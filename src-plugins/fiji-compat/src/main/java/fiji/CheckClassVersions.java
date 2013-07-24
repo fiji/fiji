@@ -1,6 +1,5 @@
 package fiji;
 
-import ij.IJ;
 import ij.Menus;
 
 import java.io.DataInputStream;
@@ -8,16 +7,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
-
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -42,7 +39,7 @@ public class CheckClassVersions {
 		checker.print();
 	}
 
-	static class VersionNumber implements Comparable {
+	static class VersionNumber implements Comparable<VersionNumber> {
 		int major, minor;
 
 		VersionNumber(int major, int minor) {
@@ -50,8 +47,7 @@ public class CheckClassVersions {
 			this.minor = minor;
 		}
 
-		public int compareTo(Object other) {
-			VersionNumber o = (VersionNumber)other;
+		public int compareTo(VersionNumber o) {
 			return major != o.major ?
 				o.major - major : o.minor - minor;
 		}
@@ -61,12 +57,12 @@ public class CheckClassVersions {
 		}
 	}
 
-	Map classes = new TreeMap();
+	Map<VersionNumber, List<String>> classes = new TreeMap<VersionNumber, List<String>>();
 	void addClass(int major, int minor, String name) {
 		VersionNumber version = new VersionNumber(major, minor);
-		List list = (List)classes.get(version);
+		List<String> list = classes.get(version);
 		if (list == null) {
-			list = new ArrayList();
+			list = new ArrayList<String>();
 			classes.put(version, list);
 		}
 		list.add(name);
@@ -74,10 +70,10 @@ public class CheckClassVersions {
 
 	final String maxVersion = "1.5";
 	void print() {
-		Iterator iter = new TreeSet(classes.keySet()).iterator();
+		Iterator<VersionNumber> iter = new TreeSet<VersionNumber>(classes.keySet()).iterator();
 		while (iter.hasNext()) {
-			VersionNumber version = (VersionNumber)iter.next();
-			List list = (List)classes.get(version);
+			VersionNumber version = iter.next();
+			List<String> list = classes.get(version);
 			System.out.println("" + list.size()
 					+ " classes require at least "
 					+ "Java version " + version
@@ -86,7 +82,7 @@ public class CheckClassVersions {
 			if (verbose || version.toString().compareTo(maxVersion)
 					> 0) {
 				Collections.sort(list);
-				Iterator iter2 = list.iterator();
+				Iterator<String> iter2 = list.iterator();
 				while (iter2.hasNext())
 					System.out.println("\t" + iter2.next());
 				System.out.println("");
@@ -105,10 +101,9 @@ public class CheckClassVersions {
 		} else if (path.endsWith(".jar")) {
 			try {
 				ZipFile jarFile = new ZipFile(file);
-				Enumeration list = jarFile.entries();
+				Enumeration<? extends ZipEntry> list = (Enumeration<? extends ZipEntry>) jarFile.entries();
 				while (list.hasMoreElements()) {
-					ZipEntry entry =
-						(ZipEntry)list.nextElement();
+					ZipEntry entry = list.nextElement();
 					String name = entry.getName();
 					if (!name.endsWith(".class"))
 						continue;

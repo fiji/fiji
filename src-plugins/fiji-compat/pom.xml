@@ -32,6 +32,16 @@
 			<artifactId>scijava-common</artifactId>
 			<version>${scijava-common.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij-app</artifactId>
+			<version>${imagej.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij-legacy</artifactId>
+			<version>${imagej.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
