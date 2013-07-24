@@ -3,9 +3,9 @@ This is Fiji
 
 [ Fiji Is Just ImageJ ]
 
-Fiji provides an easy way to set up Java+ImageJA+TrakEM2+VIB+a lot of
-other plugins that are useful to biologists, geologists and every other
-scientist who wants to process images.
+Fiji provides an easy way to set up Java, ImageJ and a lot of plugins
+that are useful to biologists, geologists and every other scientist who
+wants to process images.
 
 At the moment, the following platforms are supported:
 
@@ -22,8 +22,8 @@ starting the Java wrapper.  The wrapper is a program that starts the Java
 machine hands-free, i.e. it sets the correct settings to start up ImageJ
 with the plugins directory and heap size set up for you.
 
-In a way, you could say that the "F" in "Fiji" stands for "painless",
-"easy", "quick" and "convenient" :-)
+Fiji is intended to be the most painless, easy, quick and convenient way
+to install ImageJ and plugins and keep everything up-to-date.
 
 
 Usage
