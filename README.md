@@ -9,13 +9,13 @@ wants to process images.
 
 At the moment, the following platforms are supported:
 
-- Windows-x86
-- Windows-x86_64
-- Linux-x86
-- Linux-x86_64
-- MacOSX-PowerPC
-- MacOSX-x86
-- MacOSX-x86_64
+- Windows Intel 32-bit
+- Windows Intel 64-bit
+- Linux Intel 32-bit
+- Linux Intel 64-bit
+- MacOSX PowerPC 32-bit
+- MacOSX Intel 32-bit
+- MacOSX Intel 64-bit
 - all platforms supporting Java and a POSIX shell, via bin/ImageJ.sh
 
 The setup should be as easy as unpacking the (portable) application and
