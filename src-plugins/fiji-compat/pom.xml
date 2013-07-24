@@ -16,6 +16,10 @@
 	<name>jars/fiji-compat.jar</name>
 	<description></description>
 
+	<properties>
+		<imagej1.version>1.47v</imagej1.version>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>net.imagej</groupId>
