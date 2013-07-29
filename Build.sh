@@ -361,8 +361,8 @@ then
 	update_launcher
 	for name in fiji ImageJ
 	do
-		uptodate "$LAUNCHER" "$name" ||
-		cp "$LAUNCHER" "$name"
+		uptodate "$LAUNCHER" "$name$exe" ||
+		cp "$LAUNCHER" "$name$exe"
 	done
 else
 	for name in "$@"
@@ -370,8 +370,8 @@ else
 		case "$name" in
 		fiji|ImageJ)
 			update_launcher
-			uptodate "$LAUNCHER" "$name" ||
-			cp "$LAUNCHER" "$name"
+			uptodate "$LAUNCHER" "$name$exe" ||
+			cp "$LAUNCHER" "$name$exe"
 			continue
 			;;
 		clean)
