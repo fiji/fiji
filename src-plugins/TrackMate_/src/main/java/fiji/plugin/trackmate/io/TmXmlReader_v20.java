@@ -61,7 +61,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.imglib2.img.ImgPlus;
-import ome.xml.model.DetectorSettings;
 
 import org.jdom2.Attribute;
 import org.jdom2.DataConversionException;
@@ -102,9 +101,7 @@ import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
-
 public class TmXmlReader_v20 extends TmXmlReader {
-
 
 	/*
 	 * CONSTRUCTORS
@@ -122,8 +119,8 @@ public class TmXmlReader_v20 extends TmXmlReader {
 	 */
 
 	/**
-	 * @return  the log text saved in the specified file, or <code>null</code> if log
-	 * text was not saved. Must be called after {@link #process()}.
+	 * @return the log text saved in the specified file, or <code>null</code> if
+	 *         log text was not saved. Must be called after {@link #process()}.
 	 */
 	public String getLogText() {
 		final Element logElement = root.getChild(LOG_ELEMENT_KEY);
@@ -161,7 +158,6 @@ public class TmXmlReader_v20 extends TmXmlReader {
 		return root.getAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME).getValue();
 	}
 
-
 	@Override
 	public String getErrorMessage() {
 		return logger.toString();
@@ -172,7 +168,7 @@ public class TmXmlReader_v20 extends TmXmlReader {
 		final Model model = new Model();
 
 		// Physical units - fetch them from the settings element
-		final Element infoEl 	= root.getChild(IMAGE_ELEMENT_KEY);
+		final Element infoEl = root.getChild(IMAGE_ELEMENT_KEY);
 		String spaceUnits;
 		String timeUnits;
 		if (null != infoEl) {
@@ -267,8 +263,6 @@ public class TmXmlReader_v20 extends TmXmlReader {
 
 	}
 
-
-
 	/*
 	 * PRIVATE METHODS
 	 */
@@ -276,7 +270,7 @@ public class TmXmlReader_v20 extends TmXmlReader {
 	/**
 	 * Returns a map of the saved track features, as they appear in the file
 	 */
-	private Map<Integer, Map<String,Double>> readTrackFeatures(final Element modelElement) {
+	private Map<Integer, Map<String, Double>> readTrackFeatures(final Element modelElement) {
 
 		final HashMap<Integer, Map<String, Double>> featureMap = new HashMap<Integer, Map<String, Double>>();
 
@@ -303,7 +297,7 @@ public class TmXmlReader_v20 extends TmXmlReader {
 			final HashMap<String, Double> trackMap = new HashMap<String, Double>();
 
 			final List<Attribute> attributes = trackElement.getAttributes();
-			for(final Attribute attribute : attributes) {
+			for (final Attribute attribute : attributes) {
 
 				String attName = attribute.getName();
 				if (attName.equals(TRACK_NAME_ATTRIBUTE_NAME)) { // Skip trackID attribute
@@ -320,7 +314,7 @@ public class TmXmlReader_v20 extends TmXmlReader {
 				try {
 					attVal = attribute.getDoubleValue();
 				} catch (final DataConversionException e) {
-					logger.error("Track "+trackID+": Cannot read the feature "+attName+" value. Skipping.\n");
+					logger.error("Track " + trackID + ": Cannot read the feature " + attName + " value. Skipping.\n");
 					ok = false;
 					continue;
 				}
@@ -336,13 +330,12 @@ public class TmXmlReader_v20 extends TmXmlReader {
 
 	}
 
-
-	private ImagePlus getImage()  {
+	private ImagePlus getImage() {
 		final Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY);
 		if (null == imageInfoElement)
 			return null; // value will still be null
 		final String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
-		String folder 	= imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
+		String folder = imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
 		if (null == filename || filename.isEmpty())
 			return null;
 		if (null == folder || folder.isEmpty())
@@ -359,27 +352,27 @@ public class TmXmlReader_v20 extends TmXmlReader {
 		return IJ.openImage(imageFile.getAbsolutePath());
 	}
 
-
 	/**
-	 * Return the initial threshold on quality stored in this file.
-	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
+	 * Return the initial threshold on quality stored in this file. Return
+	 * <code>null</code> if the initial threshold data cannot be found in the
+	 * file.
 	 */
-	private FeatureFilter getInitialFilter()  {
+	private FeatureFilter getInitialFilter() {
 
 		final Element itEl = root.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY);
 		if (null == itEl)
 			return null;
-		final String feature 	= itEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-		final Double value 	= readDoubleAttribute(itEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
-		final boolean isAbove	= readBooleanAttribute(itEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
+		final String feature = itEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
+		final Double value = readDoubleAttribute(itEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+		final boolean isAbove = readBooleanAttribute(itEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
 		final FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 		return ft;
 	}
 
-
 	/**
 	 * Return the list of {@link FeatureFilter} for spots stored in this file.
-	 * Return <code>null</code> if the spot feature filters data cannot be found in the file.
+	 * Return <code>null</code> if the spot feature filters data cannot be found
+	 * in the file.
 	 */
 	private List<FeatureFilter> getSpotFeatureFilters() {
 
@@ -389,9 +382,9 @@ public class TmXmlReader_v20 extends TmXmlReader {
 			return null;
 		final List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (final Element ftEl : ftEls) {
-			final String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-			final Double value 	= readDoubleAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
-			final boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
+			final String feature = ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
+			final Double value = readDoubleAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+			final boolean isAbove = readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
 			final FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
 		}
@@ -400,7 +393,8 @@ public class TmXmlReader_v20 extends TmXmlReader {
 
 	/**
 	 * @return the list of {@link FeatureFilter} for tracks stored in this file.
-	 * Return <code>null</code> if the track feature filters data cannot be found in the file.
+	 *         Return <code>null</code> if the track feature filters data cannot
+	 *         be found in the file.
 	 */
 	private List<FeatureFilter> getTrackFeatureFilters() {
 		final List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
@@ -409,67 +403,63 @@ public class TmXmlReader_v20 extends TmXmlReader {
 			return null;
 		final List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (final Element ftEl : ftEls) {
-			final String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-			final Double value 	= readDoubleAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
-			final boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
+			final String feature = ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
+			final Double value = readDoubleAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+			final boolean isAbove = readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
 			final FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
 		}
 		return featureThresholds;
 	}
 
-	/**
-	 * Return the settings for the TrackMate session saved in this file.
-	 * <p>
-	 * The settings object will have its {@link DetectorSettings} and {@link TrackerSettings} set default values will be
-	 * used.
-	 *
-	 * @return  a full Settings object
-	 * @throws DataConversionException
-	 */
 	private void getBaseSettings(final Settings settings) {
 		// Basic settings
 		final Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY);
 		if (null != settingsEl) {
 			settings.xstart = readIntAttribute(settingsEl, SETTINGS_XSTART_ATTRIBUTE_NAME, logger, 1);
-			settings.xend 	= readIntAttribute(settingsEl, SETTINGS_XEND_ATTRIBUTE_NAME, logger, 512);
+			settings.xend = readIntAttribute(settingsEl, SETTINGS_XEND_ATTRIBUTE_NAME, logger, 512);
 			settings.ystart = readIntAttribute(settingsEl, SETTINGS_YSTART_ATTRIBUTE_NAME, logger, 1);
-			settings.yend 	= readIntAttribute(settingsEl, SETTINGS_YEND_ATTRIBUTE_NAME, logger, 512);
+			settings.yend = readIntAttribute(settingsEl, SETTINGS_YEND_ATTRIBUTE_NAME, logger, 512);
 			settings.zstart = readIntAttribute(settingsEl, SETTINGS_ZSTART_ATTRIBUTE_NAME, logger, 1);
-			settings.zend 	= readIntAttribute(settingsEl, SETTINGS_ZEND_ATTRIBUTE_NAME, logger, 10);
+			settings.zend = readIntAttribute(settingsEl, SETTINGS_ZEND_ATTRIBUTE_NAME, logger, 10);
 			settings.tstart = readIntAttribute(settingsEl, SETTINGS_TSTART_ATTRIBUTE_NAME, logger, 1);
-			settings.tend 	= readIntAttribute(settingsEl, SETTINGS_TEND_ATTRIBUTE_NAME, logger, 10);
+			settings.tend = readIntAttribute(settingsEl, SETTINGS_TEND_ATTRIBUTE_NAME, logger, 10);
 			//			settings.detectionChannel = readIntAttribute(settingsEl, SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME, logger, 1);
 		}
 		// Image info settings
-		final Element infoEl 	= root.getChild(IMAGE_ELEMENT_KEY);
+		final Element infoEl = root.getChild(IMAGE_ELEMENT_KEY);
 		if (null != infoEl) {
-			settings.dx				= readDoubleAttribute(infoEl, IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME, logger);
-			settings.dy				= readDoubleAttribute(infoEl, IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, logger);
-			settings.dz				= readDoubleAttribute(infoEl, IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME, logger);
-			settings.dt				= readDoubleAttribute(infoEl, IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME, logger);
-			settings.width			= readIntAttribute(infoEl, IMAGE_WIDTH_ATTRIBUTE_NAME, logger, 512);
-			settings.height			= readIntAttribute(infoEl, IMAGE_HEIGHT_ATTRIBUTE_NAME, logger, 512);
-			settings.nslices		= readIntAttribute(infoEl, IMAGE_NSLICES_ATTRIBUTE_NAME, logger, 1);
-			settings.nframes		= readIntAttribute(infoEl, IMAGE_NFRAMES_ATTRIBUTE_NAME, logger, 1);
-			settings.imageFileName	= infoEl.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
-			settings.imageFolder	= infoEl.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
+			settings.dx = readDoubleAttribute(infoEl, IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME, logger);
+			settings.dy = readDoubleAttribute(infoEl, IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, logger);
+			settings.dz = readDoubleAttribute(infoEl, IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME, logger);
+			settings.dt = readDoubleAttribute(infoEl, IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME, logger);
+			settings.width = readIntAttribute(infoEl, IMAGE_WIDTH_ATTRIBUTE_NAME, logger, 512);
+			settings.height = readIntAttribute(infoEl, IMAGE_HEIGHT_ATTRIBUTE_NAME, logger, 512);
+			settings.nslices = readIntAttribute(infoEl, IMAGE_NSLICES_ATTRIBUTE_NAME, logger, 1);
+			settings.nframes = readIntAttribute(infoEl, IMAGE_NFRAMES_ATTRIBUTE_NAME, logger, 1);
+			settings.imageFileName = infoEl.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
+			settings.imageFolder = infoEl.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
 		}
 	}
 
 	/**
-	 * Update the given {@link Settings} object with the {@link SpotDetectorFactory} and settings map fields
-	 * named {@link Settings#detectorFactory}  and {@link Settings#detectorSettings} read within the XML file
-	 * this reader is initialized with.
+	 * Update the given {@link Settings} object with the
+	 * {@link SpotDetectorFactory} and settings map fields named
+	 * {@link Settings#detectorFactory} and {@link Settings#detectorSettings}
+	 * read within the XML file this reader is initialized with.
 	 * <p>
-	 * As a side effect, this method also configure the {@link DetectorProvider} stored in
-	 * the passed {@link TrackMate_} plugin for the found target detector factory.
+	 * As a side effect, this method also configure the {@link DetectorProvider}
+	 * stored in the passed {@link TrackMate_} plugin for the found target
+	 * detector factory.
 	 * <p>
-	 * If the detector settings XML element is not present in the file, the {@link Settings}
-	 * object is not updated.
-
-	 * @param settings  the base {@link Settings} object to update.
-	 * @param provider the {@link DetectorProvider} that can unmarshal detector and detector settings.
+	 * If the detector settings XML element is not present in the file, the
+	 * {@link Settings} object is not updated.
+	 * 
+	 * @param settings
+	 *            the base {@link Settings} object to update.
+	 * @param provider
+	 *            the {@link DetectorProvider} that can unmarshal detector and
+	 *            detector settings.
 	 */
 	private void getDetectorSettings(final Settings settings, final DetectorProvider provider) {
 		final Element element = root.getChild(DETECTOR_SETTINGS_ELEMENT_KEY);
@@ -491,17 +481,22 @@ public class TmXmlReader_v20 extends TmXmlReader {
 	}
 
 	/**
-	 * Update the given {@link Settings} object with {@link SpotTracker} proper settings map fields
-	 * named {@link Settings#trackerSettings} and {@link Settings#tracker} read within the XML file
-	 * this reader is initialized with.
+	 * Update the given {@link Settings} object with {@link SpotTracker} proper
+	 * settings map fields named {@link Settings#trackerSettings} and
+	 * {@link Settings#tracker} read within the XML file this reader is
+	 * initialized with.
 	 * <p>
-	 * If the tracker settings XML element is not present in the file, the {@link Settings}
-	 * object is not updated. If the tracker settings or the tracker info can be read,
-	 * but cannot be understood (most likely because the class the XML refers to is unknown)
-	 * then a default object is substituted.
-	 *
-	 * @param settings  the base {@link Settings} object to update.
-	 * @param provider  the {@link TrackerProvider} that can unmarshal tracker and tracker settings.
+	 * If the tracker settings XML element is not present in the file, the
+	 * {@link Settings} object is not updated. If the tracker settings or the
+	 * tracker info can be read, but cannot be understood (most likely because
+	 * the class the XML refers to is unknown) then a default object is
+	 * substituted.
+	 * 
+	 * @param settings
+	 *            the base {@link Settings} object to update.
+	 * @param provider
+	 *            the {@link TrackerProvider} that can unmarshal tracker and
+	 *            tracker settings.
 	 */
 	private void getTrackerSettings(final Settings settings, final TrackerProvider provider) {
 		final Element element = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
@@ -525,18 +520,20 @@ public class TmXmlReader_v20 extends TmXmlReader {
 	/**
 	 * Read the list of all spots stored in this file.
 	 * <p>
-	 * Internally, this methods also builds the cache field, which will be required by the
-	 * following methods:
+	 * Internally, this methods also builds the cache field, which will be
+	 * required by the following methods:
 	 * <ul>
-	 * 	<li> {@link #getFilteredSpots()}
-	 * 	<li> {@link #readTracks()}
-	 * 	<li> {@link #readTrackEdges(SimpleDirectedWeightedGraph)}
-	 * 	<li> {@link #readTrackSpots(SimpleDirectedWeightedGraph)}
+	 * <li> {@link #getFilteredSpots()}
+	 * <li> {@link #readTracks()}
+	 * <li> {@link #readTrackEdges(SimpleDirectedWeightedGraph)}
+	 * <li> {@link #readTrackSpots(SimpleDirectedWeightedGraph)}
 	 * </ul>
-	 * It is therefore sensible to call this method first, just afther {@link #parse()}ing the file.
-	 * If not called, this method will be called anyway by the other methods to build the cache.
-	 *
-	 * @return  a {@link SpotCollection}. Return <code>null</code> if the spot section is not present in the file.
+	 * It is therefore sensible to call this method first, just afther
+	 * {@link #parse()}ing the file. If not called, this method will be called
+	 * anyway by the other methods to build the cache.
+	 * 
+	 * @return a {@link SpotCollection}. Return <code>null</code> if the spot
+	 *         section is not present in the file.
 	 */
 	private SpotCollection getAllSpots() {
 		// Root element for collection
@@ -583,7 +580,7 @@ public class TmXmlReader_v20 extends TmXmlReader {
 	/**
 	 * Sets the spot visibility as stored in this file.
 	 */
-	private void setSpotsVisibility()  {
+	private void setSpotsVisibility() {
 		final Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY);
 		if (null == selectedSpotCollection)
 			return;
@@ -614,7 +611,7 @@ public class TmXmlReader_v20 extends TmXmlReader {
 
 		String name = spotEl.getAttributeValue(SPOT_NAME_ATTRIBUTE_NAME);
 		if (null == name || name.equals(""))
-			name = "ID"+ID;
+			name = "ID" + ID;
 		spot.setName(name);
 		atts.remove(SPOT_NAME_ATTRIBUTE_NAME);
 
@@ -625,11 +622,10 @@ public class TmXmlReader_v20 extends TmXmlReader {
 			try {
 				spot.putFeature(att.getName(), att.getDoubleValue());
 			} catch (final DataConversionException e) {
-				logger.error("Cannot read the feature "+att.getName()+" value. Skipping.\n");
+				logger.error("Cannot read the feature " + att.getName() + " value. Skipping.\n");
 			}
 		}
 		return spot;
 	}
-
 
 }
