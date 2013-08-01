@@ -2,26 +2,23 @@
 
 package vib;
 
-import distance.Euclidean;
-import org.junit.Test;
-import org.junit.Before;
-import org.junit.After;
+import static landmarks.TestLoading.getTestResourcePath;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.*;
-
-import util.BatchOpener;
-
-import distance.MutualInformation;
-import distance.TwoValues;
-import distance.Correlation;
-import distance.Euclidean;
-
-import ij.ImagePlus;
 import ij.ImageJ;
+import ij.ImagePlus;
 import ij.io.FileSaver;
 
 import java.io.File;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import util.BatchOpener;
+import distance.Correlation;
+import distance.Euclidean;
+import distance.MutualInformation;
+import distance.TwoValues;
 
 public class TestRigidRegistration {
 
@@ -32,19 +29,19 @@ public class TestRigidRegistration {
 	@Before
 	public void loadImagesAndImageJ() {
 		// Start ImageJ (maybe not necessary?
-		this.imageJ = new ImageJ();
+		//this.imageJ = new ImageJ();
 	}
 
 	@After
 	public void closeImageAndImageJ() {		
-		imageJ.quit();
+		//imageJ.quit();
 	}
 
 	@Test
 	public void testRegistration8BitGray() {
 
-		String canton = "tests/sample-data"+File.separator+"CantonF41c-reduced.tif";
-		String other  = "tests/sample-data"+File.separator+"tidied-mhl-62yxUAS-lacZ0-reduced.tif";
+		String canton = getTestResourcePath( "tests/sample-data"+File.separator+"CantonF41c-reduced.tif" );
+		String other  = getTestResourcePath( "tests/sample-data"+File.separator+"tidied-mhl-62yxUAS-lacZ0-reduced.tif" );
 
 		float bestScoreMI = -0.3f;
                 float bestScoreEuclidean = 25.0f;
@@ -139,10 +136,10 @@ public class TestRigidRegistration {
 	public void testRegistrationMaterials() {
 
 		ImagePlus centralComplex_Labels_71yAAeastmost_ImagePlus = BatchOpener.openFirstChannel(
-			centralComplex_Labels_71yAAeastmost );
+			getTestResourcePath( centralComplex_Labels_71yAAeastmost ) );
 
 		ImagePlus centralComplex_Labels_c005BA_ImagePlus = BatchOpener.openFirstChannel(
-			centralComplex_Labels_c005BA );
+			getTestResourcePath( centralComplex_Labels_c005BA ) );
 	
 		int materials [] = { fanShapedBody, protocerebralBridge };
 		float bestScores [] = { 15.5f, 55555555f };
@@ -229,9 +226,9 @@ public class TestRigidRegistration {
 	@Test
 	public void testRegistration12BitGray() {
 
-		String darkDetail =   "tests/sample-data"+File.separator+"181y-12bit-aaarrg-dark-detail-reduced.tif";
-		String midDetail =    "tests/sample-data"+File.separator+"181y-12bit-aaarrg-mid-detail-reduced.tif";
-		String brightDetail = "tests/sample-data"+File.separator+"181y-12bit-aaarrg-bright-reduced.tif";
+		String darkDetail =   getTestResourcePath( "tests/sample-data"+File.separator+"181y-12bit-aaarrg-dark-detail-reduced.tif" );
+		String midDetail =    getTestResourcePath( "tests/sample-data"+File.separator+"181y-12bit-aaarrg-mid-detail-reduced.tif" );
+		String brightDetail = getTestResourcePath( "tests/sample-data"+File.separator+"181y-12bit-aaarrg-bright-reduced.tif" );
 
 		ImagePlus darkDetail_ImagePlus   = BatchOpener.openFirstChannel( darkDetail );
 		ImagePlus midDetail_ImagePlus    = BatchOpener.openFirstChannel( midDetail );

@@ -334,7 +334,7 @@ public class Bead_Registration implements PlugIn
 			if ( defaultBeadBrightness == 0 )
 			{
 				conf.minPeakValue[ 0 ] = 0.001f;
-				conf.integralImgThreshold[ 0 ] = 0.025f;
+				conf.integralImgThreshold[ 0 ] = 0.0025f;
 			}
 			else if ( defaultBeadBrightness == 1 )
 			{

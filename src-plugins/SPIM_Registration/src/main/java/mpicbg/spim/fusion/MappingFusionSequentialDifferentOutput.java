@@ -1,5 +1,7 @@
 package mpicbg.spim.fusion;
 
+import ij.IJ;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,8 +28,8 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 	final int numViews;
 	final int numParalellStacks;
 	
-	//int angleIndicies[] = new int[]{ 0, 6, 7 };
-	public static int angleIndicies[] = null;
+	public static int[] angleIndiciesStatic = null;
+	public int[] angleIndicies = null;
 
 	public MappingFusionSequentialDifferentOutput( final ViewStructure viewStructure, final ViewStructure referenceViewStructure,
 			  									   final ArrayList<IsolatedPixelWeightenerFactory<?>> isolatedWeightenerFactories,
@@ -41,16 +43,25 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused images.");
 
-		if ( angleIndicies == null )
+		if ( angleIndiciesStatic == null )
 		{
 			angleIndicies = new int[ numViews ];
 
 			for ( int view = 0; view < numViews; view++ )
 				angleIndicies[ view ] = view;
 		}
+		else
+		{
+			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): WARNING: Using statically defined angle-indices from class mpicbg.spim.fusion.MappingFusionSequentialDifferentOutput: " + Util.printCoordinates( angleIndicies ) );
+			
+			angleIndicies = angleIndiciesStatic.clone();
+		}
 
 		this.numParalellStacks = numParalellStacks;
-		
+
+		IJ.log( "nump = " + numParalellStacks );
+
 		fusedImages = new Image[ angleIndicies.length ];
 		final ImageFactory<FloatType> fusedImageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
 

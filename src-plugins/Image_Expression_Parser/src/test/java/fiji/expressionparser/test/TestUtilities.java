@@ -26,7 +26,7 @@ public class TestUtilities <T extends RealType<T>> {
 	
 	private final static int WIDTH = 9; 
 	private final static int HEIGHT = 9;
-	private final static float ERROR_TOLERANCE = Float.MIN_VALUE;
+	private final static float ERROR_TOLERANCE = 1e-6f;
 	/** 16-bit image */
 	public static Image<UnsignedShortType> image_A, image_B; 
 	static {	

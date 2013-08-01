@@ -222,7 +222,7 @@ public class PixelError extends Metrics
 			double stepThreshold )
 	{
 		
-		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		if( minThreshold < 0 || minThreshold > maxThreshold || maxThreshold > 1)
 		{
 			IJ.log("Error: unvalid threshold values.");
 			return null;

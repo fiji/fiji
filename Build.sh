@@ -176,30 +176,36 @@ fi
 PATH="$PATH:$(get_java_home)/bin:$(get_java_home)/../bin"
 export PATH
 
+# Thanks, MacOSX (or for that matter, BSD), and Windows, for easy, standard
+# ways to get the mtime of a file.
+
+get_mtime () {
+	stat -c %Y "$1"
+}
+
 # JAVA_HOME needs to be a DOS path for Windows from here on
 case "$UNAME_S" in
 MINGW*)
 	export JAVA_HOME="$(cd "$JAVA_HOME" && pwd -W)"
+	get_mtime () {
+		date -r "$1" +%s
+	}
 	;;
 CYGWIN*)
 	export JAVA_HOME="$(cygpath -d "$JAVA_HOME")"
 	;;
+Darwin*)
+	get_mtime () {
+		stat -f %m "$1"
+	}
+	;;
 esac
 
-# Thanks, MacOSX (or for that matter, BSD)
-
-get_mtime () {
-        stat -c %Y "$1"
-}
-if test Darwin = "$(uname -s 2> /dev/null)"
-then
-        get_mtime () {
-                stat -f %m "$1"
-        }
-fi
-
-# figure out whether $1 is newer than $2, or if $2 is a SNAPSHOT .jar
-# whether it is older than a day
+# Figure out whether $2 (the destination) is newer than $1 (the source).
+# If $2 is a SNAPSHOT .jar, must not be older than a day, either.
+#
+# This function is mainly used to test whether something is older than
+# Build.sh and hence needs to be updated.
 
 uptodate () {
 	test -f "$2" &&
@@ -225,27 +231,35 @@ esac
 
 ARGV0="$CWD/$0"
 SCIJAVA_COMMON="$CWD/modules/scijava-common"
-MAVEN_DOWNLOAD="$SCIJAVA_COMMON/bin/maven-helper.sh"
-maven_update () {
-	force_update=
-	uptodate "$ARGV0" "$MAVEN_DOWNLOAD" || {
+MAVEN_HELPER="$SCIJAVA_COMMON/bin/maven-helper.sh"
+force_update=
+maven_helper () {
+	uptodate "$ARGV0" "$MAVEN_HELPER" || {
 		force_update=t
 		if test -d "$SCIJAVA_COMMON/.git"
 		then
 			(cd "$SCIJAVA_COMMON" &&
-			 test arefs/heads/master != "$(git rev-parse --symbolic-full-name HEAD)" ||
-			 git pull -k)
+			 test arefs/heads/master != "a$(git rev-parse --symbolic-full-name HEAD)" ||
+			 git pull -k) >&2
 		else
 			git clone https://github.com/scijava/scijava-common \
-				"$SCIJAVA_COMMON"
-		fi
-		if test ! -f "$MAVEN_DOWNLOAD"
+				"$SCIJAVA_COMMON" >&2
+		fi || {
+			echo "Could not update SciJava-common" >&2
+			exit 1
+		}
+		if test ! -f "$MAVEN_HELPER"
 		then
-			echo "Could not find $MAVEN_DOWNLOAD!" >&2
+			echo "Could not find $MAVEN_HELPER!" >&2
 			exit 1
 		fi
-		touch "$MAVEN_DOWNLOAD"
+		touch "$MAVEN_HELPER"
 	}
+	test $# = 0 ||
+	sh -$- "$MAVEN_HELPER" "$@"
+}
+
+maven_update () {
 	for gav in "$@"
 	do
 		artifactId="${gav#*:}"
@@ -267,12 +281,14 @@ maven_update () {
 
 		 uptodate "$ARGV0" "$path" && continue
 		 echo "Downloading $gav" >&2
-		 (cd jars/ && sh "$MAVEN_DOWNLOAD" install "$gav")
+		 (cd jars/ && maven_helper install "$gav")
 		 if test ! -f "$path"
 		 then
 			echo "Failure to download $path" >&2
 			exit 1
-		 fi)
+		 fi
+		 uptodate "$ARGV0" "$path" ||
+		 touch "$path")
 	done
 }
 
@@ -292,7 +308,7 @@ EOF
 	*)
 		uptodate "$ARGV0" "$CWD/$LAUNCHER" ||
 		(cd $CWD &&
-		 sh bin/download-launchers.sh snapshot $platform)
+		 sh -$- bin/download-launchers.sh release $platform)
 		;;
 	esac
 	test -z "$FIJILAUNCHER" ||
@@ -302,10 +318,10 @@ EOF
 
 # make sure that javac and ij-minimaven are up-to-date
 
-VERSION=2.0.0-SNAPSHOT
-maven_update sc.fiji:javac:$VERSION \
-	net.imagej:ij-minimaven:$VERSION \
-	net.imagej:ij-updater-ssh:$VERSION
+FIJI_VERSION="$(maven_helper property-from-pom "$CWD"/pom.xml fiji.version)"
+IMAGEJ_VERSION="$(maven_helper property-from-pom "$CWD"/pom.xml imagej.version)"
+maven_update sc.fiji:javac:$FIJI_VERSION \
+	net.imagej:ij-minimaven:$IMAGEJ_VERSION
 
 # command-line options
 
@@ -322,6 +338,14 @@ do
 	*=*)
 		OPTIONS="$OPTIONS -D$1"
 		;;
+	--)
+		shift
+		break
+		;;
+	-*)
+		echo "Invalid option: $1" >&2
+		exit 1
+		;;
 	*)
 		break
 		;;
@@ -333,18 +357,25 @@ done
 
 if test $# = 0
 then
-	eval sh "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install
+	eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install
 	update_launcher
+	for name in fiji ImageJ
+	do
+		uptodate "$LAUNCHER" "$name$exe" ||
+		cp "$LAUNCHER" "$name$exe"
+	done
 else
 	for name in "$@"
 	do
 		case "$name" in
 		fiji|ImageJ)
 			update_launcher
+			uptodate "$LAUNCHER" "$name$exe" ||
+			cp "$LAUNCHER" "$name$exe"
 			continue
 			;;
 		clean)
-			eval sh \"$CWD/bin/ImageJ.sh\" --mini-maven \
+			eval sh -$- \"$CWD/bin/ImageJ.sh\" --mini-maven \
                                 "$OPTIONS" clean
 			continue
 			;;
@@ -354,11 +385,11 @@ else
 		artifactId="${artifactId%%-[0-9]*}"
 		case "$name" in
 		*-rebuild)
-			eval sh "$CWD/bin/ImageJ.sh" --mini-maven \
+			eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven \
 				"$OPTIONS" -DartifactId="$artifactId" clean
 			;;
 		esac
-		eval sh "$CWD/bin/ImageJ.sh" --mini-maven \
+		eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven \
 			"$OPTIONS" -DartifactId="$artifactId" install
 	done
 fi

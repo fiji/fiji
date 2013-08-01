@@ -6,6 +6,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileSaver;
+import ij.plugin.Concatenator;
 import ij.process.ImageProcessor;
 
 import java.io.File;
@@ -24,20 +25,62 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
+import mpicbg.imglib.interpolation.nearestneighbor.NearestNeighborInterpolatorFactory;
 import mpicbg.imglib.multithreading.Chunk;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.imglib.util.Util;
-import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.InvertibleCoordinateTransform;
 import mpicbg.models.NoninvertibleModelException;
-import mpicbg.spim.registration.bead.BeadRegistration;
 
 public class OverlayFusion 
 {
+	public static boolean useSizeOfFirstImage = false;
+	public static boolean useNearestNeighborInterpolation = false;
+	
+	protected static <T extends RealType<T>> CompositeImage createOverlay( final T targetType, final ImagePlus imp1, final ImagePlus imp2, final InvertibleBoundable finalModel1, final InvertibleBoundable finalModel2, final int dimensionality ) 
+	{
+		final ArrayList< ImagePlus > images = new ArrayList< ImagePlus >();
+		images.add( imp1 );
+		images.add( imp2 );
+		
+		final int ntimepoints = Math.min( imp1.getNFrames(), imp2.getNFrames() );
+		
+		final ImagePlus[] cis = new ImagePlus[ ntimepoints ];
+		
+		final ArrayList< InvertibleBoundable > models = new ArrayList< InvertibleBoundable >();
+		for ( int i = 0; i < ntimepoints; ++i ) 
+		{
+			models.add( finalModel1 );
+			models.add( finalModel2 );
+		}
+		
+		for ( int tp = 1; tp <= ntimepoints; ++tp ) 
+		{
+			if ( useNearestNeighborInterpolation )
+				cis[ tp-1 ] = createOverlay( targetType, images, models, dimensionality, tp, new NearestNeighborInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
+			else
+				cis[ tp-1 ] = createOverlay( targetType, images, models, dimensionality, tp, new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
+		}
+		
+		final ImagePlus imp = new Concatenator().concatenateHyperstacks( cis, "Fused " + imp1.getShortTitle() + " & " + imp2.getShortTitle(), false );
+
+		// get the right number of channels, slices and frames
+		final int numChannels = imp1.getNChannels() + imp2.getNChannels();
+		final int nSlices = cis[ 0 ].getNSlices();
+				
+		// Set the right dimensions
+		imp.setDimensions( numChannels, nSlices, ntimepoints );
+		
+		// Copy calibration
+		imp.setCalibration( imp1.getCalibration() );
+		
+		return new CompositeImage( imp, CompositeImage.COMPOSITE );
+	}
+	
+	/*
 	protected static <T extends RealType<T>> CompositeImage createOverlay( final T targetType, final ImagePlus imp1, final ImagePlus imp2, final InvertibleBoundable finalModel1, final InvertibleBoundable finalModel2, final int dimensionality ) 
 	{
 		final ArrayList< ImagePlus > images = new ArrayList<ImagePlus>();
@@ -48,8 +91,12 @@ public class OverlayFusion
 		models.add( finalModel1 );
 		models.add( finalModel2 );
 		
-		return createOverlay( targetType, images, models, dimensionality, 1, new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
+		if ( useNearestNeighborInterpolation )
+			return createOverlay( targetType, images, models, dimensionality, 1, new NearestNeighborInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
+		else
+			return createOverlay( targetType, images, models, dimensionality, 1, new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
 	}
+	*/
 	
 	public static <T extends RealType<T>> ImagePlus createReRegisteredSeries( final T targetType, final ImagePlus imp, final ArrayList<InvertibleBoundable> models, final int dimensionality, final String directory )
 	{
@@ -72,7 +119,17 @@ public class OverlayFusion
 		
 		// estimate the boundaries of the output image and the offset for fusion (negative coordinates after transform have to be shifted to 0,0,0)
 		estimateBounds( offset, size, imgSizes, models, dimensionality );
-				
+		
+		// use the same size as the first image, this is a little bit ad-hoc
+		if ( useSizeOfFirstImage )
+		{
+			for ( int d = 0; d < dimensionality; ++d )
+			{
+				size[ d ] = imgSizes[ 0 ][ d ];
+				offset[ d ] = 0;
+			}
+		}
+		
 		// for output
 		final ImageFactory<T> f = new ImageFactory<T>( targetType, new ImagePlusContainerFactory() );
 		// the composite
@@ -83,7 +140,10 @@ public class OverlayFusion
 			for ( int c = 1; c <= imp.getNChannels(); ++c )
 			{
 				final Image<T> out = f.createImage( size );
-				fuseChannel( out, ImageJFunctions.convertFloat( Hyperstack_rearranger.getImageChunk( imp, c, t ) ), offset, models.get( t - 1 ), new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
+				if ( useNearestNeighborInterpolation )
+					fuseChannel( out, ImageJFunctions.convertFloat( Hyperstack_rearranger.getImageChunk( imp, c, t ) ), offset, models.get( t - 1 ), new NearestNeighborInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
+				else
+					fuseChannel( out, ImageJFunctions.convertFloat( Hyperstack_rearranger.getImageChunk( imp, c, t ) ), offset, models.get( t - 1 ), new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
 				try 
 				{
 					final ImagePlus outImp = ((ImagePlusContainer<?,?>)out.getContainer()).getImagePlus();

@@ -158,7 +158,7 @@ public class Analyse_Particles implements PlugIn
 		{
 			try
 			{
-				threads[t].join();
+				if (threads[t] != null) threads[t].join();
 			}
 			catch(Exception e)
 			{

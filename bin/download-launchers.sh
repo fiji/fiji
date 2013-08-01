@@ -20,7 +20,7 @@ esac
 
 groupId=net/imagej
 artifactId=ij-launcher
-baseurl=http://maven.imagej.net/service/local/repositories/$mode/content/$groupId/$artifactId
+baseurl=http://maven.imagej.net/content/repositories/$mode/$groupId/$artifactId
 
 get () {
 	echo "$metadata" |
@@ -119,7 +119,7 @@ download_platform () {
 	esac
 }
 
-curl $baseurl/$basename.nar > jars/ij-launcher-$VERSION.jar
+curl $baseurl/$basename.nar > jars/ij-launcher-$version.jar
 
 if test -z "$platform"
 then

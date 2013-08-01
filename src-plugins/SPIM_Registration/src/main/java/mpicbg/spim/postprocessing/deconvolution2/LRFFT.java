@@ -22,7 +22,7 @@ import mpicbg.imglib.type.numeric.real.FloatType;
 
 public class LRFFT 
 {
-	public static enum PSFTYPE { EXPONENT, CONDITIONAL, INDEPENDENT };
+	public static enum PSFTYPE { OPTIMIZATION_II, OPTIMIZATION_I, EFFICIENT_BAYESIAN, INDEPENDENT };
 	
 	public static CUDAConvolution cuda = null;
 	
@@ -140,20 +140,62 @@ public class LRFFT
 			// compute the inverted kernel (switch dimensions)
 			this.kernel2 = computeInvertedKernel( this.kernel1 );
 		}
-		else if ( iterationType == PSFTYPE.CONDITIONAL )
+		else if ( iterationType == PSFTYPE.EFFICIENT_BAYESIAN )
 		{
-			// compute the kernel using conditional probabilities
-			// if this is x1, then compute
-			// P(x1|psi) * P(x2|x1) * P(x3|x1) * ... * P(xn|x1)
-			// where
-			// P(xi|x1) = P(x|psi) convolved with P(xi|psi)
+			// compute the compound kernel P_v^compound of the efficient bayesian multi-view deconvolution
+			// for the current view \phi_v(x_v)
+			//
+			// P_v^compound = P_v^{*} prod{w \in W_v} P_v^{*} \ast P_w \ast P_w^{*}
 			
-			// we first get P(x1|psi)
-			final Image< FloatType > tmp = ( this.kernel1.clone() );
+			// we first get P_v^{*} -> {*} refers to the inverted coordinates
+			final Image< FloatType > tmp = computeInvertedKernel( this.kernel1.clone() );
 
-			//ImageJFunctions.copyToImagePlus( tmp ).show();
+			// now for each view: w \in W_v
+			for ( final LRFFT view : views )
+			{
+				if ( view != this )
+				{
+					// convolve first P_v^{*} with P_w
+					final FourierConvolution<FloatType, FloatType> conv1 = new FourierConvolution<FloatType, FloatType>( computeInvertedKernel( this.kernel1 ), view.kernel1 );
+					conv1.setNumThreads();
+					conv1.setKeepImgFFT( false );
+					conv1.setImageOutOfBoundsStrategy( new OutOfBoundsStrategyValueFactory<FloatType>() );
+					conv1.process();
+		
+					// and now convolve the result with P_w^{*}
+					final FourierConvolution<FloatType, FloatType> conv2 = new FourierConvolution<FloatType, FloatType>( conv1.getResult(), computeInvertedKernel( view.kernel1 ) );
+					conv2.setNumThreads();
+					conv2.setKeepImgFFT( false );
+					conv2.setImageOutOfBoundsStrategy( new OutOfBoundsStrategyValueFactory<FloatType>() );
+					conv2.process();
+					
+					// multiply the result with P_v^{*} yielding the compound kernel
+					final Cursor<FloatType> cursor = tmp.createCursor();
+					for ( final FloatType t : ( conv2.getResult() ) )
+					{
+						cursor.fwd();
+						cursor.getType().set( t.get() * cursor.getType().get() );
+					}					
+				}
+			}
 			
-			// now convolve P(x1|psi) with all other kernels 
+			// norm the compound kernel
+			AdjustInput.normImage( tmp );
+						
+			// set it as kernel2 of the deconvolution
+			this.kernel2 = ( tmp );			
+		}
+		else if ( iterationType == PSFTYPE.OPTIMIZATION_I )
+		{
+			// compute the simplified compound kernel P_v^compound of the efficient bayesian multi-view deconvolution
+			// for the current view \phi_v(x_v)
+			//
+			// P_v^compound = P_v^{*} prod{w \in W_v} P_v^{*} \ast P_w
+			
+			// we first get P_v^{*} -> {*} refers to the inverted coordinates
+			final Image< FloatType > tmp = ( this.kernel1.clone() );
+			
+			// now for each view: w \in W_v
 			for ( final LRFFT view : views )
 			{
 				if ( view != this )
@@ -179,11 +221,8 @@ public class LRFFT
 						
 			// compute the inverted kernel
 			this.kernel2 = computeInvertedKernel( tmp );
-			
-			// close the temp image
-			//tmp.close();			
 		}
-		else //if ( iterationType == PSFTYPE.EXPONENT )
+		else //if ( iterationType == PSFTYPE.OPTIMIZATION_II )
 		{			
 			// compute the squared kernel and its inverse
 			final Image< FloatType > exponentialKernel = computeExponentialKernel( this.kernel1, numViews );
@@ -194,9 +233,6 @@ public class LRFFT
 			// compute the inverted squared kernel
 			this.kernel2 = computeInvertedKernel( exponentialKernel );	
 		}
-		
-		//ImageJFunctions.show( this.kernel2 );
-		//SimpleMultiThreading.threadHaltUnClean();
 		
 		if ( useCPU )
 		{

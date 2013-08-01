@@ -1,7 +1,11 @@
 package plugin;
 
+import java.util.ArrayList;
+
 import ij.gui.Roi;
 import mpicbg.models.AbstractModel;
+import mpicbg.models.InvertibleBoundable;
+import mpicbg.models.PointMatch;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
 
@@ -95,4 +99,12 @@ public class DescriptorParameters
 			return new TranslationModel3D();
 
 	}
+	
+	// for java-based calling
+	public boolean storePoints = false;
+	public boolean storeModels = false;
+	
+	public ArrayList<PointMatch> inliers = null;
+	public InvertibleBoundable model1 = null;
+	public InvertibleBoundable model2 = null;
 }

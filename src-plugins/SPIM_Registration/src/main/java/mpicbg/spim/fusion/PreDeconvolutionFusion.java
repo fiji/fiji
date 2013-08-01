@@ -23,6 +23,8 @@ import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 
+import ij.IJ;
+
 public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconvolutionFusionInterface
 {
 	final Image<FloatType> images[], weights[];
@@ -38,17 +40,17 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		
 		// normalize the weights so the the sum for each pixel over all views is 1?
 		this.normalize = true;
-		
+
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
 		
 		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
 		numViews = viewStructure.getNumViews();
-		
+				
 		if ( conf.extractPSF )
 			extractPSF = new ExtractPSF( viewStructure );
 		else
-			extractPSF = ExtractPSF.loadAndTransformPSF( conf.psfFile, conf.deconvolutionShowAveragePSF, viewStructure );			
+			extractPSF = ExtractPSF.loadAndTransformPSF( conf.psfFiles, conf.transformPSFs, viewStructure );			
 		
 		images = new Image[ numViews ];
 		weights = new Image[ numViews ];
@@ -294,7 +296,7 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		    							tmpCoordinates[ i ].x = x * scale + min.x;
 		    							tmpCoordinates[ i ].y = y * scale + min.y;
 		    							tmpCoordinates[ i ].z = z * scale + min.z;
-		
+									
 		    							mpicbg.spim.mpicbg.Java3d.applyInverseInPlace( models[i], tmpCoordinates[i], tmp );
 			
 		    							loc[i][0] = Util.round( tmpCoordinates[i].x );
@@ -303,13 +305,13 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 
 		    							locf[i][0] = tmpCoordinates[i].x;
 		    							locf[i][1] = tmpCoordinates[i].y;
-		    							locf[i][2] = tmpCoordinates[i].z;	
+		    							locf[i][2] = tmpCoordinates[i].z;
 
 		    							// do we hit the source image?
-										if ( loc[ i ][ 0 ] >= 0 && loc[ i ][ 1 ] >= 0 && loc[ i ][ 2 ] >= 0 && 
-											 loc[ i ][ 0 ] < imageSizes[ i ][ 0 ] && 
-											 loc[ i ][ 1 ] < imageSizes[ i ][ 1 ] && 
-											 loc[ i ][ 2 ] < imageSizes[ i ][ 2 ] )
+									if ( loc[ i ][ 0 ] >= 0 && loc[ i ][ 1 ] >= 0 && loc[ i ][ 2 ] >= 0 && 
+										loc[ i ][ 0 ] < imageSizes[ i ][ 0 ] && 
+										loc[ i ][ 1 ] < imageSizes[ i ][ 1 ] && 
+										loc[ i ][ 2 ] < imageSizes[ i ][ 2 ] )
 		    							{
 		    								use[ i ] = true;
 		    								++num;
@@ -320,10 +322,10 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		    							}
 									}
 								}
-		    				
+
 								if ( num > 0 )
 								{
-		    						// update combined weighteners
+			    						// update combined weighteners
 									if ( combW.length > 0 )
 										for ( final CombinedPixelWeightener<?> w : combW )
 											w.updateWeights(locf, use);
@@ -377,7 +379,10 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 			    						{
 			    							if ( use[view] )
 			    							{
-			    								outWeights[ view ].getType().set( tmpWeights[ view ]/sumWeights );
+											if ( sumWeights > 1 )
+			    									outWeights[ view ].getType().set( tmpWeights[ view ]/sumWeights );
+											else
+												outWeights[ view ].getType().set( tmpWeights[ view ] );
 			    							}
 			    						}
 		    						}
@@ -416,13 +421,15 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Closing all input images (Channel " + channelIndex +  ").");
-
-		// extract all PSF's
-		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println( "Extracting all PSF's" );
 		
 		if ( conf.extractPSF )
-			extractPSF.extract( conf.deconvolutionShowAveragePSF );
+		{
+			// extract all PSF's
+			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+				IOFunctions.println( "Extracting all PSF's" );
+			
+			extractPSF.extract();
+		}
 		
 		// unload images
 		for ( final ViewDataBeads view : views ) 

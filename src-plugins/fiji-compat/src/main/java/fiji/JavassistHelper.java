@@ -1,9 +1,5 @@
 package fiji;
 
-/**
- * A helper to use Javassist effectively
- */
-
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -11,14 +7,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
-
 import java.util.jar.JarOutputStream;
-
 import java.util.zip.ZipEntry;
+
+import org.scijava.util.FileUtils;
 
 import javassist.CannotCompileException;
 import javassist.ClassClassPath;
@@ -27,15 +24,18 @@ import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtMethod;
 import javassist.NotFoundException;
-
 import javassist.bytecode.BadBytecode;
 import javassist.bytecode.CodeIterator;
 import javassist.bytecode.InstructionPrinter;
 import javassist.bytecode.MethodInfo;
 import javassist.bytecode.Opcode;
-
 import javassist.expr.MethodCall;
 
+/**
+ * A helper to use Javassist effectively
+ *
+ * @deprecated use {@link imagej.legacy.CodeHacker} instead
+ */
 public abstract class JavassistHelper implements Runnable {
 
 	protected Set<String> classNames = new HashSet<String>();
@@ -66,11 +66,25 @@ public abstract class JavassistHelper implements Runnable {
 			new Exception("Attempted to defined patched classes again").printStackTrace();
 			return;
 		}
-		for (String name : definedClasses.keySet())
-			definedClasses.get(name).toClass();
+		for (String name : definedClasses.keySet()) {
+			final CtClass clazz = definedClasses.get(name);
+			if (clazz.isFrozen() || !clazz.isModified()) {
+				// assume that ij-legacy did something about it
+				continue;
+			}
+			try {
+				clazz.toClass();
+			} catch (CannotCompileException e) {
+				final Throwable cause = e.getCause();
+				if (cause != null && !(cause instanceof LinkageError)) {
+					throw e;
+				}
+			}
+		}
 		frozen = true;
 	}
 
+	@Override
 	final public void run() {
 		if (frozen) {
 			System.err.println("Attempted to patch classes again: " + getClass().getName());
@@ -95,7 +109,7 @@ public abstract class JavassistHelper implements Runnable {
 
 	public abstract void instrumentClasses() throws BadBytecode, CannotCompileException, NotFoundException;
 
-	protected String getLatestArg(MethodCall call, int skip) throws BadBytecode, NotFoundException {
+	protected String getLatestArg(MethodCall call, int skip) throws BadBytecode {
 		int[] indices = new int[skip + 1];
 		int counter = 0;
 
@@ -178,11 +192,14 @@ public abstract class JavassistHelper implements Runnable {
 
 	public static void verify(byte[] bytecode, PrintStream out) {
 		try {
-			ClassLoader loader = new FijiClassLoader(true);
-			Class readerClass = loader.loadClass("jruby.objectweb.asm.ClassReader");
-			java.lang.reflect.Constructor ctor = readerClass.getConstructor(new Class[] { bytecode.getClass() });
+			final File[] files = FileUtils.getAllVersions(new File(System.getProperty("ij.dir"), "jars"), "jruby.jar");
+			final URL[] urls = new URL[files.length];
+			for (int i = 0; i < urls.length; i++) urls[i] = files[i].toURI().toURL();
+			ClassLoader loader = new URLClassLoader(urls);
+			Class<?> readerClass = loader.loadClass("jruby.objectweb.asm.ClassReader");
+			java.lang.reflect.Constructor<?> ctor = readerClass.getConstructor(new Class[] { bytecode.getClass() });
 			Object reader = ctor.newInstance(bytecode);
-			Class checkerClass = loader.loadClass("jruby.objectweb.asm.util.CheckClassAdapter");
+			Class<?> checkerClass = loader.loadClass("jruby.objectweb.asm.util.CheckClassAdapter");
 			java.lang.reflect.Method verify = checkerClass.getMethod("verify", new Class[] { readerClass, Boolean.TYPE, PrintWriter.class });
 			verify.invoke(null, new Object[] { reader, false, new PrintWriter(out) });
 		} catch(Exception e) {
