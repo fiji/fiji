@@ -3,12 +3,16 @@ package fiji;
 import ij.IJ;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
+/**
+ * @deprecated use {@link org.scijava.util.ProcessUtils#exec(File, PrintStream, PrintStream, String...)} instead
+ * 
+ * @author Johannes Schindelin
+ */
 public class SimpleExecuter {
 	protected StreamDumper stdout, stderr;
 	protected int exitCode;

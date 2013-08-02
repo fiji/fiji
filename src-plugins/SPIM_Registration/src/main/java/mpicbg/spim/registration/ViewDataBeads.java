@@ -31,6 +31,12 @@ import spimopener.SPIMExperiment;
 public class ViewDataBeads implements Comparable< ViewDataBeads >
 {
 	/**
+	 * Can be used to manually set min (minmaxset[0]) and max (minmaxset[1]) value for all views
+	 * that are opened. Otherwise min and max will be read from the images 
+	 */
+	public static float[] minmaxset = null;
+	
+	/**
 	 * @param <M> - an implementation of the {@link AbstractAffineModel3D}
 	 * @param id - an unique id
 	 * @param model - the model instance, unintitialized

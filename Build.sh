@@ -346,12 +346,19 @@ if test $# = 0
 then
 	eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install
 	update_launcher
+	for name in fiji ImageJ
+	do
+		uptodate "$LAUNCHER" "$name$exe" ||
+		cp "$LAUNCHER" "$name$exe"
+	done
 else
 	for name in "$@"
 	do
 		case "$name" in
 		fiji|ImageJ)
 			update_launcher
+			uptodate "$LAUNCHER" "$name$exe" ||
+			cp "$LAUNCHER" "$name$exe"
 			continue
 			;;
 		clean)

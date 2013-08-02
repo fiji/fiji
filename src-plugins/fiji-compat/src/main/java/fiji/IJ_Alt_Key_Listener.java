@@ -1,28 +1,19 @@
 package fiji;
 
+import fiji.gui.InvokeLater;
 import ij.IJ;
 import ij.ImageJ;
 
-import fiji.gui.InvokeLater;
-
 import java.awt.AWTException;
-import java.awt.Menu;
-import java.awt.MenuBar;
-import java.awt.PopupMenu;
 import java.awt.Robot;
-
-import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-
 import java.lang.reflect.Method;
 
 public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener, Runnable {
-	private boolean altPressed;
 	private int pressedKeys;
 	private final Runnable openMenu = getOpener();
 
@@ -67,15 +58,12 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener, Ru
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		if (pressedKeys == 0 && e.getKeyCode() == KeyEvent.VK_ALT)
-			altPressed = true;
 		pressedKeys++;
 	}
 
 	@Override
 	public void keyReleased(KeyEvent e) {
 		if (e.getKeyCode() == KeyEvent.VK_ALT) {
-			altPressed = false;
 			if (pressedKeys == 1 && openMenu != null) {
 				new InvokeLater(25, openMenu).later(50);
 			}
@@ -104,12 +92,14 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener, Ru
 	}
 
 	static Runnable getX11Opener() throws NoSuchMethodException {
+		@SuppressWarnings("deprecation")
 		final Method method = IJ.getInstance().getMenuBar()
 			.getPeer().getClass()
 			.getDeclaredMethod("handleF10KeyPress",
 					new Class[] { KeyEvent.class });
 		method.setAccessible(true);
 		return new Runnable() {
+			@SuppressWarnings("deprecation")
 			@Override
 			public void run() {
 				final ImageJ ij = IJ.getInstance();
@@ -117,7 +107,8 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener, Ru
 				KeyEvent event = new KeyEvent(IJ.getInstance(),
 					KeyEvent.VK_F10,
 					System.currentTimeMillis(), 0,
-					KeyEvent.VK_F10);
+					KeyEvent.VK_F10,
+					KeyEvent.CHAR_UNDEFINED);
 				try {
 					method.invoke(ij.getMenuBar().getPeer(),
 						new Object[] { event });

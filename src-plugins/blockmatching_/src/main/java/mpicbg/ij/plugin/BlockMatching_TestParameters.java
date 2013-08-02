@@ -11,7 +11,7 @@ import ij.process.FloatProcessor;
 
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.Set;
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 import mpicbg.ij.blockmatching.BlockMatching;
@@ -82,7 +82,7 @@ public class BlockMatching_TestParameters extends AbstractBlockMatching
 		
 		final ArrayList< PointMatch > pm12 = new ArrayList< PointMatch >();
 
-		final Set< Vertex > v1 = mesh.getVertices();
+		final Collection< Vertex > v1 = mesh.getVertices();
 
 		final TranslationModel2D ct = new TranslationModel2D();
 
@@ -230,7 +230,7 @@ public class BlockMatching_TestParameters extends AbstractBlockMatching
 		}
 		
 		final SpringMesh mesh = new SpringMesh( meshResolution, imp1.getWidth(), imp1.getHeight(), 1, 1000, 0.9f );
-		final Set< Vertex > vertices = mesh.getVertices();
+		final Collection< Vertex > vertices = mesh.getVertices();
 		final RealPointSampleList< ARGBType > maskSamples = new RealPointSampleList< ARGBType >( 2 );
 		for ( final Vertex vertex : vertices )
 			maskSamples.add( new RealPoint( vertex.getL() ), new ARGBType( 0xffffffff ) );

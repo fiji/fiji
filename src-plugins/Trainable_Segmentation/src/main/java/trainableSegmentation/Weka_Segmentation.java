@@ -429,6 +429,7 @@ public class Weka_Segmentation implements PlugIn
 					}
 					else if(e.getSource() == settingsButton){
 						showSettingsDialog();
+						win.updateButtonsEnabling();
 					}
 					else if(e.getSource() == wekaButton){
 						// Macro recording
@@ -1110,8 +1111,8 @@ public class Weka_Segmentation implements PlugIn
 				saveClassifierButton.setEnabled( win.trainingComplete );
 				overlayButton.setEnabled(resultExists);
 				resultButton.setEnabled(resultExists);
-				plotButton.setEnabled(resultExists);
 				
+				plotButton.setEnabled( win.trainingComplete );				
 				probabilityButton.setEnabled( win.trainingComplete );
 
 				//newImageButton.setEnabled(true);
@@ -2196,7 +2197,12 @@ public class Weka_Segmentation implements PlugIn
 	    		return false;
 	    	}
 	    	
+	    	// Assing new classifier
 	    	wekaSegmentation.setClassifier( cls );
+	    	
+	    	// Set the training flag to false  
+	    	win.trainingComplete = false;
+	    	
 	    	// Macro recording
 			record(SET_CLASSIFIER, new String[] { c.getClass().getName(), options} );
 	    		    	

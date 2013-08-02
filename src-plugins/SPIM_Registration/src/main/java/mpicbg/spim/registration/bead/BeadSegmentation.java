@@ -316,7 +316,15 @@ public class BeadSegmentation
 		final FloatType min = new FloatType();
 		final FloatType max = new FloatType();
 		
-		DOM.computeMinMax( img, min, max );
+		if ( ViewDataBeads.minmaxset == null )
+		{
+			DOM.computeMinMax( img, min, max );
+		}
+		else
+		{
+			min.set( ViewDataBeads.minmaxset[ 0 ] );
+			max.set( ViewDataBeads.minmaxset[ 1 ] );
+		}
 
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): min intensity = " + min.get() + ", max intensity = " + max.get() );

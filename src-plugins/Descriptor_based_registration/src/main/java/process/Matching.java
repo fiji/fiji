@@ -129,9 +129,22 @@ public class Matching
 				}
 			}
 			
-			Descriptor_based_registration.lastModel1 = (InvertibleBoundable)model1.copy();
-			Descriptor_based_registration.lastModel2 = (InvertibleBoundable)model2.copy();
-			Descriptor_based_registration.lastDimensionality = params.dimensionality;
+			if ( params.storePoints )
+				params.inliers = finalInliers;
+			
+			if ( params.storeModels )
+			{
+				params.model1 = (InvertibleBoundable)model1.copy();
+				params.model2 = (InvertibleBoundable)model2.copy();
+			}
+
+			try
+			{
+				Descriptor_based_registration.lastModel1 = (InvertibleBoundable)model1.copy();
+				Descriptor_based_registration.lastModel2 = (InvertibleBoundable)model2.copy();
+				Descriptor_based_registration.lastDimensionality = params.dimensionality;
+			}
+			catch ( Exception e ) { IJ.log( "Could not save model as static variable." ); };
 			
 			if ( !params.silent )
 				IJ.log( "" + model1 );

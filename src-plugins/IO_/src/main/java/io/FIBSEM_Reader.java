@@ -65,7 +65,8 @@ public class FIBSEM_Reader implements PlugIn
 
 		try
 		{
-			final FileInputStream file = new FileInputStream( f );
+			FileInputStream file = new FileInputStream( f );
+			
 			final FIBSEMData header = parseHeader( file );
 
 			if ( header == null )
@@ -75,7 +76,11 @@ public class FIBSEM_Reader implements PlugIn
 			}
 
 			//System.out.println( header );
+			file.close();
 
+			// re-open the file to be able to jump exactly to position 1024
+			file = new FileInputStream( f );
+			
 			final ImagePlus imp = readFIBSEM( header, file, openAsFloat );
 			file.close();
 
@@ -135,9 +140,12 @@ public class FIBSEM_Reader implements PlugIn
 
 	public ImagePlus readFIBSEM( final FIBSEMData header, final FileInputStream file, boolean openAsFloat ) throws IOException
 	{
+		// go to position 1024
+		file.skip( 1024 );
+
 		ImagePlus imp;
 		double[] minmax = new double[] { Double.MAX_VALUE, Double.MIN_VALUE };
-
+		
 		if ( header.numChannels == 1 )
 		{
 			imp = new ImagePlus( "", readChannel( header, file, minmax, openAsFloat ) );

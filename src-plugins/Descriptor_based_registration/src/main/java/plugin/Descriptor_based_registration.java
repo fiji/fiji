@@ -122,8 +122,11 @@ public class Descriptor_based_registration implements PlugIn
 			dimensionality = 2;
 		
 		if ( imp1.getNFrames() > 1 || imp2.getNFrames() > 2 )
-			IJ.log( "WARNING: Images have more than one timepoint, ignoring all but the first one." );
-		
+			IJ.log( "WARNING: Images have more than one timepoint, same model as the first timepoint will be applied to all timepoints." );
+
+		if ( imp1.getNFrames() != imp2.getNFrames() )
+			IJ.log( "CRITICAL: Images do not have the same amount of timepoints. Will use the number of timepoints of the smaller series." );
+
 		// reapply?
 		if ( reApply )
 		{

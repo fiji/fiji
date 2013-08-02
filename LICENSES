@@ -94,6 +94,7 @@ Name					File					Author(s)						Contact								License
 * Snakuscule				Snakuscule_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/snakuscule/			BIG (see below)
 * Stack Reverser 			Stack_Reverser.class 			Anthony Padua, Daniel Barboriak 			http://rsb.info.nih.gov/ij/plugins/substack-maker.html		PD
 * StackReg				StackReg_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/stackreg/			BIG (see below)
+* Statistical Region Merging		SRM_.jar				Johannes Schindelin					http://fiji.sc/Statistical_Region_Merging			BSD
 * Substack Maker 			Substack_Maker.class 			Wayne Rasband 						http://rsb.info.nih.gov/ij/plugins/reverser.html 		PD
 * Threshold Colour 			Threshold_Colour.jar			Gabriel Landini 					G.Landini@bham.ac.uk						GPL 2 or later
 * TransformJ 				TransformJ_.jar 			Erik Meijering 						http://www.imagescience.org/meijering/software/transformj/	imagescience (see below)

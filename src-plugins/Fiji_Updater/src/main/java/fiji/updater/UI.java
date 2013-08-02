@@ -8,6 +8,7 @@ package fiji.updater;
  * alternative output to stderr instead.
  * 
  * @see StderrUI, ImageJ1UI
+ * @deprecated use ij-updater-core directly
  */
 public interface UI {
 	public void showStatus(String message);

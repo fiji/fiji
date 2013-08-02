@@ -100,9 +100,9 @@ startScreencast(vlc, outputFile, width) {
 	err = new ReadInto(process.getErrorStream(), out);
 	out = new ReadInto(process.getInputStream(), out);
 
-	item = User_Plugins.getMenuItem("File>Make Screencast");
-	if (item != null) {
-		ij = IJ.getInstance();
+	ij = options.interactive ? IJ.getInstance() : null;
+	if (ij != null) {
+		item = fiji.FijiTools.getMenuItem("File>Make Screencast");
 		listeners = item.getActionListeners();
 		for (ActionListener listener : listeners)
 			item.removeActionListener(listener);
@@ -115,7 +115,7 @@ startScreencast(vlc, outputFile, width) {
 				err.join();
 				out.interrupt();
 				out.join();
-				IJ.showStatus("Saved '" + outputFile + "'");
+				IJ.showStatus("Saved '" + options.outputFile + "'");
 				if (ij == null)
 					System.exit(0);
 				for (ActionListener listener : listeners)
@@ -136,12 +136,40 @@ run() {
 		return;
 	}
 
-	outputFile = getOutputFile();
-	if (outputFile == null)
-		return; // canceled
-	if (outputFile.exists() && outputFile.length() != 0 &&
-			!IJ.showMessageWithCancel("Overwrite?", "The file '" + outputFile + "' appears to exist already. Overwrite?"))
-		return;
+	startScreencast(options);
+}
+
+showUI() {
+	options = new Options();
+	options.interactive = true;
+
+	SaveDialog od = new SaveDialog("Save screencast as...", null, ".ogv");
+	directory = od.getDirectory();
+	fileName = od.getFileName();
+	if (directory == null || fileName == null)
+		return null;
+
+	options.outputFile = new File(directory, fileName);
+	if (options.outputFile == null) return null; // canceled
+	if (options.outputFile.exists() && options.outputFile.length() != 0 &&
+			!IJ.showMessageWithCancel("Overwrite?", "The file '" + options.outputFile + "' appears to exist already. Overwrite?")) {
+		return null;
+	}
+
+	options.outputWidth = (int)IJ.getNumber("Width", Toolkit.getDefaultToolkit().getScreenSize().width);
+
+	if (options.outputWidth < 0) return null;
+	return options;
+}
+
+usage() {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+                + " [--force] [--width <width>] [--fps <fps>] [--geometry <geometry>] <output-file>");
+        System.exit(1);
+}
+
+parseCommandLine() {
+	options = new Options();
 
 	if (IJ.getInstance() != null)
 		width = (int)IJ.getNumber("Width", Toolkit.getDefaultToolkit().getScreenSize().width);

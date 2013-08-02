@@ -1,5 +1,6 @@
 package tests;
 
+import static org.junit.Assume.assumeNotNull;
 import gadgets.MaskFactory;
 import ij.ImagePlus;
 import ij.gui.NewImage;
@@ -60,6 +61,7 @@ public class TestImageAccessor {
 		BufferedInputStream bis = new BufferedInputStream(is);
 
 		ImagePlus imp = opener.openTiff(bis, "The Test Image");
+		assumeNotNull(imp);
 		return ImagePlusAdapter.wrap(imp);
 	}
 

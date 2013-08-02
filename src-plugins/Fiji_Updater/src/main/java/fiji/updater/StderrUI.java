@@ -1,5 +1,8 @@
 package fiji.updater;
 
+/**
+ * @deprecated use ij-updater-core directly
+ */
 public class StderrUI implements UI {
 	/**
 	 * Show the status

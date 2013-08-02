@@ -16,6 +16,10 @@
 	<name>jars/fiji-compat.jar</name>
 	<description></description>
 
+	<properties>
+		<imagej1.version>1.47v</imagej1.version>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>net.imagej</groupId>
@@ -32,37 +36,43 @@
 			<artifactId>scijava-common</artifactId>
 			<version>${scijava-common.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij-app</artifactId>
+			<version>${imagej.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij-legacy</artifactId>
+			<version>${imagej.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
 			<plugin>
-				<artifactId>maven-invoker-plugin</artifactId>
-				<version>1.8</version>
-				<configuration>
-					<!-- <debug>true</debug> -->
-					<showErrors>true</showErrors>
-					<streamLogs>true</streamLogs>
-					<addTestClassPath>true</addTestClassPath>
-					<properties>
-						<imagej1.version>${imagej1.version}</imagej1.version>
-					</properties>
-					<projectsDirectory>src/it</projectsDirectory>
-					<cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
-					<pomIncludes>
-						<pomInclude>*/pom.xml</pomInclude>
-					</pomIncludes>
-					<settingsFile>src/it/settings.xml</settingsFile>
-					<localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
-					<postBuildHookScript>verify.bsh</postBuildHookScript>
-				</configuration>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>2.15</version>
 				<executions>
 					<execution>
-						<id>integration-test</id>
+						<id>code-hacker</id>
 						<goals>
-							<goal>install</goal>
-							<goal>run</goal>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
 						</goals>
+						<configuration>
+							<argLine>-Djava.awt.headless=true</argLine>
+							<includes>
+								<include>**/BarePluginsIT.java</include>
+							</includes>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>

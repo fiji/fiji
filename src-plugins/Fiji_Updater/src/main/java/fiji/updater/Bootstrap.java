@@ -6,6 +6,7 @@ import java.io.File;
  * Bootstrap the ImageJ Updater
  *
  * @author Johannes Schindelin
+ * @deprecated use ij-updater-core directly
  */
 public class Bootstrap {
 	public static void main(String[] args) {

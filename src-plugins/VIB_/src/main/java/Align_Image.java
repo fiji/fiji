@@ -160,7 +160,7 @@ public class Align_Image implements PlugIn {
 			a01 = -a10;
 			a11 = a00;
 		} else {
-			double aTan = Math.atan2(dy2, dx2) - Math.atan2(dy1, dx1);
+			double aTan = Math.atan2(dy1, dx1) - Math.atan2(dy2, dx2);
 			a00 = (float) Math.cos(aTan);
 			a10 = (float) Math.sin(aTan);
 			a01 = (float) -Math.sin(aTan);

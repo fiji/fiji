@@ -4,18 +4,18 @@
 
 package tracing;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNotNull;
+import features.ComputeCurvatures;
 import ij.ImagePlus;
 import ij.measure.Calibration;
 
-import util.BatchOpener;
-
-import features.ComputeCurvatures;
-
-import org.junit.Test;
 import org.junit.After;
 import org.junit.Before;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
+import org.junit.Test;
+
+import util.BatchOpener;
 
 public class Test2DTracing {
 
@@ -26,12 +26,12 @@ public class Test2DTracing {
 
 	@Before public void setUp() {
 		image = BatchOpener.openFirstChannel("tests/sample-data/c061AG-small-section-z-max.tif" );
-		assertNotNull("Couldn't open the 2D test image",image);
+		assumeNotNull("Couldn't open the 2D test image",image);
 	}
 
 	@After
 	public void tearDown() {
-		image.close();
+		if (image != null) image.close();
 	}
 
 	@Test
