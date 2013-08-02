@@ -22,6 +22,7 @@
 
 	<properties>
 		<autocomplete.version>2.0.2</autocomplete.version>
+		<fiji.version>2.0.0-SNAPSHOT</fiji.version>
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
 		<imagescience.version>2.4.1</imagescience.version>
 		<jcommon.version>1.0.17</jcommon.version>
@@ -53,6 +54,23 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<mailingLists>
+		<mailingList>
+			<name>ImageJ</name>
+			<subscribe>http://imagej.net/list.html</subscribe>
+			<unsubscribe>http://imagej.net/list.html</unsubscribe>
+			<post>imagej@list.nih.gov</post>
+			<archive>http://list.nih.gov/archives/imagej.html</archive>
+		</mailingList>
+		<mailingList>
+			<name>Fiji-devel</name>
+			<subscribe>http://groups.google.com/group/fiji-devel</subscribe>
+			<unsubscribe>http://groups.google.com/group/fiji-devel</unsubscribe>
+			<post>fiji@fiji.sc</post>
+			<archive>http://groups.google.com/group/fiji-devel</archive>
+		</mailingList>
+	</mailingLists>
 
 	<scm>
 		<connection>scm:git:git://github.com/fiji/fiji</connection>
