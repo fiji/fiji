@@ -10,20 +10,30 @@ import java.util.Date;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.util.Util;
+
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.multithreading.Chunk;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 
 public class BayesMVDeconvolution implements Deconvolver
 {
+	// if you want to start from a certain iteration
+	public static String initialImage = null;
+	
+	// check in advance if values are reasonable
+	public static boolean checkNumbers = true;
+	
 	public static boolean debug = true;
 	public static int debugInterval = 1;
 	final static float minValue = 0.0001f;
-	public static int speedUp = 1;
 
 	final int numViews, numDimensions;
     final float avg;
@@ -54,9 +64,10 @@ public class BayesMVDeconvolution implements Deconvolver
 		this.numDimensions = data.get( 0 ).getImage().getNumDimensions();
 		this.lambda = lambda;
 		
-		this.psi = data.get( 0 ).getImage().createNewImage( "psi (deconvolved image)" );
-		
-		this.avg = (float)AdjustInput.normAllImages( data, speedUp );
+		if ( initialImage != null )
+			this.psi = loadInitialImage( initialImage, checkNumbers, minValue, data.get( 0 ).getImage().getDimensions(), data.get( 0 ).getImage().getImageFactory() );
+				
+		this.avg = (float)AdjustInput.normAllImages( data );
 		
 		IJ.log( "Average intensity in overlapping area: " + avg );        
 		
@@ -65,9 +76,15 @@ public class BayesMVDeconvolution implements Deconvolver
 		
 		//
 		// the real data image psi is initialized with the average 
-		//	
-		for ( final FloatType f : psi )
-			f.set( avg );
+		// if there was no initial guess loaded
+		//
+		if ( this.psi == null )
+		{
+			this.psi = data.get( 0 ).getImage().createNewImage( "psi (deconvolved image)" );
+
+			for ( final FloatType f : psi )
+				f.set( avg );
+		}
 		
 		//this.stack = new ImageStack( this.psi.getDimension( 0 ), this.psi.getDimension( 1 ) );
 		
@@ -126,6 +143,62 @@ public class BayesMVDeconvolution implements Deconvolver
 		}
 		
 		IJ.log( "DONE (" + new Date(System.currentTimeMillis()) + ")." );
+	}
+	
+	
+	protected static Image< FloatType > loadInitialImage( final String fileName, final boolean checkNumbers, final float minValue, final int[] dimensions, final ImageFactory< FloatType > imageFactory )
+	{
+		IOFunctions.println( "Loading image '" + fileName + "' as start for iteration." );
+		Image< FloatType > psi = LOCI.openLOCIFloatType( fileName, imageFactory );
+		
+		if ( psi == null )
+		{
+			IOFunctions.println( "Could not load image '" + fileName + "'." );
+			return null;
+		}
+		else
+		{
+			boolean dimensionsMatch = true;
+			
+			for ( int d = 0; d < psi.getNumDimensions(); ++d )
+				if ( psi.getDimension( d ) != dimensions[ d ] )
+					dimensionsMatch = false;
+			
+			if ( !dimensionsMatch )
+			{
+				IOFunctions.println( "Dimensions of '" + fileName + "' do not match: " + Util.printCoordinates( psi.getDimensions() ) + " != " + Util.printCoordinates( dimensions ) );
+				psi.close();
+				return null;
+			}
+			
+			if ( checkNumbers )
+			{
+				IOFunctions.println( "Checking values of '" + fileName + "' you can disable this check by setting mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution.checkNumbers = false;" );
+				
+				boolean smaller = false;
+				boolean hasZerosOrNeg = false;
+				
+				for ( final FloatType v : psi )
+				{
+					if ( v.get() < minValue )
+						smaller = true;
+	
+					if ( v.get() <= 0 )
+					{
+						hasZerosOrNeg = true;
+						v.set( minValue );
+					}
+				}
+	
+				if ( smaller )
+					IOFunctions.println( "Some values '" + fileName + "' are smaller than the minimal value of " + minValue + ", this can lead to instabilities." );
+	
+				if ( hasZerosOrNeg )
+					IOFunctions.println( "Some values '" + fileName + "' were smaller or equal to zero, they have been replaced with the min value of " + minValue );
+			}
+		}
+		
+		return psi;
 	}
 	
 	public LRInput getData() { return views; }

@@ -134,7 +134,7 @@ public class MappingFusionSequential extends SPIMImageFusion
 		for ( int i = 0; i < numViews; ++i )
 			imageSizes[ i ] = views.get( i ).getImageSize();
 
-		// iterate over input images
+		// iterate over input images in steps of numParalellStacks
 		for (int v = 0; v < numViews; v += numParalellStacks )
 		{
 			final int viewIndexStart = v;

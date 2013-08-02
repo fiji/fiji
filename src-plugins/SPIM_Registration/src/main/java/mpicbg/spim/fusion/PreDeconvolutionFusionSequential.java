@@ -8,7 +8,6 @@ import javax.vecmath.Point3f;
 
 import fiji.plugin.Multi_View_Deconvolution;
 
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
@@ -23,16 +22,14 @@ import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 
-import ij.IJ;
-
-public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconvolutionFusionInterface
+public class PreDeconvolutionFusionSequential extends SPIMImageFusion implements PreDeconvolutionFusionInterface
 {
 	final Image<FloatType> images[], weights[];
 	final int numViews;
 	final boolean normalize;
 	final ExtractPSF extractPSF;
 	
-	public PreDeconvolutionFusion( final ViewStructure viewStructure, final ViewStructure referenceViewStructure, 
+	public PreDeconvolutionFusionSequential( final ViewStructure viewStructure, final ViewStructure referenceViewStructure, 
 								  final ArrayList<IsolatedPixelWeightenerFactory<?>> isolatedWeightenerFactories, 
 								  final ArrayList<CombinedPixelWeightenerFactory<?>> combinedWeightenerFactories )
 	{
@@ -40,24 +37,25 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		
 		// normalize the weights so the the sum for each pixel over all views is 1?
 		this.normalize = true;
-
+		
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
 		
 		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
 		numViews = viewStructure.getNumViews();
-				
+		
 		if ( conf.extractPSF )
 			extractPSF = new ExtractPSF( viewStructure );
 		else
-			extractPSF = ExtractPSF.loadAndTransformPSF( conf.psfFiles, conf.transformPSFs, viewStructure );			
+			extractPSF = ExtractPSF.loadAndTransformPSF( conf.psfFiles, conf.transformPSFs, viewStructure );
 		
+
 		images = new Image[ numViews ];
 		weights = new Image[ numViews ];
 
 		if ( extractPSF == null )
 			return;
-
+		
 		for ( int view = 0; view < numViews; view++ )
 		{
 			weights[ view ] = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "weights_" + view );
@@ -70,14 +68,7 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 
 				return;
 			}
-
-		}		
-	}
-	
-	public static void subtractBackground( final Image< FloatType > img, final float value )
-	{
-		for ( final FloatType t : img )
-			t.set( Math.max( 0, t.get() - value ) );
+		}			
 	}
 
 	@Override
@@ -101,20 +92,6 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		if ( channelIndex > 0 )
 			return;
 		
-		// load images 
-		for ( final ViewDataBeads view : views )
-		{
-			view.getImage();
-			if ( Multi_View_Deconvolution.subtractBackground != 0 )
-			{
-        		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-        			IOFunctions.println( "PreDeconvolutionFusionSequential(): Subtracting background of " + Multi_View_Deconvolution.subtractBackground + " from " + view.getName() );
-
-        		subtractBackground( view.getImage( false ), Multi_View_Deconvolution.subtractBackground );
-				view.getImage( true );
-			}
-		}
-			
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN && isolatedWeightenerFactories.size() > 0 )
 		{
 			String methods = "(" + isolatedWeightenerFactories.get(0).getDescriptiveName();			
@@ -124,62 +101,7 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 			
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Init isolated weighteners for all views " + methods );
 		}
-		
-		// init isolated pixel weighteners
-		final AtomicInteger ai = new AtomicInteger(0);					
-        Thread[] threads = SimpleMultiThreading.newThreads(conf.numberOfThreads);
-        final int numThreads = threads.length;
-
-        // compute them all in paralell ( computation done while opening )
-		IsolatedPixelWeightener<?>[][] isoWinit = new IsolatedPixelWeightener<?>[ isolatedWeightenerFactories.size() ][ numViews ];
-		for (int j = 0; j < isoWinit.length; j++)		
-		{
-			final int i = j;
 			
-			final IsolatedPixelWeightener<?>[][] isoW = isoWinit;
-			
-			for (int ithread = 0; ithread < threads.length; ++ithread)
-	            threads[ithread] = new Thread(new Runnable()
-	            {
-	                public void run()
-	                {
-	                	final int myNumber = ai.getAndIncrement();
-	                	
-						for (int view = 0; view < numViews; view++)
-							if ( view % numThreads == myNumber)
-							{
-								IOFunctions.println( "Computing " + isolatedWeightenerFactories.get( i ).getDescriptiveName() + " for " + views.get( view ) );
-								isoW[i][view] = isolatedWeightenerFactories.get(i).createInstance( views.get(view) );
-							}
-	                }
-	            });
-			
-			SimpleMultiThreading.startAndJoin( threads );
-		}
-		
-		// test if the isolated weighteners were successfull...		
-		try
-		{
-			boolean successful = true;
-			for ( IsolatedPixelWeightener[] iso : isoWinit )
-				for ( IsolatedPixelWeightener i : iso )
-					if ( i == null )
-						successful = false;
-						
-			if ( !successful )
-			{
-				IOFunctions.println( "Not enough memory for computing the weights for the multi-view deconvolution." );
-				isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
-			}
-		}
-		catch (Exception e)
-		{				
-			IOFunctions.println( "Not enough memory for computing the weights for the multi-view deconvolution." );
-			isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
-		}
-		
-		final IsolatedPixelWeightener<?>[][] isoW = isoWinit;
-		
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Computing output image (Channel " + channelIndex +  ").");
 
@@ -209,8 +131,15 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		for ( int i = 0; i < numViews; ++i )
 			imageSizes[ i ] = views.get( i ).getImageSize();
 		
-		ai.set( 0 );					
-        threads = SimpleMultiThreading.newThreads( numThreads );
+		//
+		// compute only the blending
+		//
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println( "Computing blending weights for all input views ... " );
+		
+		final AtomicInteger ai = new AtomicInteger(0);					
+        Thread[] threads = SimpleMultiThreading.newThreads(conf.numberOfThreads);
+        final int numThreads = threads.length;
 
 		for (int ithread = 0; ithread < threads.length; ++ithread)
             threads[ithread] = new Thread(new Runnable()
@@ -239,13 +168,7 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		        		final CombinedPixelWeightener<?>[] combW = new CombinedPixelWeightener<?>[combinedWeightenerFactories.size()];
 		        		for (int i = 0; i < combW.length; i++)
 		        			combW[i] = combinedWeightenerFactories.get(i).createInstance( views );
-		            	
-						// get iterators for isolated weights
-		        		final LocalizableByDimCursor<FloatType> isoIterators[][] = new LocalizableByDimCursor[ isoW.length ][ numViews ];            		
-						for (int i = 0; i < isoW.length; i++)
-							for (int view = 0; view < isoW[i].length; view++)
-								isoIterators[i][view] = isoW[i][view].getResultIterator();
-		        		
+		            			        		
 		    			final Point3f[] tmpCoordinates = new Point3f[ numViews ];
 		    			final int[][] loc = new int[ numViews ][ 3 ];
 		    			final float[][] locf = new float[ numViews ][ 3 ];
@@ -254,31 +177,19 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		    			for ( int i = 0; i < numViews; ++i )
 		    				tmpCoordinates[ i ] = new Point3f();
 		    			
-		    			final LocalizableCursor<FloatType> outIntensity[] = new LocalizableCursor[ numViews ];
 		    			final LocalizableCursor<FloatType> outWeights[] = new LocalizableCursor[ numViews ];
 		    			
 		    			final float[] tmpWeights = new float[ numViews ];
 		    			
 		    			for ( int i = 0; i < numViews; ++i )
-		    			{
-		    				outIntensity[ i ] = images[ i ].createLocalizableCursor();
 		    				outWeights[ i ] = weights[ i ].createLocalizableCursor();
-		    			}
 		    			
-		    			final LocalizableCursor<FloatType> firstCursor = outIntensity[ 0 ];
-		    			
-		    			// create Interpolated Iterators for the input images (every thread need own ones!)
-		    			final Interpolator<FloatType>[] interpolators = new Interpolator[ numViews ];
-		    			for (int view = 0; view < numViews ; view++)
-		    				interpolators[ view ] = views.get( view ).getImage().createInterpolator( conf.interpolatorFactorOutput );
+		    			final LocalizableCursor<FloatType> firstCursor = outWeights[ 0 ];
 		    			
 		    			while ( firstCursor.hasNext() )
 		    			{
 			    			for ( int i = 0; i < numViews; ++i )
-			    			{
-			    				outIntensity[ i ].fwd();
 			    				outWeights[ i ].fwd();
-			    			}
 		    				
 		        			if ( firstCursor.getPosition(2) % numThreads == myNumber )
 		        			{
@@ -296,7 +207,7 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		    							tmpCoordinates[ i ].x = x * scale + min.x;
 		    							tmpCoordinates[ i ].y = y * scale + min.y;
 		    							tmpCoordinates[ i ].z = z * scale + min.z;
-									
+		
 		    							mpicbg.spim.mpicbg.Java3d.applyInverseInPlace( models[i], tmpCoordinates[i], tmp );
 			
 		    							loc[i][0] = Util.round( tmpCoordinates[i].x );
@@ -305,13 +216,13 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 
 		    							locf[i][0] = tmpCoordinates[i].x;
 		    							locf[i][1] = tmpCoordinates[i].y;
-		    							locf[i][2] = tmpCoordinates[i].z;
+		    							locf[i][2] = tmpCoordinates[i].z;	
 
 		    							// do we hit the source image?
-									if ( loc[ i ][ 0 ] >= 0 && loc[ i ][ 1 ] >= 0 && loc[ i ][ 2 ] >= 0 && 
-										loc[ i ][ 0 ] < imageSizes[ i ][ 0 ] && 
-										loc[ i ][ 1 ] < imageSizes[ i ][ 1 ] && 
-										loc[ i ][ 2 ] < imageSizes[ i ][ 2 ] )
+										if ( loc[ i ][ 0 ] >= 0 && loc[ i ][ 1 ] >= 0 && loc[ i ][ 2 ] >= 0 && 
+											 loc[ i ][ 0 ] < imageSizes[ i ][ 0 ] && 
+											 loc[ i ][ 1 ] < imageSizes[ i ][ 1 ] && 
+											 loc[ i ][ 2 ] < imageSizes[ i ][ 2 ] )
 		    							{
 		    								use[ i ] = true;
 		    								++num;
@@ -322,16 +233,15 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		    							}
 									}
 								}
-
+		    				
 								if ( num > 0 )
 								{
-			    						// update combined weighteners
+		    						// update combined weighteners
 									if ( combW.length > 0 )
 										for ( final CombinedPixelWeightener<?> w : combW )
 											w.updateWeights(locf, use);
 		
 									float sumWeights = 0;
-		    						//float value = 0;
 		
 		    						for ( int view = 0; view < numViews; ++view )
 		    						{
@@ -344,18 +254,9 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		    									for (final CombinedPixelWeightener<?> w : combW)
 		    										weight *= w.getWeight(view);
 		    								
-		    								// multiplicate isolated weights
-		    								for (int i = 0; i < isoW.length; i++)
-		    								{
-		    									isoIterators[ i ][ view ].setPosition( loc[ view ] );
-												weight *= isoIterators[ i ][ view ].getType().get();
-		    								}        									      
-		    								
 		    								tmp[ 0 ] = tmpCoordinates[view].x;
 		    								tmp[ 1 ] = tmpCoordinates[view].y;
 		    								tmp[ 2 ] = tmpCoordinates[view].z;
-		    								
-		    								interpolators[view].moveTo( tmp );
 		    								
 		    								if ( normalize )
 		    								{
@@ -368,7 +269,6 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		    								{
 		    									outWeights[ view ].getType().set( weight );
 		    								}
-		    								outIntensity[ view ].getType().set( interpolators[view].getType().get() );
 		    							}
 		    						}
 		    						
@@ -380,7 +280,7 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 			    							if ( use[view] )
 			    							{
 											if ( sumWeights > 1 )
-			    									outWeights[ view ].getType().set( tmpWeights[ view ]/sumWeights );
+				    								outWeights[ view ].getType().set( tmpWeights[ view ]/sumWeights );
 											else
 												outWeights[ view ].getType().set( tmpWeights[ view ] );
 			    							}
@@ -393,63 +293,147 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 	        			} // iterator loop
 	        			
 		    			for ( int i = 0; i < numViews; ++i )
-		    			{
-		    				outIntensity[ i ].close();
 		    				outWeights[ i ].close();
-	        				interpolators[ i ].close();
-		    			}
 		    			
 	        			// close combined pixel weighteners
 	        			for (int i = 0; i < combW.length; i++)
 	        				combW[i].close();     
-	        			
-	        			// close isolated iterators
-						for (int i = 0; i < isoW.length; i++)
-							for (int view = 0; view < isoW[i].length; view++)
-								isoIterators[i][view].close();
-         			
                 	}
                 	catch (NoninvertibleModelException e)
                 	{
                 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-                			IOFunctions.println( "MappingFusionParalell(): Model not invertible for " + viewStructure );
+                			IOFunctions.println( "PreDeconvolutionFusionSequential(): Model not invertible for " + viewStructure );
                 	}
                 }// Thread.run loop
             });
         
         SimpleMultiThreading.startAndJoin(threads);	
+		
+		
+		//
+		// compute the transformed, aligned images
+		//
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println( "Computing transformed input views ... " );
+		
+		// max size of PSF
+		final int[] maxSize = new int[]{ 0, 0 ,0 };
+		
+		for ( int view = 0; view < numViews; ++view )
+		{
+			if ( !useView[ view ] )
+				continue;
+			
+			final int i = view;
+			
+			// load image
+			views.get( i ).getImage();
+			if ( Multi_View_Deconvolution.subtractBackground != 0 )
+			{
+        		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+        			IOFunctions.println( "PreDeconvolutionFusionSequential(): Subtracting background of " + Multi_View_Deconvolution.subtractBackground + " from " + views.get( i ).getName() );
+        		
+				PreDeconvolutionFusion.subtractBackground( views.get( i ).getImage( false ), Multi_View_Deconvolution.subtractBackground );
+				views.get( i ).getImage( true );
+			}
+			
+	        ai.set( 0 );
+	        threads = SimpleMultiThreading.newThreads(conf.numberOfThreads);
+	        
+			for (int ithread = 0; ithread < threads.length; ++ithread)
+	            threads[ithread] = new Thread(new Runnable()
+	            {
+	                public void run()
+	                {
+	                	try
+	                	{
+	                        final int myNumber = ai.getAndIncrement();
+	
+	                        // temporary float array
+			            	final float[] tmp = new float[ 3 ];
+			            	
+			            	final int imageSizeX = imageSizes[ i ][ 0 ];
+			            	final int imageSizeY = imageSizes[ i ][ 1 ];
+			            	final int imageSizeZ = imageSizes[ i ][ 2 ];
+			            	
+			    			final Point3f tmpCoordinates = new Point3f();
+			    			
+			    			final LocalizableCursor<FloatType> outIntensity = images[ i ].createLocalizableCursor();
+			    			
+			    			// create Interpolated Iterators for the input images (every thread need own ones!)
+			    			final Interpolator<FloatType> interpolator = views.get( i ).getImage().createInterpolator( conf.interpolatorFactorOutput );
+			    			
+			    			while ( outIntensity.hasNext() )
+			    			{
+			    				outIntensity.fwd();
+			    				
+			    				final int zPos = outIntensity.getPosition( 2 ); 
+			    				
+			        			if ( zPos % numThreads == myNumber )
+			        			{
+			        				// get the coordinates if cropped (all coordinates are the same, so we only use the first cursor)
+			        				final int x = outIntensity.getPosition( 0 ) + cropOffsetX;
+			        				final int y = outIntensity.getPosition( 1 ) + cropOffsetY;
+			        				final int z = zPos + cropOffsetZ;
+	
+			        				// how many view contribute at this position
+									tmpCoordinates.x = x * scale + min.x;
+	    							tmpCoordinates.y = y * scale + min.y;
+	    							tmpCoordinates.z = z * scale + min.z;
+	
+	    							mpicbg.spim.mpicbg.Java3d.applyInverseInPlace( models[i], tmpCoordinates, tmp );
+		
+	    							final int locX = Util.round( tmpCoordinates.x );
+	    							final int locY = Util.round( tmpCoordinates.y );
+	    							final int locZ = Util.round( tmpCoordinates.z );	
 
-		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Closing all input images (Channel " + channelIndex +  ").");
-		
+	    							// do we hit the source image?
+									if ( locX >= 0 && locY >= 0 && locZ >= 0 && 
+										 locX < imageSizeX && locY < imageSizeY && locZ < imageSizeZ )
+	    							{
+	    								tmp[ 0 ] = tmpCoordinates.x;
+	    								tmp[ 1 ] = tmpCoordinates.y;
+	    								tmp[ 2 ] = tmpCoordinates.z;
+	    								
+	    								interpolator.setPosition( tmp );
+	    								
+	    								outIntensity.getType().set( interpolator.getType().get() );
+	    							}			    						
+		            			} // myThread loop       				
+		        			} // iterator loop
+		        			
+		    				outIntensity.close();
+	        				interpolator.close();
+	                	}
+	                	catch (NoninvertibleModelException e)
+	                	{
+	                		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+	                			IOFunctions.println( "PreDeconvolutionFusionSequential(): Model not invertible for " + viewStructure );
+	                	}
+	                }// Thread.run loop
+	            });
+	        
+	        SimpleMultiThreading.startAndJoin(threads);
+	        
+    		
+    		if ( conf.extractPSF )
+    		{
+    	        // extract the PSF for this one	        
+        		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+        			IOFunctions.println( "Extracting PSF for " + views.get( i ).getName() );
+
+    			extractPSF.extract( i, maxSize );
+    		}
+    		
+			// unload image
+	        views.get( i ).closeImage();
+		}
+			
 		if ( conf.extractPSF )
-		{
-			// extract all PSF's
-			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-				IOFunctions.println( "Extracting all PSF's" );
-			
-			extractPSF.extract();
-		}
-		
-		// unload images
-		for ( final ViewDataBeads view : views ) 
-			view.closeImage();
-			
-		// close weighteners		
-		// close isolated pixel weighteners
-		try
-		{
-			for (int i = 0; i < isoW.length; i++)
-				for (int view = 0; view < numViews; view++)
-					isoW[i][view].close();
-		}
-		catch (Exception e )
-		{
-			// this will fail if there was not enough memory...
-		}
+			extractPSF.computeAveragePSF( maxSize );
 		
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Done computing output image (Channel " + channelIndex +  ").");
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Done computing output image for deconvolution (Channel " + channelIndex +  ").");
 	}
 
 	@Override
@@ -457,6 +441,7 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 	
 	@Override
 	public Image<FloatType> getFusedImage( final int index ) { return images[ index ]; }
+	
 	@Override
 	public Image<FloatType> getWeightImage( final int index ) { return weights[ index ]; }
 
@@ -472,5 +457,4 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 
 	@Override
 	public ExtractPSF getExtractPSFInstance() { return this.extractPSF; }
-
 }
