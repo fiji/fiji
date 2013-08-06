@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>jama</groupId>
 			<artifactId>jama</artifactId>
-			<version>1.0.2</version>
+			<version>${jama.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>

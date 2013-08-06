@@ -26,6 +26,7 @@
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
 		<imagescience.version>2.4.1</imagescience.version>
 		<java3d.version>1.5.2</java3d.version>
+		<jama.version>1.0.2</jama.version>
 		<jcommon.version>1.0.17</jcommon.version>
 		<jfreechart.version>1.0.14</jfreechart.version>
 		<jsch.version>0.1.49</jsch.version>
