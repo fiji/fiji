@@ -23,6 +23,7 @@
 	<properties>
 		<autocomplete.version>2.0.2</autocomplete.version>
 		<beanshell.version>2.0b4</beanshell.version>
+		<clojure.version>1.3.0</clojure.version>
 		<edu.mines.version>20100113</edu.mines.version>
 		<fiji.version>2.0.0-SNAPSHOT</fiji.version>
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
