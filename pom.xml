@@ -26,6 +26,7 @@
 		<edu.mines.version>20100113</edu.mines.version>
 		<fiji.version>2.0.0-SNAPSHOT</fiji.version>
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
+		<image5d.version>1.2.5</image5d.version>
 		<imagescience.version>2.4.1</imagescience.version>
 		<java3d.version>1.5.2</java3d.version>
 		<jama.version>1.0.2</jama.version>
