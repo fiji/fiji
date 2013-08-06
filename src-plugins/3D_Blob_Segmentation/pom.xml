@@ -58,7 +58,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>level_sets</artifactId>
-			<version>1.0</version>
+			<version>${level_sets.version}</version>
 		</dependency>
 	</dependencies>
 
