@@ -34,6 +34,7 @@
 		<jcommon.version>1.0.17</jcommon.version>
 		<jfreechart.version>1.0.14</jfreechart.version>
 		<jna.version>3.2.7</jna.version>
+		<js.version>1.7R2</js.version>
 		<jsch.version>0.1.49</jsch.version>
 		<level_sets.version>1.0</level_sets.version>
 		<mpicbg.version>0.6.1-SNAPSHOT</mpicbg.version>
