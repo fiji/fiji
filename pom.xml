@@ -22,6 +22,7 @@
 
 	<properties>
 		<autocomplete.version>2.0.2</autocomplete.version>
+		<beanshell.version>2.0b4</beanshell.version>
 		<fiji.version>2.0.0-SNAPSHOT</fiji.version>
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
 		<imagescience.version>2.4.1</imagescience.version>

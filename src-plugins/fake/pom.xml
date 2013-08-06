@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>org.beanshell</groupId>
 			<artifactId>bsh</artifactId>
-			<version>2.0b4</version>
+			<version>${beanshell.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
