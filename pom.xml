@@ -29,6 +29,7 @@
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
 		<image5d.version>1.2.5</image5d.version>
 		<imagescience.version>2.4.1</imagescience.version>
+		<itextpdf.version>5.1.1</itextpdf.version>
 		<java3d.version>1.5.2</java3d.version>
 		<jama.version>1.0.2</jama.version>
 		<jcommon.version>1.0.17</jcommon.version>
