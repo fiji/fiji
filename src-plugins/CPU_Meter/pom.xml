@@ -25,7 +25,7 @@
 		<dependency>
 			<groupId>net.java.dev.jna</groupId>
 			<artifactId>jna</artifactId>
-			<version>3.2.7</version>
+			<version>${jna.version}</version>
 		</dependency>
 	</dependencies>
 
