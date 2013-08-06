@@ -22,6 +22,7 @@
 
 	<properties>
 		<autocomplete.version>2.0.2</autocomplete.version>
+		<batik.version>1.8</batik.version>
 		<beanshell.version>2.0b4</beanshell.version>
 		<clojure.version>1.3.0</clojure.version>
 		<edu.mines.version>20100113</edu.mines.version>

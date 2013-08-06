@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>batik</groupId>
 			<artifactId>batik</artifactId>
-			<version>1.8</version>
+			<version>${batik.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
