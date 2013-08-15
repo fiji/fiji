@@ -34,7 +34,7 @@ then
 	tar xf "$FIJI_ARCHIVE"
 	rm "$FIJI_ARCHIVE"
 	cd "$FIJI_DIR"
-	./ImageJ-linux64 --update edit-update-site "$BF_UPDATE_SITE" \
+	./ImageJ-linux64 --update add-update-site "$BF_UPDATE_SITE" \
 		http://sites.imagej.net/Bio-Formats/ \
 		"webdav:Bio-Formats:$(cat "$BF_PASSWD_FILE")" .
 	cd ..
