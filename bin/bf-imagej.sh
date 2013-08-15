@@ -24,7 +24,7 @@ jars/poi-loci
 plugins/loci_plugins
 "
 BF_UPDATE_SITE="Bio-Formats daily builds"
-BF_PASSWD_FILE="~/Bio-Formats-WebDAV.passwd"
+BF_PASSWD_FILE="$HOME/Bio-Formats-WebDAV.passwd"
 
 # -- Download and unpack Fiji if it is not already present --
 
