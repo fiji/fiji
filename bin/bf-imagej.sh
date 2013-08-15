@@ -30,7 +30,7 @@ BF_PASSWD_FILE="~/Bio-Formats-WebDAV.passwd"
 
 if [ ! -d "$FIJI_DIR" ]
 then
-	wget "$FIJI_URL"
+	wget -nv "$FIJI_URL"
 	tar xf "$FIJI_ARCHIVE"
 	rm "$FIJI_ARCHIVE"
 	cd "$FIJI_DIR"
@@ -55,7 +55,7 @@ do
 	REMOTE_URL="$BF_URL/$FILENAME"
 	RM_PATH="$jar.jar $jar-[0-9]*.jar"
 
-	wget $REMOTE_URL
+	wget -nv "$REMOTE_URL"
 	rm -rf $RM_PATH
 	mv $FILENAME $jar.jar
 
