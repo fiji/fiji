@@ -53,11 +53,11 @@ do
 
 	FILENAME="$(echo $jar | sed 's/.*\///').jar"
 	REMOTE_URL="$BF_URL/$FILENAME"
-	RM_PATH="$jar.jar $jar-[0-9]*.jar"
+	RM_PATHS="$jar.jar $jar-[0-9]*.jar"
 
 	wget -nv "$REMOTE_URL"
-	rm -rf $RM_PATH
-	mv $FILENAME $jar.jar
+	rm -rf $RM_PATHS
+	mv "$FILENAME" "$jar.jar"
 
 	FILES_TO_UPLOAD="$FILES_TO_UPLOAD $jar.jar"
 done
