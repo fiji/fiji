@@ -140,7 +140,7 @@ startScreencast(options) {
 
 	ij = options.interactive ? IJ.getInstance() : null;
 	if (ij != null) {
-		item = FijiTools.getMenuItem("File>Make Screencast");
+		item = fiji.FijiTools.getMenuItem("File>Make Screencast");
 		listeners = item.getActionListeners();
 		for (ActionListener listener : listeners)
 			item.removeActionListener(listener);
@@ -153,7 +153,7 @@ startScreencast(options) {
 				err.join();
 				out.interrupt();
 				out.join();
-				IJ.showStatus("Saved '" + outputFile + "'");
+				IJ.showStatus("Saved '" + options.outputFile + "'");
 				if (ij == null)
 					System.exit(0);
 				for (ActionListener listener : listeners)
@@ -181,6 +181,7 @@ run(options) {
 
 showUI() {
 	options = new Options();
+	options.interactive = true;
 
 	SaveDialog od = new SaveDialog("Save screencast as...", null, ".ogv");
 	directory = od.getDirectory();
@@ -190,12 +191,12 @@ showUI() {
 
 	options.outputFile = new File(directory, fileName);
 	if (options.outputFile == null) return null; // canceled
-	if (outputFile.exists() && outputFile.length() != 0 &&
-			!IJ.showMessageWithCancel("Overwrite?", "The file '" + outputFile + "' appears to exist already. Overwrite?")) {
+	if (options.outputFile.exists() && options.outputFile.length() != 0 &&
+			!IJ.showMessageWithCancel("Overwrite?", "The file '" + options.outputFile + "' appears to exist already. Overwrite?")) {
 		return null;
 	}
 
-	options.outputWidth = IJ.getNumber("Width", Toolkit.getDefaultToolkit().getScreenSize().width);
+	options.outputWidth = (int)IJ.getNumber("Width", Toolkit.getDefaultToolkit().getScreenSize().width);
 
 	if (options.outputWidth < 0) return null;
 	return options;

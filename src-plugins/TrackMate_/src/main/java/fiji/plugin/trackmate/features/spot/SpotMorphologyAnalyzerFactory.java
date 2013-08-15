@@ -3,19 +3,19 @@ package fiji.plugin.trackmate.features.spot;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import fiji.plugin.trackmate.Dimension;
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
-import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.HyperSliceImgPlus;
+import fiji.plugin.trackmate.Dimension;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.Model;
 
-public class SpotMorphologyAnalyzerFactory<T extends RealType<T> & NativeType<T>> implements SpotFeatureAnalyzerFactory<T> {
+public class SpotMorphologyAnalyzerFactory<T extends RealType<T> & NativeType<T>> implements SpotAnalyzerFactory<T> {
 
 
 	/*
@@ -67,30 +67,32 @@ public class SpotMorphologyAnalyzerFactory<T extends RealType<T> & NativeType<T>
 		FEATURE_DIMENSIONS.put(featurelist_phi[0], Dimension.ANGLE);
 		FEATURE_DIMENSIONS.put(featurelist_phi[1], Dimension.ANGLE);
 		FEATURE_DIMENSIONS.put(featurelist_phi[2], Dimension.ANGLE);
-		FEATURE_DIMENSIONS.put(featurelist_sa[0], Dimension.ANGLE);
-		FEATURE_DIMENSIONS.put(featurelist_sa[1], Dimension.ANGLE);
-		FEATURE_DIMENSIONS.put(featurelist_sa[2], Dimension.ANGLE);
+		FEATURE_DIMENSIONS.put(featurelist_theta[0], Dimension.ANGLE);
+		FEATURE_DIMENSIONS.put(featurelist_theta[1], Dimension.ANGLE);
+		FEATURE_DIMENSIONS.put(featurelist_theta[2], Dimension.ANGLE);
 
 	}
 	public static final String KEY = "Spot morphology";
 	/** Spherical shape, that is roughly a = b = c. */
-	public static final int SPHERE = 0;
+	public static final Double SPHERE = Double.valueOf(0);
 	/** Oblate shape, disk shaped, that is roughly a = b > c. */
-	public static final int OBLATE = 1;
+	public static final Double OBLATE = Double.valueOf(1);
 	/** Prolate shape, rugby ball shape, that is roughly a = b < c. */
-	public static final int PROLATE = 2;
+	public static final Double PROLATE = Double.valueOf(2);
 	/** Scalene shape, nothing particular, a > b > c. */
-	public static final int SCALENE = 3;
+	public static final Double SCALENE = Double.valueOf(3);
 	
 
-	private final TrackMateModel model;
+	private final Model model;
+	private final ImgPlus<T> img;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public SpotMorphologyAnalyzerFactory(final TrackMateModel model) {
+	public SpotMorphologyAnalyzerFactory(final Model model, final ImgPlus<T> img) {
 		this.model = model;
+		this.img = img;
 	}
 	
 	/*
@@ -99,10 +101,9 @@ public class SpotMorphologyAnalyzerFactory<T extends RealType<T> & NativeType<T>
 
 	@Override
 	public SpotMorphologyAnalyzer<T> getAnalyzer(int frame, int channel) {
-		final ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(model.getSettings().imp);
 		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img, channel);
 		final ImgPlus<T> imgCT = HyperSliceImgPlus.fixTimeAxis(imgC, frame);
-		final List<Spot> spots = model.getSpots().get(frame);
+		final Iterator<Spot> spots = model.getSpots().iterator(frame, false);
 		return new SpotMorphologyAnalyzer<T>(imgCT, spots);
 	}
 

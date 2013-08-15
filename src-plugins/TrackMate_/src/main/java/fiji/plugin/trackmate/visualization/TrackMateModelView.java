@@ -7,7 +7,7 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 
 import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public interface TrackMateModelView extends InfoTextable {
 
@@ -78,20 +78,10 @@ public interface TrackMateModelView extends InfoTextable {
 	public static final String KEY_SPOT_RADIUS_RATIO = "SpotRadiusRatio";
 
 	/**
-	 * Defines the key for the feature that determines the spot color. Values can
-	 * be any {@link SpotFeature} or <code>null</code>. In the later case, the default
-	 * color #DEFAULT_COLOR is used for all spots. Otherwise, each spot color 
-	 * is set according to the selected feature value.
+	 * Defines the key for the spot coloring method. Accepted values are implementation
+	 * of {@link FeatureColorGenerator}
 	 */
-	public static final String KEY_SPOT_COLOR_FEATURE = "SpotColorFeature";
-
-	/**
-	 * Defines the key for the feature that determines the track color. Values can
-	 * be any {@link TrackFeature} or <code>null</code>. In the later case, the default
-	 * color #DEFAULT_COLOR is used for all spots. Otherwise, each track color 
-	 * is set according to the selected feature value.
-	 */
-//	public static final String KEY_TRACK_COLOR_FEATURE = "TrackColorFeature";
+	public static final String KEY_SPOT_COLORING = "SpotColoring";
 
 	/**
 	 * Defines the key for the color map to use for painting overlay. Acceptable
@@ -172,9 +162,15 @@ public interface TrackMateModelView extends InfoTextable {
 	 */
 
 	/** 
-	 * The default color.
+	 * The default color for spots.
 	 */
-	public static final Color DEFAULT_COLOR = new Color(1f, 0, 1f);
+	public static final Color DEFAULT_SPOT_COLOR = new Color(1f, 0, 1f);
+	
+	/** 
+	 * The default track color.
+	 */
+	public static final Color DEFAULT_TRACK_COLOR = new Color(250, 250, 0);
+
 
 	/** 
 	 * The default color for highlighting.
@@ -201,14 +197,14 @@ public interface TrackMateModelView extends InfoTextable {
 	 */
 
 	/**
-	 * Initialize this displayer and render it according to its concrete implementation, 
+	 * Initializes this displayer and render it according to its concrete implementation, 
 	 * target model.
-	 * @see #setModel(TrackMateModel)
+	 * @see #setModel(Model)
 	 */
 	public void render();
 
 	/**
-	 * Refresh the displayer display with current model. If the underlying model was modified,
+	 * Refreshes the displayer display with current model. If the underlying model was modified,
 	 * or the display settings were changed, calling this method should be enough to update 
 	 * the display with changes.
 	 * @see #setDisplaySettings(String, Object)
@@ -216,17 +212,17 @@ public interface TrackMateModelView extends InfoTextable {
 	public void refresh();
 
 	/**
-	 * Remove any overlay (for spots or tracks) from this displayer.
+	 * Removes any overlay (for spots or tracks) from this displayer.
 	 */
 	public void clear();
 	
 	/**
-	 * Center the view on the given spot.
+	 * Centers the view on the given spot.
 	 */
 	public void centerViewOn(final Spot spot);
 
 	/**
-	 * @return the current display settings map.
+	 * Returns the current display settings map.
 	 */
 	public Map<String, Object> getDisplaySettings();
 
@@ -238,12 +234,17 @@ public interface TrackMateModelView extends InfoTextable {
 	public void setDisplaySettings(final String key, final Object value);
 	
 	/**
-	 * @return the value of a specific display parameter. 
+	 * Returns the value of a specific display parameter. 
 	 */
 	public Object getDisplaySettings(final String key);
 	
 	/**
-	 * @return the model displayed in this view.
+	 * Returns the model displayed in this view.
 	 */
-	public TrackMateModel getModel();
+	public Model getModel();
+	
+	/**
+	 * Returns a unique identifier that identifies this view.
+	 */
+	public String getKey();
 }

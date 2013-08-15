@@ -2,7 +2,7 @@ package fiji.plugin.trackmate.features.spot;
 
 import static fiji.plugin.trackmate.features.spot.SpotContrastAnalyzerFactory.KEY;
 
-import java.util.Collection;
+import java.util.Iterator;
 
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
@@ -14,7 +14,7 @@ public class SpotContrastAnalyzer<T extends RealType<T>> extends IndependentSpot
 
 	protected static final double RAD_PERCENTAGE = .5f;
 	
-	public SpotContrastAnalyzer(final ImgPlus<T> img, final Collection<Spot> spots) {
+	public SpotContrastAnalyzer(final ImgPlus<T> img, final Iterator<Spot> spots) {
 		super(img, spots);
 	}
 	

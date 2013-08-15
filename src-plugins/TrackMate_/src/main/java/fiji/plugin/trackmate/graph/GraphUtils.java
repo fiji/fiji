@@ -16,21 +16,21 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackGraphModel;
+import fiji.plugin.trackmate.TrackModel;
 
 public class GraphUtils {
 
 
 	/**
-	 * @return a pretty-print string representation of a {@link TrackGraphModel}, as long it is 
+	 * @return a pretty-print string representation of a {@link TrackModel}, as long it is 
 	 * a tree (each spot must not have more than one predecessor).
 	 * @throws IllegalArgumentException if the given graph is not a tree.
 	 */
-	public static final String toString(final TrackGraphModel model) {
+	public static final String toString(final TrackModel model) {
 		/*
 		 * Get directed cache
 		 */
-		DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache = model.getDirectedNeighborIndex();
+		TimeDirectedNeighborIndex cache = model.getDirectedNeighborIndex();
 		
 		/*
 		 * Check input
@@ -92,12 +92,12 @@ public class GraphUtils {
 		 * Let's go!
 		 */
 
-		for (Integer trackID : model.getFilteredTrackIDs()) {
+		for (Integer trackID : model.trackIDs(true)) {
 			
 			/*
 			 *  Get the 'first' spot for an iterator that starts there
 			 */
-			Set<Spot> track = model.getTrackSpots(trackID);
+			Set<Spot> track = model.trackSpots(trackID);
 			Iterator<Spot> it = track.iterator();
 			Spot first = it.next();
 			for (Spot spot : track) {
@@ -234,13 +234,13 @@ public class GraphUtils {
 	
 	
 	
-	public static final boolean isTree(TrackGraphModel model, DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache) {
+	public static final boolean isTree(TrackModel model, TimeDirectedNeighborIndex cache) {
 		return isTree(model.vertexSet(), cache);
 	}
 	
 
 	
-	public static final boolean isTree(Iterable<Spot> spots, DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache) {
+	public static final boolean isTree(Iterable<Spot> spots, TimeDirectedNeighborIndex cache) {
 		for (Spot spot : spots) {
 			if (cache.predecessorsOf(spot).size() > 1) {
 				return false;
@@ -252,7 +252,7 @@ public class GraphUtils {
 	
 	
 	
-	public static final Map<Spot, Integer> cumulativeBranchWidth(final TrackGraphModel model) {
+	public static final Map<Spot, Integer> cumulativeBranchWidth(final TrackModel model) {
 
 		/*
 		 * Elements stored:
@@ -269,7 +269,7 @@ public class GraphUtils {
 		 * Build isleaf tree
 		 */
 
-		final DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache = model.getDirectedNeighborIndex();
+		final TimeDirectedNeighborIndex cache = model.getDirectedNeighborIndex();
 
 		Function1<Spot, int[]> isLeafFun = new Function1<Spot, int[]>() {
 			@Override
@@ -294,10 +294,11 @@ public class GraphUtils {
 		 * By the way we compute the largest spot name
 		 */
 
-		Map<Integer, Set<Spot>> tracks = model.getTrackSpots();
-		Set<Spot> roots = new HashSet<Spot>(tracks.size()); // approx
-		Set<Spot> firsts = new HashSet<Spot>(tracks.size()); // exact
-		for (Set<Spot> track : tracks.values()) {
+		Set<Spot> roots = new HashSet<Spot>(model.nTracks(false)); // approx
+		Set<Spot> firsts = new HashSet<Spot>(model.nTracks(false)); // exact
+		Set<Integer> ids = model.trackIDs(false);
+		for (Integer id : ids) {
+			Set<Spot> track = model.trackSpots(id);
 			boolean firstFound = false;
 			for (Spot spot : track) {
 

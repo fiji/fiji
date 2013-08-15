@@ -1,12 +1,15 @@
 package fiji.plugin.trackmate.tests;
 
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.action.ExportStatsToIJAction;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import ij.IJ;
 import ij.ImageJ;
 
 import java.io.File;
+
+import org.scijava.util.AppUtils;
 
 public class ExportStats_TestDrive {
 
@@ -14,27 +17,21 @@ public class ExportStats_TestDrive {
 		
 		ImageJ.main(args);
 		
-		File file;
-		if (!IJ.isWindows()) {
-//			file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
-			file = new File("/Users/tinevez/Desktop/Data/RECEPTOR.xml");
-		} else {
-			file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
-		}
+		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
 		ij.ImageJ.main(args);
 		
-		TrackMate_ plugin = new TrackMate_();
-		plugin.initModules();
-		TmXmlReader reader = new TmXmlReader(file, plugin);
-		if (!reader.checkInput() || !reader.process()) {
-			System.err.println("Problem loading the file:");
-			System.err.println(reader.getErrorMessage());
-		}
-		System.out.println(plugin.getModel());
+		TmXmlReader reader = new TmXmlReader(file);
+		Model model = reader.getModel();
+		
+		model.setLogger(Logger.DEFAULT_LOGGER);
+//		System.out.println(model);
+//		System.out.println(model.getFeatureModel());
+		
+		TrackMate trackmate = new TrackMate(model, null);
 		
 		// Export
-		ExportStatsToIJAction exporter = new ExportStatsToIJAction();
-		exporter.execute(plugin);
+		ExportStatsToIJAction exporter = new ExportStatsToIJAction(trackmate, null);
+		exporter.execute();
 		
 	}
 

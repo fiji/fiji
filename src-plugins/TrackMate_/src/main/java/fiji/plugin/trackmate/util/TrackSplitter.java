@@ -7,10 +7,10 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.traverse.DepthFirstIterator;
+import org.jgrapht.traverse.GraphIterator;
 
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackSplitter {
 
@@ -25,9 +25,9 @@ public class TrackSplitter {
 	public static final int COMPLEX_POINT		= 128;
 	public static final int NOT_IN_GRAPH		= 256;
 	
-	private TrackMateModel model; 
+	private Model model; 
 	
-	public TrackSplitter(final TrackMateModel model) {
+	public TrackSplitter(final Model model) {
 		this.model = model;
 	}
 	
@@ -42,7 +42,7 @@ public class TrackSplitter {
 		ArrayList<ArrayList<Spot>> branches = new ArrayList<ArrayList<Spot>>();
 		ArrayList<Spot> currentParent = null;
 		
-		DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getDepthFirstIterator(first, false);
+		GraphIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getDepthFirstIterator(first, false);
 		Spot previousSpot = null;
 		while (iterator.hasNext()) {
 			Spot spot = iterator.next();
@@ -109,8 +109,8 @@ public class TrackSplitter {
 		return prunedBranches;
 	}
 	
-	public static final int getVertexType(final TrackMateModel model, final Spot spot) {
-		if (!model.getFilteredSpots().getAllSpots().contains(spot))
+	public static final int getVertexType(final Model model, final Spot spot) {
+		if (!model.getTrackModel().vertexSet().contains(spot))
 			return NOT_IN_GRAPH;
 		
 		Set<DefaultWeightedEdge> edges = model.getTrackModel().edgesOf(spot);
@@ -119,14 +119,14 @@ public class TrackSplitter {
 		if (nConnections == 0) 
 			return LONE_VERTEX;
 		
-		int t0 = model.getSpots().getFrame(spot);
+		int t0 = spot.getFeature(Spot.FRAME).intValue();
 
 		if (nConnections == 1) {
 			DefaultWeightedEdge edge = edges.iterator().next();
 			Spot other = model.getTrackModel().getEdgeSource(edge);
 			if (other == spot)
 				other = model.getTrackModel().getEdgeTarget(edge);
-			int t1 = model.getSpots().getFrame(other);
+			int t1 = other.getFeature(Spot.FRAME).intValue();
 			if (t1 > t0)
 				return BRANCH_START;
 			else
@@ -139,14 +139,12 @@ public class TrackSplitter {
 			Spot other1 = model.getTrackModel().getEdgeSource(edge1);
 			if (other1 == spot)
 				other1 = model.getTrackModel().getEdgeTarget(edge1);
-//			double t1 = other1.getFeature(SpotFeature.POSITION_T);
-			int t1 = model.getSpots().getFrame(other1);
+			int t1 = other1.getFeature(Spot.FRAME).intValue();
 			DefaultWeightedEdge edge2 = it.next();
 			Spot other2 = model.getTrackModel().getEdgeSource(edge2);
 			if (other2 == spot)
 				other2 = model.getTrackModel().getEdgeTarget(edge2);
-//			double t2 = other2.getFeature(SpotFeature.POSITION_T);
-			int t2 = model.getSpots().getFrame(other2);
+			int t2 = other2.getFeature(Spot.FRAME).intValue();
 			if ( (t2>t0 && t0>t1) || (t2<t0 && t0<t1) )
 				return BRIDGE;
 			else if (t0 > t1 && t0 >t2)

@@ -1,42 +1,39 @@
 package fiji.plugin.trackmate.gui;
 
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.DisplayMode;
 import java.awt.Font;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.gui.descriptors.WizardPanelDescriptor;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
- * A view for the TrackMate_ plugin, strongly inspired from the spots detection GUI of the Imaris® software 
- * from Bitplane ({@link http://www.bitplane.com/}).
+ * A view for the TrackMate_ trackmate, strongly inspired from the spots detection GUI of the Imaris® software 
+ * from <a href="http://www.bitplane.com/">Bitplane</a>.
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - September 2010 - 2011
  */
-public class TrackMateWizard extends javax.swing.JFrame implements ActionListener {
+public class TrackMateWizard extends JFrame implements ActionListener {
 
 	JButton jButtonSave;
 	JButton jButtonLoad;
 	JButton jButtonPrevious;
 	JButton jButtonNext;
+	JButton jButtonLog;
 
 	/*
 	 * DEFAULT VISIBILITY & PUBLIC CONSTANTS
@@ -45,18 +42,20 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	public static final Font FONT = new Font("Arial", Font.PLAIN, 10);
 	public static final Font BIG_FONT = new Font("Arial", Font.PLAIN, 14);
 	public static final Font SMALL_FONT = FONT.deriveFont(8);
-	static final Dimension TEXTFIELD_DIMENSION = new Dimension(40,18);
+	public static final Dimension TEXTFIELD_DIMENSION = new Dimension(40,18);
+	public static final Icon NEXT_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_right.png"));
+	public static final String NEXT_TEXT = "Next";
+	public static final String RESUME_TEXT = "Resume";
+	public static final ImageIcon TRACKMATE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/TrackIcon_small.png"));
 
 	/*
 	 * PRIVATE CONSTANTS
 	 */
 
 	private static final long serialVersionUID = -4092131926852771798L;
-	private static final Icon NEXT_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_right.png"));
 	private static final Icon PREVIOUS_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_left.png"));
 	private static final Icon LOAD_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_go.png"));
 	private static final Icon SAVE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_save.png"));
-	private static final ImageIcon TRACKMATE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/TrackIcon_small.png"));
 	private static final Icon LOG_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/information.png"));;
 
 	/*
@@ -78,31 +77,21 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 * FIELDS
 	 */
 
-	private WizardPanelDescriptor currentDescriptor;
-	private HashMap<String, WizardPanelDescriptor> descriptorHashmap = new HashMap<String, WizardPanelDescriptor>();
 	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
 	private JPanel jPanelButtons;
 	private JPanel jPanelMain;
 	private LogPanel logPanel;
-	private CardLayout cardLayout;
 	private TrackMateModelView displayer;
-	private Component component;
-	private final WizardController controller;
-	/** The stored 4 button states. It has default visibility so that states can be tweaked by the controller. */ 
-	boolean[] storedButtonState;
-	private JButton jButtonLog;
-
+	private final TrackMateGUIController controller;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public TrackMateWizard(Component component, WizardController controller) {
-		this.component = component;
+	public TrackMateWizard(TrackMateGUIController controller) {
 		this.controller = controller;
 		initGUI();
-		positionWindow();
 	}
 
 	/*
@@ -110,7 +99,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 */
 
 	/** Expose the controller managing this GUI. */
-	public WizardController getController() {
+	public TrackMateGUIController getController() {
 		return controller;
 	}
 
@@ -164,116 +153,67 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 		fireAction(event);
 	}
 
-	/*
-	 * 
-	 * WIZARD MODEL METHODS
-	 */
-
-	/**
-	 * @return the collection of {@link WizardPanelDescriptor} currently
-	 * registered in this wizard.
-	 */
-	public Collection<WizardPanelDescriptor> getWizardPanelDescriptors() {
-		return descriptorHashmap.values();
-	}
-
-	/**
-	 * Registers the WizardPanelDescriptor in the model using the String-identifier specified.
-	 * @param id String-based identifier
-	 * @param descriptor WizardPanelDescriptor that describes the panel
-	 */    
-	public void registerWizardDescriptor(String id, WizardPanelDescriptor descriptor) {
-		descriptorHashmap.put(id, descriptor);
-	}
 
 	/**
 	 * Sets the current panel to that identified by the String passed in.
 	 * It must be the {@link WizardPanelDescriptor} string ID, not the component string ID.
 	 * @param descriptorID String-based panel identifier
 	 */    
-	public void showDescriptorPanelFor(final String descriptorID) {
+	public void show(final WizardPanelDescriptor descriptor) {
 
 		SwingUtilities.invokeLater(new Runnable() {
 
 			@Override
 			public void run() {
-				currentDescriptor = descriptorHashmap.get(descriptorID);
-
 				// Register component instance with the layout on the fly
-				String componentID = currentDescriptor.getComponentID();
-				cardLayout.addLayoutComponent(currentDescriptor.getComponent(), componentID);
-				jPanelMain.add(currentDescriptor.getComponent(), componentID);
-
-				// Display it
-				cardLayout.show(jPanelMain, componentID);
+				jPanelMain.removeAll();
+				jPanelMain.add(descriptor.getComponent(), BorderLayout.CENTER);
+				jPanelMain.validate();
+				jPanelMain.repaint();
 			}
 		});
 	}
 
-	/**
-	 * @return The currently displayed WizardPanelDescriptor
-	 */    
-	public WizardPanelDescriptor getCurrentPanelDescriptor() {
-		return currentDescriptor;
-	}
-
-	public WizardPanelDescriptor getPanelDescriptorFor(Object id) {
-		return descriptorHashmap.get(id);
-	}
-
-	/**
-	 * Disable the 4 bottom buttons and memorize their state to that they
-	 * can be restored when calling {@link #restoreButtonsState()}. 
-	 */
-	public void disableButtonsAndStoreState() {
-		storedButtonState = new boolean[4];
-		storedButtonState[0] = jButtonLoad.isEnabled();
-		storedButtonState[1] = jButtonSave.isEnabled();
-		storedButtonState[2] = jButtonPrevious.isEnabled();
-		storedButtonState[3] = jButtonNext.isEnabled();
-		setLoadButtonEnabled(false);
-		setSaveButtonEnabled(false);
-		setPreviousButtonEnabled(false);
-		setNextButtonEnabled(false);
-	}
-
-	/**
-	 * Restore the button state saved when calling {@link #disableButtonsAndStoreState()}.
-	 * Do nothing if {@link #disableButtonsAndStoreState()} was not called before. 
-	 */
-	public void restoreButtonsState() {
-		if (storedButtonState == null) {
-			return;
-		}
-		setLoadButtonEnabled(storedButtonState[0]);
-		setSaveButtonEnabled(storedButtonState[1]);
-		setPreviousButtonEnabled(storedButtonState[2]);
-		setNextButtonEnabled(storedButtonState[3]);
-	}
-
+	
 	public void setNextButtonEnabled(final boolean b) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() { 
 				jButtonNext.setEnabled(b);
-				if (b) jButtonNext.requestFocusInWindow();
+				if (b) {
+					jButtonNext.requestFocusInWindow();
+				} else {
+					jButtonPrevious.requestFocusInWindow();
+				}
 			}
 		});
 	}
+	
+	public void setLogButtonEnabled(final boolean b) {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() { jButtonLog.setEnabled(b); }
+		});
+	}
+
 
 	public void setPreviousButtonEnabled(final boolean b) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() { jButtonPrevious.setEnabled(b); }
 		});
 	}
 
 	public void setSaveButtonEnabled(final boolean b) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() { jButtonSave.setEnabled(b); }
 		});
 	}
 
 	public void setLoadButtonEnabled(final boolean b) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() { jButtonLoad.setEnabled(b); }
 		});
 	}
@@ -281,42 +221,6 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	/*
 	 * PRIVATE METHODS
 	 */
-
-	/**
-	 * If the {@link Component} object given at construction is not <code>null</code>,
-	 * try to position the GUI cleverly with respect to it.
-	 */
-	private void positionWindow() {
-
-
-		if (null != component) {
-
-			// Get total size of all screens
-			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-			GraphicsDevice[] gs = ge.getScreenDevices();
-			int screenWidth = 0;
-			for (int i=0; i<gs.length; i++) {
-				DisplayMode dm = gs[i].getDisplayMode();
-				screenWidth += dm.getWidth();
-			}
-
-			Point windowLoc = component.getLocation();
-			Dimension windowSize = component.getSize();
-			Dimension guiSize = this.getSize();
-			if (guiSize.width > windowLoc.x) {
-				if (guiSize.width > screenWidth - (windowLoc.x + windowSize.width)) {
-					setLocationRelativeTo(null); // give up
-				} else {
-					setLocation(windowLoc.x+windowSize.width, windowLoc.y); // put it to the right
-				}
-			} else {
-				setLocation(windowLoc.x-guiSize.width, windowLoc.y); // put it to the left
-			}
-
-		} else {
-			setLocationRelativeTo(null);
-		}
-	}
 
 	/**
 	 * Forward the given {@link ActionEvent} to the listeners of this GUI.
@@ -335,87 +239,30 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 		try {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			setIconImage(TRACKMATE_ICON.getImage());
-			this.setTitle(fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_STR + " v"+fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_VERSION);
-			this.setResizable(false);
+			setTitle(fiji.plugin.trackmate.TrackMate.PLUGIN_NAME_STR + " v"+fiji.plugin.trackmate.TrackMate.PLUGIN_NAME_VERSION);
 			{
 				jPanelMain = new JPanel();
-				cardLayout = new CardLayout();
 				getContentPane().add(jPanelMain, BorderLayout.CENTER);
-				jPanelMain.setLayout(cardLayout);
+				jPanelMain.setLayout(new BorderLayout());
 				jPanelMain.setPreferredSize(new java.awt.Dimension(300, 461));
 			}
-			{
-				jPanelButtons = new JPanel();
-				getContentPane().add(jPanelButtons, BorderLayout.SOUTH);
-				jPanelButtons.setLayout(null);
-				jPanelButtons.setSize(300, 30);
-				jPanelButtons.setPreferredSize(new java.awt.Dimension(300, 30));
-				{
-					jButtonNext = new JButton();
-					jPanelButtons.add(jButtonNext);
-					jButtonNext.setText("Next");
-					jButtonNext.setIcon(NEXT_ICON);
-					jButtonNext.setFont(FONT);
-					jButtonNext.setBounds(220, 2, 73, 25);
-					jButtonNext.addActionListener(new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							fireAction(NEXT_BUTTON_PRESSED);
-						}
-					});
-				}
-				{
-					jButtonPrevious = new JButton();
-					jPanelButtons.add(jButtonPrevious);
-					jButtonPrevious.setIcon(PREVIOUS_ICON);
-					jButtonPrevious.setFont(FONT);
-					jButtonPrevious.setBounds(190, 2, 30, 25);
-					jButtonPrevious.addActionListener(new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							fireAction(PREVIOUS_BUTTON_PRESSED);
-						}
-					});
-				}
-				{
-					jButtonLog = new JButton();
-					jPanelButtons.add(jButtonLog);
-					jButtonLog.setIcon(LOG_ICON);
-					jButtonLog.setFont(FONT);
-					jButtonLog.setBounds(157, 2, 30, 25);
-					jButtonLog.addActionListener(new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							fireAction(LOG_BUTTON_PRESSED);
-						}
-					});
-				}
-				{
-					jButtonLoad = new JButton();
-					jPanelButtons.add(jButtonLoad);
-					jButtonLoad.setText("Load");
-					jButtonLoad.setIcon(LOAD_ICON);
-					jButtonLoad.setFont(FONT);
-					jButtonLoad.setBounds(2, 2, 76, 25);
-					jButtonLoad.addActionListener(new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							fireAction(LOAD_BUTTON_PRESSED);
-						}
-					});
-				}
-				{
-					jButtonSave = new JButton();
-					jPanelButtons.add(jButtonSave);
-					jButtonSave.setText("Save");
-					jButtonSave.setIcon(SAVE_ICON);
-					jButtonSave.setFont(FONT);
-					jButtonSave.setBounds(78, 2, 76, 25);
-					jButtonSave.addActionListener(new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							fireAction(SAVE_BUTTON_PRESSED);
-						}
-					});
-				}
-			}
+			jPanelButtons = new JPanel();
+			jPanelButtons.setLayout(new BoxLayout(jPanelButtons, BoxLayout.X_AXIS));
+			getContentPane().add(jPanelButtons, BorderLayout.SOUTH);
+			jPanelButtons.setLayout(new BoxLayout(jPanelButtons, BoxLayout.LINE_AXIS));
+			
+			/*  We don't show the load button anymore. Load action can be accessed from the menu.
+			 *  Out of simplicity, we leave the load button logic in place, but do not show it. */
+			jButtonLoad = addButton("Load", LOAD_ICON, 2, 2, 76, 25, LOAD_BUTTON_PRESSED);
+			jPanelButtons.remove(jButtonLoad);
+			
+			jButtonSave = addButton("Save", SAVE_ICON, 78, 2, 76, 25, SAVE_BUTTON_PRESSED);
+			jPanelButtons.add(Box.createHorizontalGlue());
+			jButtonLog = addButton(null, LOG_ICON, 157, 2, 30, 25, LOG_BUTTON_PRESSED);
+			jPanelButtons.add(Box.createHorizontalGlue());
+			jButtonPrevious = addButton(null, PREVIOUS_ICON, 190, 2, 30, 25, PREVIOUS_BUTTON_PRESSED);
+			jButtonNext = addButton(NEXT_TEXT, NEXT_ICON, 220, 2, 73, 25, NEXT_BUTTON_PRESSED);
 			pack();
-			this.setSize(300, 520);
 			// Only instantiate the logger panel, the rest will be done by the controller
 			{
 				logPanel = new LogPanel();
@@ -425,6 +272,26 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 		}
 		repaint();
 		validate();
+	}
+
+	private JButton addButton(final String label, final Icon icon, int x, int y, int width, int height, final ActionEvent action) {
+		JButton button = new JButton();
+		jPanelButtons.add(button);
+		button.setText(label);
+		button.setIcon(icon);
+		button.setFont(FONT);
+		button.setBounds(x, y, width, height);
+		button.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				fireAction(action);
+			}
+		});
+		return button;
+	}
+
+	public JButton getNextButton() {
+		return jButtonNext;
 	}
 
 }

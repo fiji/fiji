@@ -13,7 +13,7 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class TrackDurationAnalyzer implements TrackAnalyzer, MultiThreaded {
 
@@ -52,9 +52,9 @@ public class TrackDurationAnalyzer implements TrackAnalyzer, MultiThreaded {
 
 	private int numThreads;
 	private long processingTime;
-	private final TrackMateModel model;
+	private final Model model;
 
-	public TrackDurationAnalyzer(TrackMateModel model) {
+	public TrackDurationAnalyzer(Model model) {
 		this.model = model;
 		setNumThreads();
 	}
@@ -83,7 +83,7 @@ public class TrackDurationAnalyzer implements TrackAnalyzer, MultiThreaded {
 					while ((trackID = queue.poll()) != null) {
 
 						// I love brute force.
-						Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
+						Set<Spot> track = model.getTrackModel().trackSpots(trackID);
 						double minT = Double.POSITIVE_INFINITY;
 						double maxT = Double.NEGATIVE_INFINITY;
 						Double t;
@@ -139,7 +139,27 @@ public class TrackDurationAnalyzer implements TrackAnalyzer, MultiThreaded {
 	}
 	
 	@Override
-	public String toString() {
+	public List<String> getFeatures() {
+		return FEATURES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureShortNames() {
+		return FEATURE_SHORT_NAMES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureNames() {
+		return FEATURE_NAMES;
+	}
+
+	@Override
+	public Map<String, Dimension> getFeatureDimensions() {
+		return FEATURE_DIMENSIONS;
+	}
+
+	@Override
+	public String getKey() {
 		return KEY;
 	}
 }

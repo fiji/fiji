@@ -27,7 +27,7 @@ import javax.swing.SwingConstants;
 
 import com.itextpdf.text.Font;
 
-import fiji.plugin.trackmate.gui.ActionListenablePanel;
+import fiji.plugin.trackmate.gui.panels.ActionListenablePanel;
 import fiji.plugin.trackmate.util.TMUtils;
 
 /**

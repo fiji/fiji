@@ -10,7 +10,7 @@ import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.
 import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.featurelist_theta;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Iterator;
 
 import net.imglib2.algorithm.region.localneighborhood.EllipseCursor;
 import net.imglib2.algorithm.region.localneighborhood.EllipseNeighborhood;
@@ -73,7 +73,7 @@ public class SpotMorphologyAnalyzer<T extends RealType<T>> extends IndependentSp
 	
 
 	
-	public SpotMorphologyAnalyzer(ImgPlus<T> imgCT, List<Spot> spots) {
+	public SpotMorphologyAnalyzer(ImgPlus<T> imgCT, Iterator<Spot> spots) {
 		super(imgCT, spots);
 	}
 
@@ -242,9 +242,9 @@ public class SpotMorphologyAnalyzer<T extends RealType<T>> extends IndependentSp
 				spot.putFeature(featurelist_phi[i], (double) phi);
 				spot.putFeature(featurelist_theta[i], (double) theta);
 			}
-			spot.putFeature(featurelist_sa[2], 0);
-			spot.putFeature(featurelist_phi[2], 0);
-			spot.putFeature(featurelist_theta[2], 0);
+			spot.putFeature(featurelist_sa[2], Double.valueOf(0));
+			spot.putFeature(featurelist_phi[2], Double.valueOf(0));
+			spot.putFeature(featurelist_theta[2], Double.valueOf(0));
 
 			// Store the Spot morphology (needs to be outside the above loop)
 			spot.putFeature(MORPHOLOGY, estimateMorphology(semiaxes_ordered));
@@ -259,7 +259,7 @@ public class SpotMorphologyAnalyzer<T extends RealType<T>> extends IndependentSp
 	 * @param semiaxes The semi-axis lengths <b>in ascending order</b>.
 	 * @return 1 [Ellipsoid] if any semi-axis length(s) are significantly larger than the other(s). 0 [Spherical] otherwise. 
 	 */
-	private static final int estimateMorphology(final double[] semiaxes) {
+	private static final Double estimateMorphology(final double[] semiaxes) {
 		
 		if (semiaxes.length == 2) {
 			// 2D case
@@ -350,7 +350,7 @@ public class SpotMorphologyAnalyzer<T extends RealType<T>> extends IndependentSp
 		
 		start = System.currentTimeMillis();
 		Spot spot = new Spot(new double[] { center[0], center[1], 0 } );
-		spot.putFeature(Spot.RADIUS, max_radius);
+		spot.putFeature(Spot.RADIUS, Double.valueOf(max_radius));
 
 		SpotMorphologyAnalyzer<UnsignedByteType> bm = new SpotMorphologyAnalyzer<UnsignedByteType>(imgplus, null);
 		bm.process(spot);

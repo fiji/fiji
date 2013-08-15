@@ -16,7 +16,7 @@ import fiji.plugin.trackmate.tracking.LAPUtils;
  * <p>Linking cost function used with {@link LAPTracker}.
  * 
  * <p>The <b>cost function</b> is determined by the default equation in the
- * TrackMate plugin, see below.
+ * TrackMate trackmate, see below.
  * <p>  
  *  It slightly differs from the Jaqaman article, see equation (3) in the paper.
  *  

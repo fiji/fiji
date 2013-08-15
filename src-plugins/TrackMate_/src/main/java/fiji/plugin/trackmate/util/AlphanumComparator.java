@@ -41,9 +41,14 @@ import java.util.Comparator;
  */
 public class AlphanumComparator implements Comparator<String>
 {
+	public static final AlphanumComparator instance = new AlphanumComparator();
+	
     private final boolean isDigit(char ch) {
         return ch >= 48 && ch <= 57;
     }
+    
+    // Singleton
+    private AlphanumComparator() {}
 
     /** Length of string is passed in for improved efficiency (only need to calculate it once) **/
     private final String getChunk(String s, int slength, int marker) {

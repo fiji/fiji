@@ -1,6 +1,14 @@
 package fiji.plugin.trackmate.visualization.hyperstack;
 
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_COLORING;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.FeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij.ImagePlus;
+import ij.gui.Roi;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
@@ -15,62 +23,53 @@ import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
-
-import org.jfree.chart.renderer.InterpolatePaintScale;
-
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.util.TMUtils;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
 /**
  * The overlay class in charge of drawing the spot images on the hyperstack window.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
  */
-public class SpotOverlay implements Overlay {
+public class SpotOverlay extends Roi {
 
+	private static final long serialVersionUID = 1L;
 	private static final Font LABEL_FONT = new Font("Arial", Font.BOLD, 12);
 	private static final boolean DEBUG = false;
 
-	/** The color mapping of the target collection. */
-	protected Map<Spot, Color> targetColor;
 	protected Spot editingSpot;
-	protected final ImagePlus imp;
 	protected final double[] calibration;
 	protected Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
 	protected FontMetrics fm;
 	protected Collection<Spot> spotSelection = new ArrayList<Spot>();
 	protected Map<String, Object> displaySettings;
-	protected final TrackMateModel model;
+	protected final Model model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public SpotOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
+	public SpotOverlay(final Model model, final ImagePlus imp, final Map<String, Object> displaySettings) {
+		super(0, 0, imp);
 		this.model = model;
 		this.imp = imp;
-		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().imp);
+		this.calibration = TMUtils.getSpatialCalibration(imp);
 		this.displaySettings = displaySettings; 
-		computeSpotColors();
 	}
 
 	/*
 	 * METHODS
 	 */
 
-	
-	@Override
-	public void paint(Graphics g, int xcorner, int ycorner, double magnification) {
 
+	@Override
+	public void drawOverlay(Graphics g) {
+		int xcorner = ic.offScreenX(0);
+		int ycorner = ic.offScreenY(0);
+		double magnification = getMagnification();
+		SpotCollection spots = model.getSpots();
+		
 		boolean spotVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_SPOTS_VISIBLE);
-		if (!spotVisible  || null == model.getFilteredSpots())
+		if (!spotVisible  || spots.getNSpots(true) == 0)
 			return;
 
 		final Graphics2D g2d = (Graphics2D)g;
@@ -80,46 +79,44 @@ public class SpotOverlay implements Overlay {
 		final Stroke originalStroke = g2d.getStroke();
 		final Color originalColor = g2d.getColor();
 		final Font originalFont = g2d.getFont();
-		
+
 		g2d.setComposite(composite);
 		g2d.setFont(LABEL_FONT);
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		fm = g2d.getFontMetrics();
-		
-		final int frame = imp.getFrame()-1;
+
 		final double zslice = (imp.getSlice()-1) * calibration[2];
-		final double mag = (double) magnification;
+		final double mag = magnification;
+		final int frame = imp.getFrame()-1;
 
 		// Deal with normal spots.
+		@SuppressWarnings("unchecked")
+		FeatureColorGenerator<Spot> colorGenerator = (FeatureColorGenerator<Spot>) displaySettings.get(KEY_SPOT_COLORING);
 		g2d.setStroke(new BasicStroke(1.0f));
-		Color color;
-		final SpotCollection target = model.getFilteredSpots();
-		List<Spot> spots = target .get(frame);
-		if (null != spots) { 
-			for (Spot spot : spots) {
+		for (Iterator<Spot> iterator = spots.iterator(frame, true); iterator.hasNext();) {
+			Spot spot = iterator.next();
 
-				if (editingSpot == spot || (spotSelection  != null && spotSelection.contains(spot)))
-					continue;
+			if (editingSpot == spot || (spotSelection  != null && spotSelection.contains(spot)))
+				continue;
 
-				color = targetColor.get(spot);
-				if (null == color)
-					color = AbstractTrackMateModelView.DEFAULT_COLOR;
-				g2d.setColor(color);
-				drawSpot(g2d, spot, zslice, xcorner, ycorner, mag);
+			Color color = colorGenerator.color(spot);
+			g2d.setColor(color);
+			drawSpot(g2d, spot, zslice, xcorner, ycorner, mag);
 
-			}
 		}
 
 		// Deal with spot selection
 		if (null != spotSelection) {
 			g2d.setStroke(new BasicStroke(2.0f));
 			g2d.setColor(TrackMateModelView.DEFAULT_HIGHLIGHT_COLOR);
-			Integer sFrame;
 			for(Spot spot : spotSelection) {
-				sFrame = target.getFrame(spot);
+				if (spot == editingSpot) {
+					continue;
+				}
+				int sFrame = spot.getFeature(Spot.FRAME).intValue();
 				if (DEBUG)
 					System.out.println("[SpotOverlay] For spot "+spot+" in selection, found frame "+sFrame);
-				if (null == sFrame || sFrame != frame)
+				if (sFrame != frame)
 					continue;
 				drawSpot(g2d, spot, zslice, xcorner, ycorner, mag);
 			}
@@ -141,55 +138,15 @@ public class SpotOverlay implements Overlay {
 			final double ys = (yp - ycorner) * mag;
 			double radiusRatio = (Float) displaySettings.get(TrackMateModelView.KEY_SPOT_RADIUS_RATIO);
 			g2d.drawOval( (int) Math.round(xs-radius*radiusRatio ), (int) Math.round(ys-radius*radiusRatio), 
-						  (int) Math.round(2*radius*radiusRatio), 	(int) Math.round(2*radius*radiusRatio) );		
+					(int) Math.round(2*radius*radiusRatio), 	(int) Math.round(2*radius*radiusRatio) );		
 		}
-		
+
 		// Restore graphic device original settings
 		g2d.setTransform( originalTransform );
 		g2d.setComposite(originalComposite);
 		g2d.setStroke(originalStroke);
 		g2d.setColor(originalColor);
 		g2d.setFont(originalFont);
-	}
-	
-	public void computeSpotColors() {
-		final String feature = (String) displaySettings.get(TrackMateModelView.KEY_SPOT_COLOR_FEATURE);
-		targetColor = new HashMap<Spot, Color>( model.getSpots().getNSpots());
-		// Check null
-		if (null == feature) {
-			for(Spot spot : model.getSpots()) {
-				targetColor.put(spot, TrackMateModelView.DEFAULT_COLOR);
-			}
-			return;
-		}
-		
-		// Get min & max
-		double min = Float.POSITIVE_INFINITY;
-		double max = Float.NEGATIVE_INFINITY;
-		Double val;
-		for (int ikey : model.getSpots().keySet()) {
-			for (Spot spot : model.getSpots().get(ikey)) {
-				val = spot.getFeature(feature);
-				if (null == val)
-					continue;
-				if (val > max) max = val;
-				if (val < min) min = val;
-			}
-		}
-		
-		for(Spot spot : model.getSpots()) {
-			val = spot.getFeature(feature);
-			InterpolatePaintScale  colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
-			if (null == feature || null == val)
-				targetColor.put(spot, TrackMateModelView.DEFAULT_COLOR);
-			else
-				targetColor.put(spot, colorMap .getPaint((val-min)/(max-min)) );
-		}
-	}
-	
-	@Override
-	public void setComposite(Composite composite) {
-		this.composite = composite;
 	}
 
 	public void setSpotSelection(Collection<Spot> spots) {
@@ -202,7 +159,7 @@ public class SpotOverlay implements Overlay {
 		final double z = spot.getFeature(Spot.POSITION_Z);
 		final double dz2 = (z - zslice) * (z - zslice);
 		double radiusRatio = (Float) displaySettings.get(TrackMateModelView.KEY_SPOT_RADIUS_RATIO);
-		final double radius = spot.getFeature(Spot.RADIUS)*radiusRatio;
+		final double radius = spot.getFeature(Spot.RADIUS) * radiusRatio;
 		// In pixel units
 		final double xp = x / calibration[0] + 0.5f;
 		final double yp = y / calibration[1] + 0.5f; // so that spot centers are displayed on the pixel centers
@@ -212,23 +169,31 @@ public class SpotOverlay implements Overlay {
 
 		if (dz2 >= radius*radius)
 			g2d.fillOval((int) Math.round(xs - 2*magnification), (int) Math.round(ys - 2*magnification), 
-						 (int) Math.round(4*magnification), 	(int) Math.round(4*magnification));
+					(int) Math.round(4*magnification), 	(int) Math.round(4*magnification));
 		else {
-			final double apparentRadius =  (double) (Math.sqrt(radius*radius - dz2) / calibration[0] * magnification); 
+			final double apparentRadius = Math.sqrt(radius*radius - dz2) / calibration[0] * magnification;
 			g2d.drawOval((int) Math.round(xs - apparentRadius), (int) Math.round(ys - apparentRadius), 
 					(int) Math.round(2 * apparentRadius), (int) Math.round(2 * apparentRadius));		
 			boolean spotNameVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_DISPLAY_SPOT_NAMES);
 			if (spotNameVisible ) {
 				String str = spot.toString();
-				int xindent = fm.stringWidth(str) / 2;
+				
+				int xindent = fm.stringWidth(str);
+				int xtext = (int) (xs + apparentRadius + 5);
+				if (xtext + xindent > imp.getWindow().getWidth()) {
+					xtext = (int) (xs - apparentRadius - 5 - xindent);
+				}
+
 				int yindent = fm.getAscent() / 2;
-				g2d.drawString(spot.toString(), (int) xs-xindent, (int) ys+yindent);
+				int ytext = (int) ys + yindent;;
+				
+				g2d.drawString(spot.toString(), xtext, ytext);
 			}
 		}
 	}
-	
 
-	
+
+
 
 
 }

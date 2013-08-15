@@ -1,14 +1,34 @@
 package fiji.plugin.trackmate.io;
 
+import static fiji.plugin.trackmate.io.TmXmlKeys.*;
+import static fiji.plugin.trackmate.io.TmXmlKeys.ANALYSER_KEY_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.ANALYZER_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_TEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_TSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_COLLECTION_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.EDGE_ANALYSERS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.EDGE_FEATURES_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_DECLARATIONS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_DIMENSION_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_NAME_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_SHORT_NAME_ATTRIBUTE;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_TRACK_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ABOVE_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_FEATURE_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_VALUE_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FRAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_STATE_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_STATE_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FILENAME_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FOLDER_ATTRIBUTE_NAME;
@@ -17,36 +37,32 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NFRAMES_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NSLICES_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_UNITS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_WIDTH_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.INITIAL_SPOT_FILTER_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.LOG_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.MODEL_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.PLUGIN_VERSION_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.ROOT_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPATIAL_UNITS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ANALYSERS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FEATURES_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FILTER_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FRAME_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_NAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TIME_UNITS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ANALYSERS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FEATURES_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FILTER_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_NAME_ATTRIBUTE_NAME;
@@ -58,12 +74,10 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import net.imglib2.algorithm.Algorithm;
-import net.imglib2.algorithm.Benchmark;
 
 import org.jdom2.Attribute;
 import org.jdom2.Document;
@@ -72,108 +86,61 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.DetectorProvider;
-import fiji.plugin.trackmate.FeatureFilter;
+import fiji.plugin.trackmate.Dimension;
+import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.TrackerProvider;
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.features.FeatureFilter;
+import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
+import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
+import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
+import fiji.plugin.trackmate.gui.TrackMateGUIModel;
+import fiji.plugin.trackmate.providers.DetectorProvider;
+import fiji.plugin.trackmate.providers.TrackerProvider;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
-public class TmXmlWriter implements Algorithm, Benchmark  {
+public class TmXmlWriter {
 
 	/*
 	 * FIELD
 	 */
 
-	private final Element root;
-	private final Logger logger;
-	private final TrackMate_ plugin;
-	private final TrackMateModel model;
-	private final String log;
-	private long processingTime;
+	protected final Element root;
+	protected final Logger logger;
+	private final File file;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
 	/**
-	 * Create a new XML file write for the specified TrackMate plugin.
-	 * No log is added to the file.
-	 *  
-	 * @param plugin the plugin to write to XML. 
+	 * Creates a new XML file writer for TrackMate. 
+	 *
+	 * @param file the xml file to write to, will be overwritten.
 	 */
-	public TmXmlWriter(final TrackMate_ plugin) {
-		this(plugin, null);
-	}
-
-	/**
-	 * Create a new XML file write for the specified TrackMate plugin.
-	 * This constructor will cause the specified log string to be appended to the file
-	 * as plain text content.
-	 *  
-	 * @param plugin the plugin to write to XML. 
-	 * @param log  the log text to add to the file.
-	 */
-	public TmXmlWriter(TrackMate_ plugin, String log) {
+	public TmXmlWriter(File file) {
 		this.root = new Element(ROOT_ELEMENT_KEY);
-		root.setAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME, fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_VERSION);
+		root.setAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME, fiji.plugin.trackmate.TrackMate.PLUGIN_NAME_VERSION);
 		this.logger = new Logger.StringBuilderLogger();
-		this.plugin = plugin;
-		this.log = log;
-		this.model = plugin.getModel();
+		this.file = file;
 	}
 
 	/*
 	 * PUBLIC METHODS
 	 */
 
-	@Override
-	public long getProcessingTime() {
-		return processingTime;
-	}
-
-	@Override
-	public boolean checkInput() {
-		return true;
-	}
-
-	@Override
-	public boolean process() {
-		long start = System.currentTimeMillis();
-		
-		echoLog();
-		echoImageInfo();
-		echoBaseSettings();
-		echoDetectorSettings();
-		echoInitialSpotFilter();
-		echoSpotFilters();
-		echoTrackerSettings();
-		echoTrackFilters();
-		echoTracks(); // dense stuff is put at the end of file
-		echoFilteredTracks();
-		echoAllSpots();
-		echoFilteredSpots();
-
-		long end = System.currentTimeMillis();
-		processingTime = end - start;
-
-		return true;
-	}
-
-	@Override
-	public String getErrorMessage() {
-		return logger.toString();
-	}
-
 	/**
-	 * Write the document to the given file.
+	 * Writes the document to the file. Content must be appended first.
+	 * @see #appendLog(String)
+	 * @see #appendModel(Model)
+	 * @see #appendSettings(Settings, DetectorProvider, TrackerProvider)
 	 */
-	public void writeToFile(File file) throws FileNotFoundException, IOException {
+	public void writeToFile() throws FileNotFoundException, IOException {
 		logger.log("  Writing to file.\n");
 		Document document = new Document(root);
 		XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
@@ -182,8 +149,6 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 
 	@Override
 	public String toString() {
-		String str = "";
-
 		Document document = new Document(root);
 		XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
 		StringWriter writer = new StringWriter();
@@ -192,15 +157,83 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		str = writer.toString();
-		return str;
+		return writer.toString();
 	}
 
-	/*
-	 * PRIVATE METHODS
+	/**
+	 * Appends the content of a {@link Model} to the file generated by this writer.
+	 * @param model the {@link Model} to write.
 	 */
+	public void appendModel(Model model) {
+		Element modelElement = new Element(MODEL_ELEMENT_KEY);
+		modelElement.setAttribute(SPATIAL_UNITS_ATTRIBUTE_NAME, model.getSpaceUnits());
+		modelElement.setAttribute(TIME_UNITS_ATTRIBUTE_NAME, model.getTimeUnits());
+		
+		Element featureDeclarationElement = echoFeaturesDeclaration(model);
+		modelElement.addContent(featureDeclarationElement);
+		
+		Element spotElement = echoSpots(model);
+		modelElement.addContent(spotElement);
+		
+		Element trackElement = echoTracks(model);
+		modelElement.addContent(trackElement);
+		
+		Element filteredTrackElement = echoFilteredTracks(model);
+		modelElement.addContent(filteredTrackElement);
+		
+		root.addContent(modelElement);
+	}
 	
-	private void echoLog() {
+	/**
+	 * Appends the content of a {@link Settings} object to the document.
+	 * @param settings  the {@link Settings} to write.
+	 * @param detectorProvider the {@link DetectorProvider}, required to marshall the 
+	 * selected detector and its settings. If <code>null</code>, they won't be 
+	 * appended.
+	 * @param trackerProvider the {@link TrackerProvider}, required to marshall the 
+	 * selected tracker and its settings. If <code>null</code>, they won't be 
+	 * appended.
+	 */
+	public void appendSettings(Settings settings, DetectorProvider detectorProvider, TrackerProvider trackerProvider) {
+		Element settingsElement = new Element(SETTINGS_ELEMENT_KEY);
+		
+		Element imageInfoElement = echoImageInfo(settings);
+		settingsElement.addContent(imageInfoElement);
+		
+		Element cropElement = echoCropSettings(settings);
+		settingsElement.addContent(cropElement);
+		
+		if (null != detectorProvider) {
+			Element detectorElement = echoDetectorSettings(settings, detectorProvider);
+			settingsElement.addContent(detectorElement);
+		}
+		
+		Element initFilter = echoInitialSpotFilter(settings);
+		settingsElement.addContent(initFilter);
+		
+		Element spotFiltersElement = echoSpotFilters(settings);
+		settingsElement.addContent(spotFiltersElement);
+		
+		if (null != trackerProvider) {
+			Element trackerElement = echoTrackerSettings(settings, trackerProvider);
+			settingsElement.addContent(trackerElement);
+		}
+		
+		Element trackFiltersElement = echoTrackFilters(settings);
+		settingsElement.addContent(trackFiltersElement);
+		
+		Element analyzersElement = echoAnalyzers(settings);
+		settingsElement.addContent(analyzersElement);
+		
+		root.addContent(settingsElement);
+	}
+
+
+	/**
+	 * Appends the log content to the document. 
+	 * @param log  the log content, as a String.
+	 */
+	public void appendLog(String log) {
 		if (null != log) {
 			Element logElement = new Element(LOG_ELEMENT_KEY);
 			logElement.addContent(log);
@@ -208,66 +241,83 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 			logger.log("  Added log.\n");
 		}
 	}
-
-
-	private void echoBaseSettings() {
-		Settings settings = model.getSettings();
-		Element settingsElement = new Element(SETTINGS_ELEMENT_KEY);
-		settingsElement.setAttribute(SETTINGS_XSTART_ATTRIBUTE_NAME, ""+settings.xstart);
-		settingsElement.setAttribute(SETTINGS_XEND_ATTRIBUTE_NAME, ""+settings.xend);
-		settingsElement.setAttribute(SETTINGS_YSTART_ATTRIBUTE_NAME, ""+settings.ystart);
-		settingsElement.setAttribute(SETTINGS_YEND_ATTRIBUTE_NAME, ""+settings.yend);
-		settingsElement.setAttribute(SETTINGS_ZSTART_ATTRIBUTE_NAME, ""+settings.zstart);
-		settingsElement.setAttribute(SETTINGS_ZEND_ATTRIBUTE_NAME, ""+settings.zend);
-		settingsElement.setAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME, ""+settings.tstart);
-		settingsElement.setAttribute(SETTINGS_TEND_ATTRIBUTE_NAME, ""+settings.tend);
-		root.addContent(settingsElement);
-		logger.log("  Added base settings.\n");
-	}
-
-	private void echoDetectorSettings() {
-		Element el = new Element(DETECTOR_SETTINGS_ELEMENT_KEY);
-		if (null == model.getSettings().detectorFactory) {
-			return; // and write nothing
-		}
-		DetectorProvider provider = plugin.getDetectorProvider();
-		boolean ok = provider.select(model.getSettings().detectorFactory.getKey());
-		if (!ok) {
-			logger.error(provider.getErrorMessage());
-		} else {
-			provider.marshall(model.getSettings().detectorSettings, el);
-		}
-
-		root.addContent(el);
-		logger.log("  Added detector settings.\n");
-	}
-
-	private void echoTrackerSettings() {
-		Element el = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
-		if (null == model.getSettings().tracker) {
-			return; // and write nothing
+	
+	/**
+	 * Appends the current GUI state as a state string to the document.
+	 * @param guimodel the GUI model from which the GUI state and registered
+	 * view will be read. 
+	 */
+	public void appendGUIState(TrackMateGUIModel guimodel) {
+		Element guiel = new Element(GUI_STATE_ELEMENT_KEY);
+		// state
+		guiel.setAttribute(GUI_STATE_ATTRIBUTE, guimodel.getGUIStateString());
+		// views
+		for (TrackMateModelView view : guimodel.getViews()) {
+			Element viewel = new Element(GUI_VIEW_ELEMENT_KEY);
+			viewel.setAttribute(GUI_VIEW_ATTRIBUTE, view.getKey());
+			guiel.addContent(viewel);
 		}
 		
-		TrackerProvider provider = plugin.getTrackerProvider();
-		boolean ok = provider.select(model.getSettings().tracker.getKey());
+		root.addContent(guiel);
+		logger.log("  Added GUI current state.\n");
+	}
+
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	private Element echoCropSettings(Settings settings) {
+		Element settingsElement = new Element(CROP_ELEMENT_KEY);
+		settingsElement.setAttribute(CROP_XSTART_ATTRIBUTE_NAME, ""+settings.xstart);
+		settingsElement.setAttribute(CROP_XEND_ATTRIBUTE_NAME, ""+settings.xend);
+		settingsElement.setAttribute(CROP_YSTART_ATTRIBUTE_NAME, ""+settings.ystart);
+		settingsElement.setAttribute(CROP_YEND_ATTRIBUTE_NAME, ""+settings.yend);
+		settingsElement.setAttribute(CROP_ZSTART_ATTRIBUTE_NAME, ""+settings.zstart);
+		settingsElement.setAttribute(CROP_ZEND_ATTRIBUTE_NAME, ""+settings.zend);
+		settingsElement.setAttribute(CROP_TSTART_ATTRIBUTE_NAME, ""+settings.tstart);
+		settingsElement.setAttribute(CROP_TEND_ATTRIBUTE_NAME, ""+settings.tend);
+		logger.log("  Added crop settings.\n");
+		return settingsElement;
+	}
+
+	protected Element echoDetectorSettings(Settings settings, DetectorProvider provider) {
+		Element el = new Element(DETECTOR_SETTINGS_ELEMENT_KEY);
+		
+		if (null != settings.detectorFactory) {
+			boolean ok = provider.select(settings.detectorFactory.getKey());
+			if (!ok) {
+				logger.error(provider.getErrorMessage());
+			} else {
+				provider.marshall(settings.detectorSettings, el);
+			}
+
+			logger.log("  Added detector settings.\n");
+		}
+		
+		return el;
+	}
+
+	protected Element echoTrackerSettings(Settings settings, TrackerProvider provider) {
+		Element el = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
+		
+		if (null == settings.tracker) {
+			return el;
+		}
+		boolean ok = provider.select(settings.tracker.getKey());
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
 		} else {
-			provider.marshall(model.getSettings().trackerSettings, el);
+			provider.marshall(settings.trackerSettings, el);
 		}
 
-		root.addContent(el);
 		logger.log("  Added tracker settings.\n");
+		return el;
 	}
 
-	private void echoTracks() {
-		if (model.getTrackModel().getNTracks() == 0)
-			return;
+	private Element echoTracks(Model model) {
 
 		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
 
-		Map<Integer, Set<DefaultWeightedEdge>> trackEdges = model.getTrackModel().getTrackEdges();
-		
 		// Prepare track features for writing: we separate ints from doubles 
 		List<String> trackIntFeatures = new ArrayList<String>();
 		trackIntFeatures.add(TrackIndexAnalyzer.TRACK_ID);
@@ -282,11 +332,12 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		List<String> edgeDoubleFeatures = new ArrayList<String>(model.getFeatureModel().getEdgeFeatures());
 		edgeDoubleFeatures.removeAll(edgeIntFeatures);
 		
-		for (int trackID : trackEdges.keySet()) {
-			Set<DefaultWeightedEdge> track = trackEdges.get(trackID);
+		Set<Integer> trackIDs = model.getTrackModel().trackIDs(false);
+		for (int trackID : trackIDs) {
+			Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
 
 			Element trackElement = new Element(TRACK_ELEMENT_KEY);
-			trackElement.setAttribute(TRACK_NAME_ATTRIBUTE_NAME, model.getTrackModel().getTrackName(trackID));
+			trackElement.setAttribute(TRACK_NAME_ATTRIBUTE_NAME, model.getTrackModel().name(trackID));
 			
 			for(String feature : trackDoubleFeatures) {
 				Double val = model.getFeatureModel().getTrackFeature(trackID, feature);
@@ -325,31 +376,23 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 			}
 			allTracksElement.addContent(trackElement);
 		}
-		root.addContent(allTracksElement);
 		logger.log("  Added tracks.\n");
-		return;
+		return allTracksElement;
 	}
 
-	private void echoFilteredTracks() {
-		if (model.getTrackModel().getFilteredTrackIDs() == null) {
-			return;
-		}
-
+	private Element echoFilteredTracks(Model model) {
 		Element filteredTracksElement = new Element(FILTERED_TRACK_ELEMENT_KEY);
-		Set<Integer> filteredTrackKeys = model.getTrackModel().getFilteredTrackIDs();
+		Set<Integer> filteredTrackKeys = model.getTrackModel().trackIDs(true);
 		for (int trackID : filteredTrackKeys) {
 			Element trackIDElement = new Element(TRACK_ID_ELEMENT_KEY);
 			trackIDElement.setAttribute(TrackIndexAnalyzer.TRACK_ID, ""+trackID);
 			filteredTracksElement.addContent(trackIDElement);
 		}
-		root.addContent(filteredTracksElement);
 		logger.log("  Added filtered tracks.\n");
+		return filteredTracksElement;
 	}
 
-	private void echoImageInfo() {
-		Settings settings = model.getSettings();
-		if (null == settings || null == settings.imp)
-			return;
+	protected Element echoImageInfo(Settings settings) {
 		Element imEl = new Element(IMAGE_ELEMENT_KEY);
 		imEl.setAttribute(IMAGE_FILENAME_ATTRIBUTE_NAME, 		settings.imageFileName);
 		imEl.setAttribute(IMAGE_FOLDER_ATTRIBUTE_NAME, 			settings.imageFolder);
@@ -361,115 +404,169 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		imEl.setAttribute(IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, 	""+settings.dy);
 		imEl.setAttribute(IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME, 	""+settings.dz);
 		imEl.setAttribute(IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME, 	""+settings.dt);
-		imEl.setAttribute(IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME,	settings.spaceUnits);
-		imEl.setAttribute(IMAGE_TIME_UNITS_ATTRIBUTE_NAME,		settings.timeUnits);
-		root.addContent(imEl);
 		logger.log("  Added image information.\n");
-		return;
+		return imEl;
 	}
 
-	private void echoAllSpots() {		
-		SpotCollection allSpots = model.getSpots();
-		if (null == allSpots || allSpots.isEmpty())
-			return; // and write nothing
-		List<Spot> spots;
+	private Element echoSpots(Model model) {
+		SpotCollection spots = model.getSpots();
 
-		Element spotElement;
-		Element frameSpotsElement;
-		Element spotCollection = new Element(SPOT_COLLECTION_ELEMENT_KEY);
+		Element spotCollectionElement = new Element(SPOT_COLLECTION_ELEMENT_KEY);
 		// Store total number of spots
-		spotCollection.setAttribute(SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME, ""+allSpots.getNSpots());
+		spotCollectionElement.setAttribute(SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME, ""+spots.getNSpots(false));
 
-		for(int frame : allSpots.keySet()) {
+		for (int frame : spots.keySet()) {
 
-			frameSpotsElement = new Element(SPOT_FRAME_COLLECTION_ELEMENT_KEY);
+			Element frameSpotsElement = new Element(SPOT_FRAME_COLLECTION_ELEMENT_KEY);
 			frameSpotsElement.setAttribute(FRAME_ATTRIBUTE_NAME, ""+frame);
-			spots = allSpots.get(frame);
 
-			for (Spot spot : spots) {
-				spotElement = marshalSpot(spot);
+			for (Iterator<Spot> it = spots.iterator(frame, false); it.hasNext();) {
+				Element spotElement = marshalSpot(it.next());
 				frameSpotsElement.addContent(spotElement);
 			}
-			spotCollection.addContent(frameSpotsElement);
+			spotCollectionElement.addContent(frameSpotsElement);
 		}
-		root.addContent(spotCollection);
-		logger.log("  Added spots.\n");
-		return;
+		logger.log("  Added " + spots.getNSpots(false) + " spots.\n");
+		return spotCollectionElement;
+	}
+	
+	private Element echoFeaturesDeclaration(Model model) {
+		
+		FeatureModel fm = model.getFeatureModel();
+		Element featuresElement = new Element(FEATURE_DECLARATIONS_ELEMENT_KEY);
+		
+		// Spots
+		Element spotFeaturesElement = new Element(SPOT_FEATURES_ELEMENT_KEY);
+		Collection<String> features = fm.getSpotFeatures();
+		Map<String, String> featureNames = fm.getSpotFeatureNames();
+		Map<String, String> featureShortNames = fm.getSpotFeatureShortNames();
+		Map<String, Dimension> featureDimensions = fm.getSpotFeatureDimensions();
+		for (String feature : features) {
+			Element fel = new Element(FEATURE_ELEMENT_KEY);
+			fel.setAttribute(FEATURE_ATTRIBUTE, feature);
+			fel.setAttribute(FEATURE_NAME_ATTRIBUTE, featureNames.get(feature));
+			fel.setAttribute(FEATURE_SHORT_NAME_ATTRIBUTE, featureShortNames.get(feature));
+			fel.setAttribute(FEATURE_DIMENSION_ATTRIBUTE, featureDimensions.get(feature).name());
+			spotFeaturesElement.addContent(fel);
+		}
+		featuresElement.addContent(spotFeaturesElement);
+		
+		// Edges
+		Element edgeFeaturesElement = new Element(EDGE_FEATURES_ELEMENT_KEY);
+		features = fm.getEdgeFeatures();
+		featureNames = fm.getEdgeFeatureNames();
+		featureShortNames = fm.getEdgeFeatureShortNames();
+		featureDimensions = fm.getEdgeFeatureDimensions();
+		for (String feature : features) {
+			Element fel = new Element(FEATURE_ELEMENT_KEY);
+			fel.setAttribute(FEATURE_ATTRIBUTE, feature);
+			fel.setAttribute(FEATURE_NAME_ATTRIBUTE, featureNames.get(feature));
+			fel.setAttribute(FEATURE_SHORT_NAME_ATTRIBUTE, featureShortNames.get(feature));
+			fel.setAttribute(FEATURE_DIMENSION_ATTRIBUTE, featureDimensions.get(feature).name());
+			edgeFeaturesElement.addContent(fel);
+		}
+		featuresElement.addContent(edgeFeaturesElement);
+		
+		// Tracks
+		Element trackFeaturesElement = new Element(TRACK_FEATURES_ELEMENT_KEY);
+		features = fm.getTrackFeatures();
+		featureNames = fm.getTrackFeatureNames();
+		featureShortNames = fm.getTrackFeatureShortNames();
+		featureDimensions = fm.getTrackFeatureDimensions();
+		for (String feature : features) {
+			Element fel = new Element(FEATURE_ELEMENT_KEY);
+			fel.setAttribute(FEATURE_ATTRIBUTE, feature);
+			fel.setAttribute(FEATURE_NAME_ATTRIBUTE, featureNames.get(feature));
+			fel.setAttribute(FEATURE_SHORT_NAME_ATTRIBUTE, featureShortNames.get(feature));
+			fel.setAttribute(FEATURE_DIMENSION_ATTRIBUTE, featureDimensions.get(feature).name());
+			trackFeaturesElement.addContent(fel);
+		}
+		featuresElement.addContent(trackFeaturesElement);
+		
+		logger.log("  Added spot, edge and track feature declarations.");
+		return featuresElement;
 	}
 
-	private void echoInitialSpotFilter() {
-		Double filterVal = model.getSettings().initialSpotFilterValue;
-		if (null == filterVal) {
-			return; // and write nothing
-		}
+
+	protected Element echoInitialSpotFilter(Settings settings) {
 		Element itElement = new Element(INITIAL_SPOT_FILTER_ELEMENT_KEY);
 		itElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, Spot.QUALITY);
-		itElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, "" + filterVal);
+		itElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, "" + settings.initialSpotFilterValue);
 		itElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, "" + true);
-		root.addContent(itElement);
 		logger.log("  Added initial spot filter.\n");
-		return;
+		return itElement;
 	}
 
-	private void echoSpotFilters() {
-		List<FeatureFilter> featureThresholds = model.getSettings().getSpotFilters();
+	protected Element echoSpotFilters(Settings settings) {
+		List<FeatureFilter> featureThresholds = settings.getSpotFilters();
 
-		Element allTresholdElement = new Element(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
+		Element filtersElement = new Element(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
 		for (FeatureFilter threshold : featureThresholds) {
 			Element thresholdElement = new Element(FILTER_ELEMENT_KEY);
 			thresholdElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, threshold.feature);
 			thresholdElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, threshold.value.toString());
 			thresholdElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, ""+threshold.isAbove);
-			allTresholdElement.addContent(thresholdElement);
+			filtersElement.addContent(thresholdElement);
 		}
-		root.addContent(allTresholdElement);
 		logger.log("  Added spot feature filters.\n");
-		return;
+		return filtersElement;
 	}
 
-	private void echoTrackFilters() {
-		List<FeatureFilter> featureThresholds = model.getSettings().getTrackFilters();
+	protected Element echoTrackFilters(Settings settings) {
+		List<FeatureFilter> filters = settings.getTrackFilters();
 
-		Element allTresholdElement = new Element(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
-		for (FeatureFilter threshold : featureThresholds) {
+		Element trackFiltersElement = new Element(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
+		for (FeatureFilter filter : filters) {
 			Element thresholdElement = new Element(FILTER_ELEMENT_KEY);
-			thresholdElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, threshold.feature);
-			thresholdElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, threshold.value.toString());
-			thresholdElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, ""+threshold.isAbove);
-			allTresholdElement.addContent(thresholdElement);
+			thresholdElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, filter.feature);
+			thresholdElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, filter.value.toString());
+			thresholdElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, ""+filter.isAbove);
+			trackFiltersElement.addContent(thresholdElement);
 		}
-		root.addContent(allTresholdElement);
 		logger.log("  Added track feature filters.\n");
-		return;
+		return trackFiltersElement;
 	}
-
-	private void echoFilteredSpots() {
-		SpotCollection filteredSpots =  model.getFilteredSpots();
-		if (null == filteredSpots || filteredSpots.isEmpty())
-			return;
-		List<Spot> spots;
-
-		Element spotIDElement, frameSpotsElement;
-		Element spotCollection = new Element(FILTERED_SPOT_ELEMENT_KEY);
-
-		for(int frame : filteredSpots.keySet()) {
-
-			frameSpotsElement = new Element(FILTERED_SPOT_COLLECTION_ELEMENT_KEY);
-			frameSpotsElement.setAttribute(FRAME_ATTRIBUTE_NAME, ""+frame);
-			spots = filteredSpots.get(frame);
-
-			for(Spot spot : spots) {
-				spotIDElement = new Element(SPOT_ID_ELEMENT_KEY);
-				spotIDElement.setAttribute(SPOT_ID_ATTRIBUTE_NAME, ""+spot.ID());
-				frameSpotsElement.addContent(spotIDElement);
-			}
-			spotCollection.addContent(frameSpotsElement);
+	
+	protected Element echoAnalyzers(Settings settings) {
+		Element analyzersElement = new Element(ANALYZER_COLLECTION_ELEMENT_KEY);
+		
+		// Spot analyzers
+		Element spotAnalyzersEl = new Element(SPOT_ANALYSERS_ELEMENT_KEY);
+		for (SpotAnalyzerFactory<?> analyzer : settings.getSpotAnalyzerFactories()) {
+			Element el = new Element(ANALYSER_ELEMENT_KEY);
+			el.setAttribute(ANALYSER_KEY_ATTRIBUTE, analyzer.getKey());
+			spotAnalyzersEl.addContent(el);
 		}
+		analyzersElement.addContent(spotAnalyzersEl);
+		
+		// Edge analyzers
+		Element edgeAnalyzersEl = new Element(EDGE_ANALYSERS_ELEMENT_KEY);
+		for (EdgeAnalyzer analyzer : settings.getEdgeAnalyzers()) {
+			Element el = new Element(ANALYSER_ELEMENT_KEY);
+			el.setAttribute(ANALYSER_KEY_ATTRIBUTE, analyzer.getKey());
+			edgeAnalyzersEl.addContent(el);
+		}
+		analyzersElement.addContent(edgeAnalyzersEl);
 
-		root.addContent(spotCollection);
-		logger.log("  Added spot selection.\n");
-		return;
+		// Track analyzers
+		Element trackAnalyzersEl = new Element(TRACK_ANALYSERS_ELEMENT_KEY);
+		for (TrackAnalyzer analyzer : settings.getTrackAnalyzers()) {
+			Element el = new Element(ANALYSER_ELEMENT_KEY);
+			el.setAttribute(ANALYSER_KEY_ATTRIBUTE, analyzer.getKey());
+			trackAnalyzersEl.addContent(el);
+		}
+		analyzersElement.addContent(trackAnalyzersEl);
+
+		logger.log("  Added spot, edge and track analyzers.\n");
+		return analyzersElement;
 	}
+
+	
+	
+	
+	/*
+	 * STATIC METHODS
+	 */
 
 	private static final Element marshalSpot(final Spot spot) {
 		Collection<Attribute> attributes = new ArrayList<Attribute>();

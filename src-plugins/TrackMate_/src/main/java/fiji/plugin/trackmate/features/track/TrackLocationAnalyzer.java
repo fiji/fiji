@@ -13,18 +13,18 @@ import net.imglib2.algorithm.MultiThreaded;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benchmark {
 
 	/*
-	 * FEATURE NAMES 
+	 * FEATURE NAMES
 	 */
 	public static final String KEY = "Track location";
-	public static final String X_LOCATION = "X_LOCATION";
-	public static final String Y_LOCATION = "Y_LOCATION";
-	public static final String Z_LOCATION = "Z_LOCATION";
+	public static final String X_LOCATION = "TRACK_X_LOCATION";
+	public static final String Y_LOCATION = "TRACK_Y_LOCATION";
+	public static final String Z_LOCATION = "TRACK_Z_LOCATION";
 
 	public static final List<String> FEATURES = new ArrayList<String>(4);
 	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
@@ -51,13 +51,13 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 
 	private int numThreads;
 	private long processingTime;
-	private final TrackMateModel model;
+	private final Model model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public TrackLocationAnalyzer(final TrackMateModel model) {
+	public TrackLocationAnalyzer(final Model model) {
 		this.model = model;
 		setNumThreads();
 	}
@@ -69,7 +69,7 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 
 	@Override
 	public void process(final Collection<Integer> trackIDs) {
-		
+
 		if (trackIDs.isEmpty()) {
 			return;
 		}
@@ -77,7 +77,7 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 		final ArrayBlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(trackIDs.size(), false, trackIDs);
 		final FeatureModel fm = model.getFeatureModel();
 
-		Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
+		final Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
 		for (int i = 0; i < threads.length; i++) {
 			threads[i] = new Thread("TrackLocationAnalyzer thread " + i) {
 				@Override
@@ -85,18 +85,18 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 					Integer trackID;
 					while ((trackID = queue.poll()) != null) {
 
-						Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
+						final Set<Spot> track = model.getTrackModel().trackSpots(trackID);
 
 						double x = 0;
 						double y = 0;
 						double z = 0;
 
-						for(Spot spot : track) {
+						for(final Spot spot : track) {
 							x += spot.getFeature(Spot.POSITION_X);
 							y += spot.getFeature(Spot.POSITION_Y);
 							z += spot.getFeature(Spot.POSITION_Z);
 						}
-						int nspots = track.size();
+						final int nspots = track.size();
 						x /= nspots;
 						y /= nspots;
 						z /= nspots;
@@ -111,9 +111,9 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 			};
 		}
 
-		long start = System.currentTimeMillis();
+		final long start = System.currentTimeMillis();
 		SimpleMultiThreading.startAndJoin(threads);
-		long end = System.currentTimeMillis();
+		final long end = System.currentTimeMillis();
 		processingTime = end - start;
 	}
 
@@ -124,11 +124,11 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 
 	@Override
 	public void setNumThreads() {
-		this.numThreads = Runtime.getRuntime().availableProcessors();  
+		this.numThreads = Runtime.getRuntime().availableProcessors();
 	}
 
 	@Override
-	public void setNumThreads(int numThreads) {
+	public void setNumThreads(final int numThreads) {
 		this.numThreads = numThreads;
 
 	}
@@ -139,7 +139,27 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 	};
 
 	@Override
-	public String toString() {
+	public String getKey() {
 		return KEY;
+	}
+
+	@Override
+	public List<String> getFeatures() {
+		return FEATURES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureShortNames() {
+		return FEATURE_SHORT_NAMES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureNames() {
+		return FEATURE_NAMES;
+	}
+
+	@Override
+	public Map<String, Dimension> getFeatureDimensions() {
+		return FEATURE_DIMENSIONS;
 	}
 }

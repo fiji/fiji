@@ -5,7 +5,7 @@ package fiji.plugin.trackmate.io;
  * Contains the key string used for xml marshaling.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>  2010-2011
   */
-class TmXmlKeys {
+public class TmXmlKeys {
 	
 	/*
 	 * GENERIC ATTRIBUTES
@@ -21,6 +21,12 @@ class TmXmlKeys {
 
 	public static final String ROOT_ELEMENT_KEY 					= "TrackMate";
 	public static final String PLUGIN_VERSION_ATTRIBUTE_NAME		= "version";
+	public static final String MODEL_ELEMENT_KEY 					= "Model";
+	public static final String SETTINGS_ELEMENT_KEY 				= "Settings";
+	public static final String SPATIAL_UNITS_ATTRIBUTE_NAME 		= "spatialunits";
+	public static final String TIME_UNITS_ATTRIBUTE_NAME 			= "timeunits";
+
+	
 	
 	/*
 	 * LOG
@@ -29,19 +35,19 @@ class TmXmlKeys {
 	public static final String LOG_ELEMENT_KEY 						= "Log";
 	
 	/*
-	 * SETTINGS elements
+	 * BASE SETTINGS elements
 	 */
 	
-	public static final String SETTINGS_ELEMENT_KEY 				= "BasicSettings";
-	public static final String SETTINGS_XSTART_ATTRIBUTE_NAME 		= "xstart";
-	public static final String SETTINGS_YSTART_ATTRIBUTE_NAME 		= "ystart";
-	public static final String SETTINGS_ZSTART_ATTRIBUTE_NAME 		= "zstart";
-	public static final String SETTINGS_TSTART_ATTRIBUTE_NAME 		= "tstart";
-	public static final String SETTINGS_XEND_ATTRIBUTE_NAME 		= "xend";
-	public static final String SETTINGS_YEND_ATTRIBUTE_NAME 		= "yend";
-	public static final String SETTINGS_ZEND_ATTRIBUTE_NAME 		= "zend";
-	public static final String SETTINGS_TEND_ATTRIBUTE_NAME 		= "tend";
-	public static final String SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME 		= "detectionchannel";
+	public static final String CROP_ELEMENT_KEY 				= "BasicSettings";
+	public static final String CROP_XSTART_ATTRIBUTE_NAME 		= "xstart";
+	public static final String CROP_YSTART_ATTRIBUTE_NAME 		= "ystart";
+	public static final String CROP_ZSTART_ATTRIBUTE_NAME 		= "zstart";
+	public static final String CROP_TSTART_ATTRIBUTE_NAME 		= "tstart";
+	public static final String CROP_XEND_ATTRIBUTE_NAME 		= "xend";
+	public static final String CROP_YEND_ATTRIBUTE_NAME 		= "yend";
+	public static final String CROP_ZEND_ATTRIBUTE_NAME 		= "zend";
+	public static final String CROP_TEND_ATTRIBUTE_NAME 		= "tend";
+	public static final String CROP_DETECTION_CHANNEL_ATTRIBUTE_NAME 		= "detectionchannel";
 
 	/*
 	 * DETECTOR SETTINGS
@@ -72,8 +78,6 @@ class TmXmlKeys {
 	public static final String IMAGE_NSLICES_ATTRIBUTE_NAME 		= "nslices";
 	public static final String IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME 	= "timeinterval";
 	public static final String IMAGE_NFRAMES_ATTRIBUTE_NAME 		= "nframes";
-	public static final String IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME 	= "spatialunits";
-	public static final String IMAGE_TIME_UNITS_ATTRIBUTE_NAME 		= "timeunits";
 	
 	/*
 	 * ALL SPOTS element
@@ -102,14 +106,6 @@ class TmXmlKeys {
 	public static final String FILTER_ABOVE_ATTRIBUTE_NAME 				= "isabove";
 	
 	/*
-	 * SPOT FILTERED elements
-	 */
-	
-	public static final String FILTERED_SPOT_ELEMENT_KEY 				= "FilteredSpots";
-	public static final String FILTERED_SPOT_COLLECTION_ELEMENT_KEY 	= "FilteredSpotsInFrame";
-	public static final String SPOT_ID_ELEMENT_KEY 						= "SpotID";
-
-	/*
 	 * TRACK elements
 	 */
 	
@@ -131,4 +127,43 @@ class TmXmlKeys {
 	public static final String FILTERED_TRACK_ELEMENT_KEY 				= "FilteredTracks";
 	public static final String TRACK_ID_ELEMENT_KEY 					= "TrackID";
 	
+	/*
+	 * FEATURES elements
+	 */
+	
+	public static final String FEATURE_DECLARATIONS_ELEMENT_KEY 		= "FeatureDeclarations";
+	public static final String SPOT_FEATURES_ELEMENT_KEY 				= "SpotFeatures";
+	public static final String EDGE_FEATURES_ELEMENT_KEY 				= "EdgeFeatures";
+	public static final String TRACK_FEATURES_ELEMENT_KEY 				= "TrackFeatures";
+	public static final String FEATURE_ELEMENT_KEY 						= "Feature";
+	public static final String FEATURE_ATTRIBUTE						= "feature";
+	public static final String FEATURE_NAME_ATTRIBUTE					= "name";
+	public static final String FEATURE_SHORT_NAME_ATTRIBUTE				= "shortname";
+	public static final String FEATURE_DIMENSION_ATTRIBUTE				= "dimension";
+	
+	/*
+	 * SPOT< EDGE AND TRACK FEATURE ANALYZERS elements
+	 */
+	
+	public static final String ANALYZER_COLLECTION_ELEMENT_KEY 			= "AnalyzerCollection";
+	public static final String SPOT_ANALYSERS_ELEMENT_KEY 				= "SpotAnalyzers";
+	public static final String EDGE_ANALYSERS_ELEMENT_KEY 				= "EdgeAnalyzers";
+	public static final String TRACK_ANALYSERS_ELEMENT_KEY 				= "TrackAnalyzers";
+	public static final String ANALYSER_ELEMENT_KEY 					= "Analyzer";
+	public static final String ANALYSER_KEY_ATTRIBUTE 					= "key";
+
+	/*
+	 * GUI
+	 */
+	
+	public static final String GUI_STATE_ELEMENT_KEY 					= "GUIState";
+	public static final String GUI_STATE_ATTRIBUTE 						= "state";
+	public static final String GUI_VIEW_ELEMENT_KEY 					= "View";
+	public static final String GUI_VIEW_ATTRIBUTE 						= "key";
+	public static final String GUI_VIEW_ATTRIBUTE_POSITION_X 			= "x";
+	public static final String GUI_VIEW_ATTRIBUTE_POSITION_Y 			= "y";
+	public static final String GUI_VIEW_ATTRIBUTE_POSITION_WIDTH 		= "width";
+	public static final String GUI_VIEW_ATTRIBUTE_POSITION_HEIGHT		= "height";
+	
 }
+

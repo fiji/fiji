@@ -12,7 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
@@ -21,7 +21,7 @@ public class EdgeTargetAnalyzerTest {
 
 	private static final int N_TRACKS = 10;
 	private static final int DEPTH = 9; // must be at least 6 to avoid tracks too shorts - may make this test fail sometimes
-	private TrackMateModel model;
+	private Model model;
 	private HashMap<DefaultWeightedEdge, Spot> edgeTarget;
 	private HashMap<DefaultWeightedEdge, Spot> edgeSource;
 	private HashMap<DefaultWeightedEdge, Double> edgeCost;
@@ -32,7 +32,7 @@ public class EdgeTargetAnalyzerTest {
 		edgeTarget = new HashMap<DefaultWeightedEdge, Spot>();
 		edgeCost = new HashMap<DefaultWeightedEdge, Double>();
 
-		model = new TrackMateModel();
+		model = new Model();
 		model.beginUpdate();
 		try {
 
@@ -81,7 +81,7 @@ public class EdgeTargetAnalyzerTest {
 		analyzer.process(model.getTrackModel().edgeSet());
 
 		// Prepare listener
-		model.addTrackMateModelChangeListener(new ModelChangeListener() {
+		model.addModelChangeListener(new ModelChangeListener() {
 			@Override
 			public void modelChanged(ModelChangeEvent event) {
 				HashSet<DefaultWeightedEdge> edgesToUpdate = new HashSet<DefaultWeightedEdge>();
@@ -99,8 +99,8 @@ public class EdgeTargetAnalyzerTest {
 					// Get the all the edges of the track they belong to
 					HashSet<DefaultWeightedEdge> globalEdgesToUpdate = new HashSet<DefaultWeightedEdge>();
 					for (DefaultWeightedEdge edge : edgesToUpdate) {
-						Integer motherTrackID = model.getTrackModel().getTrackIDOf(edge);
-						globalEdgesToUpdate.addAll(model.getTrackModel().getTrackEdges(motherTrackID));
+						Integer motherTrackID = model.getTrackModel().trackIDOf(edge);
+						globalEdgesToUpdate.addAll(model.getTrackModel().trackEdges(motherTrackID));
 					}
 					analyzer.process(globalEdgesToUpdate);
 				}
@@ -131,7 +131,7 @@ public class EdgeTargetAnalyzerTest {
 		private boolean hasBeenRun = false;
 		private Collection<DefaultWeightedEdge> edges;
 
-		public TestEdgeTargetAnalyzer(TrackMateModel model) {
+		public TestEdgeTargetAnalyzer(Model model) {
 			super(model);
 		}
 
