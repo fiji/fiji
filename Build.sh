@@ -385,6 +385,8 @@ else
 		artifactId="${artifactId%%-[0-9]*}"
 		case "$name" in
 		*-rebuild)
+			artifactId=${artifactId%-rebuild}
+			artifactId="${artifactId%.jar}"
 			eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven \
 				"$OPTIONS" -DartifactId="$artifactId" clean
 			;;
