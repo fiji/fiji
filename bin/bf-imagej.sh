@@ -64,5 +64,5 @@ done
 
 # -- Upload files to the Bio-Formats update site! --
 
-echo ./ImageJ-linux64 --update upload \
+./ImageJ-linux64 --update upload \
 	--update-site "$BF_UPDATE_SITE" --force-shadow $FILES_TO_UPLOAD
