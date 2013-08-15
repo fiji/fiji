@@ -284,8 +284,8 @@ public class Matching
 			//Descriptor_based_series_registration.lastModels.addAll( models );
 			
 			for ( final InvertibleBoundable m : models )
-				Descriptor_based_series_registration.lastModels.add( (InvertibleBoundable)((AbstractAffineModel3D)m).copy() );
-			
+				Descriptor_based_series_registration.lastModels.add( (InvertibleBoundable)((Model)m).copy() );
+
 			Descriptor_based_series_registration.lastDimensionality = params.dimensionality;
 		}
 		else
@@ -293,7 +293,7 @@ public class Matching
 			models = new ArrayList<InvertibleBoundable>();
 			
 			for ( final InvertibleBoundable m : Descriptor_based_series_registration.lastModels )
-				models.add( (InvertibleBoundable)((AbstractAffineModel3D)m).copy() );
+				models.add( (InvertibleBoundable)((Model)m).copy() );
 
 			//models.addAll( Descriptor_based_series_registration.lastModels );
 		}
