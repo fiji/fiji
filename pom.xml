@@ -50,7 +50,10 @@
 			<plugin>
 				<groupId>net.imagej</groupId>
 				<artifactId>imagej-maven-plugin</artifactId>
-				<version>0.1.1-SNAPSHOT</version>
+				<version>0.2.0</version>
+				<configuration>
+					<deleteOtherVersions>true</deleteOtherVersions>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
