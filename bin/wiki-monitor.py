@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython --headless --mem=64m "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/ImageJ.sh --jython --headless --mem=64m "$0" "$@" # (call again with fiji)'''
 
 # This script allows you to monitor a Wiki conveniently, by looking at the
 # Special:RecentChanges page, and comparing it with the version it found
@@ -68,7 +68,11 @@ f.close()
 result = ''
 for line in response.split('\n'):
 	i = line.find('<h4>')
-	if i >= 0:
+	if line.find('<div') > 0 and line.find('mainContent') > 0:
+		result = ''
+	elif line.find('</div') > 0 and line.find('mainContent') > 0:
+		break
+	elif i >= 0:
 		line = line[i + 4:]
 		if line.endswith('</h4>'):
 			line = line[:-5]
@@ -94,7 +98,18 @@ for line in response.split('\n'):
 					start += 1
 				time = line[start:start + 5]
 		else:
-			author = '<unknown>'
+			i = line.find('>Talk</a>')
+			if i > 0:
+				end = line.rfind('</a>', 0, i)
+				start = line.rfind('>', 0, end) + 1
+				author = line[start:end]
+				end = line.rfind('; ', 0, start)
+				time = line[end + 2:end + 7]
+				end = line.rfind('</a>', 0, end)
+				start = line.rfind('">', 0, end) + 2
+				title = line[start:end]
+			else:
+				author = '<unknown>'
 		i = line.find('uploaded "<a href=')
 		if i > 0:
 			start = line.find('>', i) + 1

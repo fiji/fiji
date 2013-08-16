@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/ImageJ.sh --jython "$0" "$@" # (call again with fiji)'''
 
 import os
 import sys
@@ -139,7 +139,7 @@ if write_fakefile:
 
 # update .gitmodules
 path = submodule[:-1]
-modules_config = 'git config -f .gitmodules submodule.' + path
+modules_config = 'git config -f .gitmodules submodule.' + path[path.rfind('/') + 1:]
 try:
 	print 'URL: ' + execute(modules_config + '.url')
 except:
@@ -161,7 +161,7 @@ for extension in [ 'config', 'Fakefile' ]:
 
 # precompile
 
-print execute('./fiji --build ' + precompiled_target)
+print execute('./ImageJ --build ' + precompiled_target)
 
 # git add submodule & precompiled
 

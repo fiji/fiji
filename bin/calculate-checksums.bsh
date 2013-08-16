@@ -1,0 +1,27 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji */
+
+import imagej.updater.core.Checksummer;
+import imagej.updater.core.FilesCollection;
+import imagej.updater.core.FileObject;
+
+import imagej.updater.util.StderrProgress;
+
+import java.util.Arrays;
+
+ijDir = new File(System.getProperty("ij.dir"));
+files = new FilesCollection(ijDir);
+progress = new StderrProgress();
+checksummer = new Checksummer(files, progress);
+
+if (bsh.args.length > 0) {
+	checksummer.updateFromLocal(Arrays.asList(bsh.args));
+}
+else
+	checksummer.updateFromLocal();
+files.sort();
+iter = files.iterator();
+while (iter.hasNext()) {
+	file = iter.next();
+	print(file + " " + file.current.checksum);
+}

@@ -1,0 +1,454 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji */
+
+import fiji.SimpleExecuter;
+
+import fiji.build.Fake;
+import fiji.build.Rule;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.Stack;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+if (bsh.args.length == 0) {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		+ " <Fakefile-target> [<Fakefile-target>...]");
+	System.exit(1);
+}
+
+File fijiDir = new File(System.getProperty("fiji.dir"));
+
+boolean isLicenseOrReadme(String fileName) {
+	fileName = fileName.toLowerCase();
+	return fileName.startsWith("license") || fileName.startsWith("readme") || fileName.startsWith("copying");
+}
+
+warnings = "";
+void moveSources(File sourceDirectory, File targetJavaDirectory, File targetResourceDirectory, File targetJavadocDirectory) {
+	File[] list = sourceDirectory.listFiles();
+	if (list == null)
+		return;
+	for (File file : list) {
+		File targetJavaFile = new File(targetJavaDirectory, file.getName());
+		File targetResourceFile = new File(targetResourceDirectory, file.getName());
+		File targetJavadocFile = new File(file.getName().equals("overview.html") ?  targetJavadocDirectory.getParentFile() : targetJavadocDirectory, file.getName());
+		if (file.isDirectory() && !file.getAbsolutePath().endsWith("/src/main/java") && !file.getAbsolutePath().endsWith("/src/main/resources") && !file.getName().startsWith("."))
+			moveSources(file, targetJavaFile, targetResourceFile, targetJavadocFile);
+		else if (file.getPath().startsWith("src-plugins/Script_Editor/templates/")) {
+			SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetResourceDirectory.getPath() });
+			SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetResourceFile.getPath() });
+		}
+		else if (file.getName().endsWith(".java")) {
+			SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetJavaDirectory.getPath() });
+			SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetJavaFile.getPath() });
+		}
+		else if (file.isFile() && !new SimpleExecuter(fijiDir, new String[] { "git", "ls-files", file.getAbsolutePath() }).getOutput().equals("")) {
+			name = file.getName();
+			if (name.equals("plugins.config") || name.endsWith(".gif") || name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".txt") || name.endsWith(".properties") || name.endsWith(".properties-template") || file.getAbsolutePath().indexOf("/services/") > 0 || isLicenseOrReadme(file.getName())) {
+				SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetResourceDirectory.getPath() });
+				SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetResourceFile.getPath() });
+			}
+			else if (file.getName().endsWith(".html")) {
+				SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetJavadocFile.getParentFile().getPath() });
+				SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetJavadocFile.getPath() });
+			}
+			else if (file.getName().equals("Makefile"))
+				SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), file.getPath() + ".old" });
+			else {
+				warnings += "Warning: did not move " + file + "\n";
+				print("Warning: did not move " + file);
+			}
+		}
+	}
+}
+
+void moveSources(String baseDirectory) {
+	moveSources(new File(baseDirectory), new File(baseDirectory, "src/main/java"), new File(baseDirectory, "src/main/resources"), new File(baseDirectory, "src/main/javadoc/resources"));
+}
+
+String readFile(File file) {
+	byte[] buffer = new byte[65536];
+	in = new FileInputStream(file);
+	out = new ByteArrayOutputStream();
+	for (;;) {
+		int count = in.read(buffer);
+		if (count < 0)
+			break;
+		out.write(buffer, 0, count);
+	}
+	in.close();
+	out.close();
+	return out.toString();
+}
+
+String getArtifactId(String target) {
+	String key = target;
+	if (key.endsWith(".jar"))
+		key = key.substring(0, key.length() - 4);
+	int slash = key.lastIndexOf('/');
+	if (slash >= 0)
+		key = key.substring(slash + 1);
+	if (key.equals("j3dcore"))
+		return "j3d-core";
+	if (key.equals("j3dutils"))
+		return "j3d-core-utils";
+	if (key.equals("edu_mines_jtk"))
+		return "mines-jtk";
+	if (key.equals("weka"))
+		return "weka-dev";
+	return key;
+}
+
+void writeAndAddFile(String contents, File file) {
+	dir = file.getParentFile();
+	if (dir != null && !dir.exists())
+		dir.mkdirs();
+	out = new FileOutputStream(file);
+	out.write(contents.getBytes("UTF-8"));
+	out.close();
+	SimpleExecuter.exec(fijiDir, new String[] { "git", "add", file.getPath() });
+}
+
+String[] groupAndVersionMappings = {
+	"batik:batik:1.8",
+	"com.fifesoft:autocomplete:0.4",
+	"com.fifesoft:rsyntaxtextarea:1.4.1",
+	"com.itextpdf:itextpdf:5.1.1",
+	"com.jcraft:jsch:0.1.42",
+	"com.jcraft:jzlib:1.0.7",
+	"edu.mines:mines-jtk:20100113",
+	"jama:Jama:1.0.2",
+	"java3d:j3d-core-utils:1.5.2",
+	"java3d:j3d-core:1.5.2",
+	"java3d:vecmath:1.5.2",
+	"jfree:jcommon:1.0.15",
+	"jfree:jfreechart:1.0.13",
+	"jgraph:jgraphx:1.10.0.3",
+	"jgrapht:jgrapht-jdk1.6:0.8.1",
+	"junit:junit:${junit.version}",
+	"loci:loci_tools:4.4-SNAPSHOT",
+	"mpicbg:imglib-algorithms:${imagej.version}",
+	"mpicbg:imglib-ij:${imagej.version}",
+	"mpicbg:imglib-io:${imagej.version}",
+	"mpicbg:imglib:${imagej.version}",
+	"mpicbg:mpicbg:${imagej.version}",
+	"mpicbg:mpicbg_:${imagej.version}",
+	"net.imagej:Image_5D:1.2.5",
+	"net.imagej:ij:${imagej1.version}",
+	"net.imglib2:imglib2-algorithms-gpl:${imagej.version}",
+	"net.imglib2:imglib2-algorithms:${imagej.version}",
+	"net.imglib2:imglib2-ij:${imagej.version}",
+	"net.imglib2:imglib2-io:${imagej.version}",
+	"net.imglib2:imglib2-ops:${imagej.version}",
+	"net.imglib2:imglib2-ui:${imagej.version}",
+	"net.imglib2:imglib2:${imagej.version}",
+	"net.java.dev.jna:jna:3.2.7",
+	"nz.ac.waikato.cms.weka:weka-dev:3.7.6",
+	"org.apache.commons:commons-math:3.0-SNAPSHOT",
+	"org.beanshell:bsh:2.0b4",
+	"org.clojure:clojure:1.3.0",
+	"org.javassist:javassist:3.14.0-GA",
+	"org.jdom:jdom:1.1",
+	"org.jdom:jdom-contrib:1.1.3",
+	"org.jpedal:jpedalSTD:2.80b11",
+	"org.jruby:jruby:1.6.7.2",
+	"org.python:jython:2.5.2",
+	"rhino:js:1.7R2",
+	// fall-back
+	"sc.fiji::${imagej.version}"
+};
+
+String[] getGroupIdAndVersion(String artifact) {
+	for (String groupAndVersion : groupAndVersionMappings) {
+		String[] list = groupAndVersion.split(":");
+		if (list.length != 3) {
+			System.err.println("Invalid mapping: " + groupAndVersion);
+			System.exit(1);
+		}
+		if (list[1].equals("") || list[1].equals(artifact))
+			return new String[] { list[0], list[2] };
+	}
+	System.err.println("Last mapping must have empty artifactId: " + groupAndVersionMappings[groupAndVersionMappings.length - 1]);
+	System.exit(1);
+}
+
+String getMainClass(Rule rule) {
+	return rule.getVar("MAINCLASS");
+}
+
+void writePOM(String target, Rule rule) {
+	String mainClass = getMainClass(rule);
+	String versionRegex = "(.*?)-([\\.0-9]*(-SNAPSHOT)?)";
+	Pattern versionPattern = Pattern.compile(versionRegex);
+	dependencies = "";
+	boolean needsToolsJar = false;
+	for (String target : rule.getJarDependencies()) {
+		artifact = getArtifactId(target);
+		if (artifact.equals("tools")) {
+			needsToolsJar = true;
+			continue;
+		}
+		version = null;
+		Matcher matcher = versionPattern.matcher(artifact);
+		if (matcher.matches()) {
+			artifact = matcher.group(1);
+			version = matcher.group(2);
+		}
+		String[] groupAndVersion = getGroupIdAndVersion(artifact);
+		group = groupAndVersion[0];
+		if (version == null)
+			version = groupAndVersion[1];
+		if (rule.target.endsWith("/" + artifact + ".jar"))
+			continue;
+
+		dependencies += "\t\t<dependency>\n"
+			+ "\t\t\t<groupId>" + group + "</groupId>\n"
+			+ "\t\t\t<artifactId>" + artifact + "</artifactId>\n"
+			+ (version == null || version.equals("") ? "" : "\t\t\t<version>" + version + "</version>\n")
+			+ "\t\t</dependency>\n";
+	}
+
+	artifact = getArtifactId(target);
+	groupAndVersion = getGroupIdAndVersion(artifact);
+	pom = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n"
+		+ "\txmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+		+ "\txsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0\n"
+		+ "\t\thttp://maven.apache.org/xsd/maven-4.0.0.xsd\">\n"
+		+ "\t<modelVersion>4.0.0</modelVersion>\n"
+		+ "\n"
+		+ "\t<parent>\n"
+		+ "\t\t<groupId>sc.fiji</groupId>\n"
+		+ "\t\t<artifactId>pom-fiji-plugins</artifactId>\n"
+		+ "\t\t<version>2.0.0-SNAPSHOT</version>\n"
+		+ "\t</parent>\n"
+		+ "\n"
+		+ "\t<artifactId>" + artifact + "</artifactId>\n"
+		+ (groupAndVersion[0].equals("sc.fiji") ? "" : "\t<groupId>" + groupAndVersion[0] + "</groupId>\n")
+		+ (groupAndVersion[1].equals("${imagej.version}") ? "" : "\t<version>" + groupAndVersion[1] + "</version>\n")
+		+ "\n"
+		+ "\t<name>" + target + "</name>\n"
+		+ "\t<description></description>\n"
+		+ "\n"
+		+ (dependencies.equals("") ?
+			"" :
+			"\t<dependencies>\n"
+			+ dependencies
+			+ "\t</dependencies>\n"
+			+ "\n")
+		+ (mainClass == null ? "" :
+			"\t<build>\n"
+			+ "\t\t<plugins>\n"
+			+ "\t\t\t<plugin>\n"
+			+ "\t\t\t\t<artifactId>maven-jar-plugin</artifactId>\n"
+			+ "\t\t\t\t<configuration>\n"
+			+ "\t\t\t\t\t<archive>\n"
+			+ "\t\t\t\t\t\t<manifest>\n"
+			+ "\t\t\t\t\t\t\t<mainClass>" + mainClass + "</mainClass>\n"
+			+ "\t\t\t\t\t\t</manifest>\n"
+			+ "\t\t\t\t\t</archive>\n"
+			+ "\t\t\t\t</configuration>\n"
+			+ "\t\t\t</plugin>\n"
+			+ "\t\t</plugins>\n"
+			+ "\t</build>\n"
+			+ "\n")
+		+ (!needsToolsJar ? "" :
+			"\t<profiles>\n"
+			+ "\t\t<profile>\n"
+			+ "\t\t\t<id>javac</id>\n"
+			+ "\t\t\t<activation>\n"
+			+ "\t\t\t\t<file>\n"
+			+ "\t\t\t\t\t<!-- NB: Custom properties do not work here, so we hardcode. -->\n"
+			+ "\t\t\t\t\t<exists>${java.home}/../lib/tools.jar</exists>\n"
+			+ "\t\t\t\t</file>\n"
+			+ "\t\t\t</activation>\n"
+			+ "\t\t\t<dependencies>\n"
+			+ "\t\t\t\t<dependency>\n"
+			+ "\t\t\t\t\t<groupId>com.sun</groupId>\n"
+			+ "\t\t\t\t\t<artifactId>tools</artifactId>\n"
+			+ "\t\t\t\t\t<version>1.4.2</version>\n"
+			+ "\t\t\t\t\t<scope>system</scope>\n"
+			+ "\t\t\t\t\t<systemPath>${java.home}/../lib/tools.jar</systemPath>\n"
+			+ "\t\t\t\t</dependency>\n"
+			+ "\t\t\t</dependencies>\n"
+			+ "\t\t</profile>\n"
+			+ "\t</profiles>\n")
+		+ "\n"
+		+ "\t<!-- NB: for project parent -->\n"
+		+ "\t<repositories>\n"
+		+ "\t\t<repository>\n"
+		+ "\t\t\t<id>imagej.releases</id>\n"
+		+ "\t\t\t<url>http://maven.imagej.net/content/repositories/releases</url>\n"
+		+ "\t\t</repository>\n"
+		+ "\t\t<repository>\n"
+		+ "\t\t\t<id>imagej.snapshots</id>\n"
+		+ "\t\t\t<url>http://maven.imagej.net/content/repositories/snapshots</url>\n"
+		+ "\t\t</repository>\n"
+		+ "\t</repositories>\n"
+		+ "</project>";
+	writeAndAddFile(pom, new File(fijiDir, rule.getStripPath() + "pom.xml"));
+}
+
+void editParentPOM(String stripPath) {
+	if (stripPath.endsWith("/"))
+		stripPath = stripPath.substring(0, stripPath.length() - 1);
+	slash = stripPath.lastIndexOf('/');
+	file = new File(fijiDir, stripPath.substring(0, slash) + "/pom.xml");
+	if (!file.exists())
+		return;
+	module = stripPath.substring(slash + 1);
+	pom = readFile(file);
+	offset = pom.indexOf("\t</modules>");
+	pom = pom.substring(0, offset)
+		+ "\t\t<module>" + module + "</module>\n"
+		+ pom.substring(offset);
+	writeAndAddFile(pom, file);
+}
+
+void fsckEclipse(String stripPath) {
+	factoryPath = "<factorypath>\n"
+		+ "\t<factorypathentry kind=\"VARJAR\" id=\"M2_REPO/net/java/sezpoz/sezpoz/1.9-imagej/sezpoz-1.9-imagej.jar\" enabled=\"true\" runInBatchMode=\"true\"/>\n"
+		+ "</factorypath>";
+	writeAndAddFile(factoryPath, new File(fijiDir, stripPath + ".factorypath"));
+	settings = "#Sun Jan 15 20:38:51 CET 2010\n"
+		+ "eclipse.preferences.version=1\n"
+		+ "org.eclipse.jdt.apt.aptEnabled=true\n"
+		+ "org.eclipse.jdt.apt.genSrcDir=target/classes\n"
+		+ "org.eclipse.jdt.apt.reconcileEnabled=false\n";
+	writeAndAddFile(settings, new File(fijiDir, stripPath + ".settings/org.eclipse.jdt.apt.core.prefs"));
+}
+
+void editFakefile(String target, String stripPath) {
+	insert = target + " <- " + stripPath + "pom.xml\n";
+
+	fakefile = readFile(new File(fijiDir, "Fakefile"));
+
+	for (String key : new String[] { "CLASSPATH", "MAINCLASS" }) {
+		int offset = fakefile.indexOf("\n" + key + "(" + target + ")=");
+		if (offset > 0) {
+			int end = fakefile.indexOf('\n', offset + 1);
+			while (fakefile.charAt(end - 1) == '\\')
+				end = fakefile.indexOf('\n', end + 1);
+			fakefile = fakefile.substring(0, offset)
+				+ fakefile.substring(end);
+		}
+	}
+
+	int offset = fakefile.indexOf("\n" + target + " <- ");
+	if (offset >= 0) {
+		// does not use the default rule
+		int endOffset = fakefile.indexOf("\n", offset + 1);
+		while (endOffset > 0 && fakefile.charAt(endOffset - 1) == '\\')
+			endOffset = fakefile.indexOf("\n", endOffset + 1);
+		fakefile = fakefile.substring(0, offset)
+			+ fakefile.substring(endOffset);
+	}
+
+	offset = fakefile.indexOf("\n\n# pre-Java5 generics");
+	if (offset < 0) {
+		System.err.println("Could not find pre-Java5 generics label!");
+		System.exit(1);
+	}
+	else {
+		pomLabelOffset = fakefile.indexOf("\n\n# pom.xml sub-projects");
+		fakefile = fakefile.substring(0, offset + 1)
+			+ (pomLabelOffset < 0 ? "\n# pom.xml sub-projects\n\n" : "")
+			+ insert
+			+ fakefile.substring(offset + 1);
+	}
+
+	writeAndAddFile(fakefile, new File(fijiDir, "Fakefile"));
+}
+
+rules = new LinkedHashSet();
+void addRule(Rule rule) {
+	if (rule == null || rules.contains(rule))
+		return;
+	// Beanshell cannot handle MultiIterable...
+	iter = rule.getDependencies().iterator();
+	while (iter.hasNext()) {
+		Rule dependency = iter.next();
+		addRule(dependency);
+	}
+	if (rule.getClass().getName().endsWith(".CompileJar"))
+		rules.add(rule);
+}
+
+boolean hasNonMavenDependency(Rule rule) {
+	for (String dependency : rule.getJarDependencies()) {
+		if (dependency.startsWith(fijiDir.getAbsolutePath()))
+			dependency = dependency.substring(fijiDir.getAbsolutePath().length() + 1);
+		Rule rule2 = parser.getRule(dependency);
+		if (rule2 != null && rule2.getClass().getName().endsWith(".CompileJar") && !rules.contains(rule2)) {
+			print("Target '" + rule.target + "' has a non-Maven dependency '" + dependency + "' (" + rule2.getClass() + ")");
+			return true;
+		}
+	}
+	return false;
+}
+
+fake = new Fake();
+parser = fake.parse(new FileInputStream(new File(fijiDir, "Fakefile")), fijiDir);
+parser.parseRules(new ArrayList());
+
+errors = 0;
+
+if (bsh.args.length == 1 && bsh.args[0].equals("--all")) {
+	bsh.args = new String[0];
+	for (String target : parser.getVariable("PLUGIN_TARGETS").split("[ \t]+"))
+		addRule(parser.getRule(target));
+}
+
+// topo-sort
+for (i = 0; i < bsh.args.length; i++) {
+	target = bsh.args[i];
+	rule = parser.getRule(target);
+	if (rule == null) {
+		print("No rule found for " + target);
+		errors++;
+		continue;
+	}
+	addRule(rule);
+}
+
+for (Rule rule : rules) {
+	target = rule.target;
+	if (!rule.getClass().getName().endsWith(".CompileJar")) {
+		print("Target '" + target + "' is not a .jar rule (" + rule.getClass() + ")");
+		errors++;
+		continue;
+	}
+	if (hasNonMavenDependency(rule)) {
+		errors++;
+		continue;
+	}
+
+	String stripPath = rule.getStripPath();
+
+	SimpleExecuter.exec(fijiDir, new String[] { "rm", "-rf", stripPath + "/target" });
+	moveSources(stripPath);
+	writePOM(target, rule);
+	editParentPOM(stripPath);
+	fsckEclipse(stripPath);
+	editFakefile(target, stripPath);
+
+	if (stripPath.endsWith("/"))
+		stripPath = stripPath.substring(0, stripPath.length() - 1);
+	stripPath = stripPath.substring(stripPath.lastIndexOf('/') + 1);
+	SimpleExecuter.exec(fijiDir, new String[] { "git", "commit", "-m", "Mavenize " + stripPath });
+}
+
+if (!warnings.equals(""))
+	System.err.println("\nWarnings:\n" + warnings);
+
+if (errors > 0)
+	System.exit(1);
+

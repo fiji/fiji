@@ -1,8 +1,9 @@
 #!/bin/sh
 
 CWD="$(cd "$(dirname "$0")" && pwd)"
-BASEURL=http://www.apache.org/dyn/closer.cgi/maven/binaries/
-DIR=apache-maven-2.2.1
+VERSION=3.0.4
+BASEURL=http://www.apache.org/dyn/closer.cgi/maven/maven-3/$VERSION/binaries/
+DIR=apache-maven-$VERSION
 TAR=$DIR-bin.tar.gz
 MVN="$CWD/$DIR/bin/mvn"
 
@@ -23,15 +24,26 @@ then
 	die "Could not get maven"
 fi
 
-if test Darwin = "$(uname -s)"
+if test ! -d "$JAVA_HOME"
 then
-	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/
-	JAVACMD=$JAVA_HOME/Commands/java
-else
-	FIJI="$CWD/../fiji"
-	JAVA_HOME="$("$FIJI" --print-java-home)/.."
-	JAVACMD="$JAVA_HOME/bin/java"
+	if test Darwin = "$(uname -s)"
+	then
+		JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/
+		export JAVA_HOME
+		JAVACMD=$JAVA_HOME/Commands/java
+		export JAVACMD
+	else
+		FIJI="$CWD/../ImageJ"
+		FIJI_JAVA_HOME="$("$FIJI" --print-java-home)"
+		if test -d "$FIJI_JAVA_HOME"
+		then
+			JAVA_HOME="${FIJI_JAVA_HOME%/jre/}"
+			JAVA_HOME="${JAVA_HOME%/jre}"
+			export JAVA_HOME
+			JAVACMD="$JAVA_HOME/bin/java"
+			export JAVACMD
+		fi
+	fi
 fi
-export JAVACMD JAVA_HOME
 
 exec "$MVN" "$@"

@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/ImageJ.sh --jython "$0" "$@" # (call again with fiji)'''
 
 from os import listdir, mkdir, remove, rmdir, system
 from os.path import isdir
@@ -11,14 +11,13 @@ from tempfile import mktemp
 from fiji.updater.logic import Checksummer, PluginCollection, \
 	XMLFileReader, XMLFileWriter
 from fiji.updater.util import StderrProgress, Util
-from java.io import FileInputStream
+from java.io import FileInputStream, FileOutputStream
 from java.lang.System import getProperty
-from java.util.zip import GZIPInputStream
+from java.util.zip import GZIPInputStream, GZIPOutputStream
 
-dbPath = getProperty('fiji.dir') + '/db.xml.gz'
-XMLFileReader(GZIPInputStream(FileInputStream(dbPath)))
-
-plugins = PluginCollection.getInstance()
+dbPath = getProperty('ij.dir') + '/db.xml.gz'
+plugins = PluginCollection()
+XMLFileReader(plugins).read(None, GZIPInputStream(FileInputStream(dbPath)))
 
 def addPreviousVersion(plugin, checksum, timestamp):
 	p = plugins.getPlugin(plugin)
@@ -53,5 +52,6 @@ def addPreviousVersions(path):
 
 addPreviousVersions('')
 
-XMLFileWriter.writeAndValidate(dbPath[:-3])
-system('gzip -9f ' + dbPath[:-3])
+writer = XMLFileWriter(plugins)
+writer.validate()
+writer.write(GZIPOutputStream(FileOutputStream(dbPath)))

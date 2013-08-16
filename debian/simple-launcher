@@ -15,9 +15,17 @@ then
         export JAVA_HOME=$FIJI_JAVA_HOME
     else
         export JAVA_HOME=@@INSTALLED_JVM_ROOT@@
+        if [ ! -e "$JAVA_HOME/lib/tools.jar"  ]
+        then
+            # Then it may be that this is a system
+            # where we need to use
+            # /usr/lib/jvm/java-6-openjdk-i386/ (etc.)
+            # instead of /usr/lib/jvm/java-6-openjdk/
+            export JAVA_HOME=$(echo $JAVA_HOME | sed 's,/*$,,')-$(dpkg --print-architecture)
+        fi
     fi
 fi
 
 export LD_LIBRARY_PATH=@@LD_LIBRARY_PATH@@:$(cat /usr/lib/fiji/jni/*.conf 2> /dev/null | tr '\n' ':')
 
-/usr/lib/fiji/fiji -Dfiji.debian=true --class-path @@ADDITIONAL_JARS@@ --fiji-dir /usr/lib/fiji/ -- "$@"
+/usr/lib/fiji/ImageJ -Dfiji.debian=true --java-home "$JAVA_HOME" --class-path @@ADDITIONAL_JARS@@ --ij-dir /usr/lib/fiji/ -- "$@"

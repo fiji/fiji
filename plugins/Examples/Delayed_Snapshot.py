@@ -11,7 +11,7 @@ import time
 
 def snapshot(delay):
    time.sleep(delay)
-   IJ.doCommand('Capture Screen ')
+   IJ.doCommand('Capture Screen')
 
 gd = GenericDialog('Delay')
 gd.addSlider('Delay (secs.): ', 0, 20, 5)

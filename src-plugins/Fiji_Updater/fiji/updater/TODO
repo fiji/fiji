@@ -1,8 +1,22 @@
-Show-stoppers:
+What does not work yet:
 
-- Add a context menu to trigger actions
+- Transfer modes other than SSH, e.g. FTP, SFTP, CIFS (Windows share) or
+  DAV (HTTP "PUT"), are not implemented, although it is possible to add
+  them in the future, if needed.
 
-Not-quite show-stoppers:
+- it is not scriptable enough just yet, that is: you cannot easily
+  integrate the uploading of a nightly build to a "nightly build" site.
+
+- there are still ugly usability bugs (sometimes it seems to lag due to
+  doing unnecessary processing of plugins, etc)
+
+- there is no easy "Add Micro Manager" button in the "Manage Update Sites"
+  dialog yet (which would add the site without SSH information, of
+  course) :-)
+
+Other (nice-to-haves, longer-term goals):
+
+- Think about reusing maven's repository structure for the update sites
 
 - If the developer tries to upload a version that has already be marked
   as a previous version, ask her loudly if she is sure.

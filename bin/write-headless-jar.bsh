@@ -1,0 +1,4 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji */
+
+fiji.Headless.main(new String[0]);

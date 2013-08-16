@@ -1,0 +1,35 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji */
+
+/*
+This script checks several preconditions of .jar files before uploading:
+
+- the source files should be committed
+- the latest commit touching the source files should be pushed
+- Fiji Build should report it as up-to-date
+- no stale leftover files from old versions
+- no debug information in the .class files
+*/
+
+myexit(exitCode, fallBackToException) {
+	if (ij.IJ.getInstance() == null)
+		System.exit(exitCode);
+	else if (fallBackToException && exitCode != 0)
+		throw new RuntimeException("Status: " + exitCode);
+}
+
+if (bsh.args.length == 0) {
+	print("Usage: " + this.interpreter.getSourceFileInfo()
+		+ " <file>...");
+	myexit(1, true);
+}
+
+import fiji.scripting.ReadyForUpload;
+
+checker = new ReadyForUpload(System.err);
+
+exitCode = 0;
+for (String arg : bsh.args)
+	if (!checker.check(arg))
+		exitCode = 1;
+myexit(exitCode, false);

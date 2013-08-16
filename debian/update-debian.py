@@ -1,6 +1,7 @@
-#!/usr/bin/python2.6
+#!/usr/bin/python
 
 import os
+import stat
 import sys
 import urllib2
 import re
@@ -13,6 +14,7 @@ from lxml import etree
 from subprocess import call, check_call, Popen, PIPE
 from common import *
 import textwrap
+from tempfile import NamedTemporaryFile
 
 # On Ubuntu and Debian, the required Java3D jars are in these packages:
 #
@@ -70,10 +72,10 @@ package_name_to_file_matchers = {
         [ "jars/autocomplete.jar" ],
 
     "fiji-base" :
-        [ "fiji-linux",
-          "fiji-linux64",
+        [ "ImageJ-linux32",
+          "ImageJ-linux64",
           "jars/fake.jar",
-          "misc/Fiji.jar",
+          "misc/ij-launcher.jar",
           "plugins/Fiji_Updater.jar",
           "plugins/Bug_Submitter.jar",
           "jars/fiji-lib.jar",
@@ -112,7 +114,11 @@ package_name_to_file_matchers = {
           "jars/jai_core.jar" ],
 
     "fiji-imglib" :
-        [ "jars/imglib.jar" ],
+        [ "jars/imglib.jar",
+          "jars/imglib-scripting.jar",
+          "jars/imglib-algorithms.jar",
+          "jars/imglib-ij.jar",
+          "jars/imglib-io.jar" ],
 
     "fiji-vib" :
         [ "plugins/VIB_.jar",
@@ -145,6 +151,9 @@ package_name_to_file_matchers = {
     "fiji-lsm-reader" :
         [ "plugins/LSM_Reader.jar" ],
 
+    "fiji-image5d" :
+        [ "plugins/Image_5D.jar" ],
+
     "fiji-loci-tools" :
         [ "plugins/loci_tools.jar" ],
 
@@ -175,7 +184,16 @@ package_name_to_file_matchers = {
         [ "plugins/3D_Viewer.jar" ],
 
     "fiji-tracer" :
-        [ "plugins/Simple_Neurite_Tracer.jar" ]
+        [ "plugins/Simple_Neurite_Tracer.jar" ],
+
+    "fiji-db-registration" :
+        [ "plugins/Descriptor_based_registration.jar" ],
+
+    "fiji-jython" :
+        [ "jars/jython.jar" ],
+
+    "fiji-itext" :
+        [ "jars/itextpdf.jar" ]
 
 }
 
@@ -183,7 +201,10 @@ package_name_to_file_matchers = {
 # version of another package - this is almost always because a file
 # has been moved from one package to another.
 conflicts_and_replaces = {
-    'fiji-3d-viewer' : ( 'fiji-plugins (< 20100821202529)', )
+    'fiji-3d-viewer' : ( 'fiji-plugins (<= 20100821202528)', ),
+    'fiji-imglib' : ( 'fiji-plugins (<= 20110609134243)', ),
+    'fiji-image5d' : ( 'fiji-plugins (<= 20111011070056)', ),
+    'fiji-db-registration' : ( 'fiji-plugins (<= 20111206070018)', )
 }
 
 # A dictionary whose keys are regular expressions that match files in
@@ -197,19 +218,19 @@ conflicts_and_replaces = {
 # less brittle.
 map_to_external_dependencies = {
     'jars/batik\.jar' : ( 'libbatik-java', 'libxml-commons-external-java' ),
-    'jars/jython\.jar' : ( 'jython', ),
     'jars/bsh.*\.jar' : ('bsh', ),
     'jars/clojure.*\.jar' : ( 'clojure', ),
     'jars/junit.*\.jar' : ( 'junit', ),
     'jars/js\.jar' : ( 'rhino', ),
     'jars/Jama.*\.jar': ( 'libjama-java', ),
-    'jars/itext.*\.jar' : ( 'libitext1-java', ),
     'jars/jzlib.*\.jar' : ( 'libjzlib-java', ),
     'jars/jfreechart.*\.jar' : ( 'libjfreechart-java', ),
     'jars/jcommon.*\.jar' : ( 'libjcommon-java', ),
     'jars/jsch.*\.jar' : ( 'libjsch-java', ),
     'jars/postgresql.*\.jar' : ( 'libpg-java', ),
-    'jars/ant.*\.jar' : ( 'ant', 'ant-optional' )
+    'jars/ant.*\.jar' : ( 'ant', 'ant-optional', ),
+    'jars/javassist.*\.jar' : ( 'libjavassist-java', ),
+    'jars/jna\.jar' : ( 'libjna-java', )
 }
 
 # A dictionary that maps a file in the Fiji build tree to tuples of
@@ -217,18 +238,18 @@ map_to_external_dependencies = {
 # an external dependency.
 replacement_files =  {
     'jars/batik.jar' : ( '/usr/share/java/batik-all.jar', '/usr/share/java/xml-apis-ext.jar' ),
-    'jars/bsh-2.0b4.jar' : ( '/usr/share/java/bsh.jar', ),
+    'jars/bsh.jar' : ( '/usr/share/java/bsh.jar', ),
     'jars/clojure.jar' : ( '/usr/share/java/clojure.jar', ),
-    'jars/itext-1.3.jar' : ( '/usr/share/java/itext1.jar', ),
-    'jars/Jama-1.0.2.jar' : ( '/usr/share/java/jama.jar', ),
-    'jars/jcommon-1.0.12.jar' : ( '/usr/share/java/jcommon.jar', ),
-    'jars/jfreechart-1.0.13.jar' : ( '/usr/share/java/jfreechart.jar', ),
+    'jars/Jama.jar' : ( '/usr/share/java/jama.jar', ),
+    'jars/jcommon.jar' : ( '/usr/share/java/jcommon.jar', ),
+    'jars/jfreechart.jar' : ( '/usr/share/java/jfreechart.jar', ),
     'jars/js.jar' : ( '/usr/share/java/js.jar', ),
-    'jars/jsch-0.1.37.jar' : ( '/usr/share/java/jsch.jar', ),
-    'jars/junit-4.5.jar' : ( '/usr/share/java/junit4.jar', ),
-    'jars/jython.jar' : ( '/usr/share/java/jython.jar', ),
-    'jars/jzlib-1.0.7.jar' : ( '/usr/share/java/jzlib.jar', ),
-    'jars/postgresql-8.2-506.jdbc3.jar' : ( '/usr/share/java/postgresql.jar', ),
+    'jars/jsch.jar' : ( '/usr/share/java/jsch.jar', ),
+    'jars/junit.jar' : ( '/usr/share/java/junit4.jar', ),
+    'jars/jzlib.jar' : ( '/usr/share/java/jzlib.jar', ),
+    'jars/postgresql.jar' : ( '/usr/share/java/postgresql.jar', ),
+    'jars/javassist.jar' : ( '/usr/share/java/javassist.jar', ),
+    'jars/jna.jar' : ( '/usr/share/java/jna.jar', ),
     '$TOOLS_JAR' : ('/usr/lib/jvm/java-6-openjdk/lib/tools.jar', ),
     '$JAVA3D_JARS' : ('/usr/share/java/j3dcore.jar', '/usr/share/java/vecmath.jar', '/usr/share/java/j3dutils.jar', )
 }
@@ -347,20 +368,29 @@ options,args = parser.parse_args()
 source_directory = os.path.split(script_directory)[0]
 os.chdir(source_directory)
 
+with open('debian/java-home') as fp:
+    java_home = fp.read().strip()
+
 # ========================================================================
 # Fill in some template information at the top of the changelog, including
 # the current git HEAD:
 
 if options.add_changelog_template:
+    if len(args) == 0:
+        message = "[Fill in the rest of the commit message here.]"
+    elif len(args) == 1:
+        message = args[0]
+    else:
+        raise Exception, "You must provide a single argument with the changelog message"
     suggest_new_version = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
     git_rev = Popen(["git","rev-parse","--verify","HEAD"],stdout=PIPE).communicate()[0].strip()
     fp = open("debian/changelog")
     old_changelog = fp.read()
     fp.close()
     fp = open("debian/changelog","w")
-    fp.write("fiji (%s) unstable; urgency=low\n\n"%(suggest_new_version))
+    fp.write("fiji (%s) unstable; urgency=low\n\n"%(suggest_new_version,))
     fp.write("  * Based on fiji.git at "+git_rev+"\n")
-    fp.write("    [Fill in the rest of the commit message here.]\n")
+    fp.write("    %s\n"%(message))
     fp.write("\n")
     fp.write(" -- Mark Longair <mhl@pobox.com>  "+time.strftime("%a, %d %b %Y %H:%M:%S +0000",time.gmtime())+"\n\n")
     fp.write(old_changelog)
@@ -404,6 +434,8 @@ if options.generate_build_command:
 ## with debian/update-debian --generate-build-command
 
 DEBIAN_DIRECTORY=$(dirname $(readlink -f "$BASH_SOURCE"))
+FIJI_DIRECTORY=$(readlink -f "$DEBIAN_DIRECTORY"/..)
+
 export JAVA_HOME=`cat "$DEBIAN_DIRECTORY"/java-home`
 JAVAC_PATH=$JAVA_HOME/bin/javac
 
@@ -415,7 +447,19 @@ fi
 
 echo In build-command, found JAVA_HOME was $JAVA_HOME
 
-sh -x Fake.sh FALLBACK=false VERBOSE=true \\
+# These lines are taken from Build.sh to ensure that Fake
+# is built:
+source_dir=src-plugins/fake
+source=$source_dir/fiji/build/*.java
+export SYSTEM_JAVAC=$JAVA_HOME/bin/javac
+export SYSTEM_JAVA=$JAVA_HOME/bin/java
+
+mkdir -p "$FIJI_DIRECTORY"/build &&
+  $SYSTEM_JAVAC -d "$FIJI_DIRECTORY"/build/ "$FIJI_DIRECTORY"/$source &&
+  $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake ImageJ &&
+  $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake jars/fake.jar
+
+./ImageJ --build --java-home "$JAVA_HOME" -- FALLBACK=false VERBOSE=true \\
 ''')
         for k in sorted(new_classpaths.keys()):
             f.write('    "CLASSPATH(%s)=%s" \\\n' % (k,':'.join(sorted(new_classpaths[k]))))
@@ -480,6 +524,7 @@ if options.install or options.generate_complete_control or options.generate_sour
     directories_to_walk = [ "plugins",
                             "misc",
                             "jars",
+                            "scripts",
                             "luts",
                             "macros",
                             "images" ]
@@ -608,19 +653,22 @@ if options.clean:
                   "staged-plugins/TransformJ_.config",
                   "staged-plugins/TransformJ_.jar" ]
 
+    # Remove MacAdapter
+    to_remove.append("modules/ImageJA/src/main/java/MacAdapter.java")
+
     # Also remove submodules which are now provided by external dependencies:
     to_remove.append("batik")
     to_remove.append("java/linux")
     to_remove.append("java/linux-amd64")
     to_remove.append("java/macosx-java3d")
-    to_remove.append("src-plugins/Jama-1.0.2")
+    to_remove.append("src-plugins/Jama")
     to_remove.append("java/win32")
     to_remove.append("java/win64")
     to_remove.append("livehelper")
     to_remove.append("Retrotranslator")
-    to_remove.append("jython")
     to_remove.append("clojure")
     to_remove.append("junit")
+    to_remove.append("javassist")
 
     # Remove files that are now provided by external dependencies.
     # FIXME: This list could (and should) be taken from the keys of
@@ -628,7 +676,6 @@ if options.clean:
     to_remove.append("jars/js.jar")
     to_remove.append("jars/bsh*.jar")
     to_remove.append("jars/Jama*.jar")
-    to_remove.append("jars/itext*.jar")
     to_remove.append("jars/jzlib*.jar")
     to_remove.append("jars/jcommon*.jar")
     to_remove.append("jars/jfreechart*.jar")
@@ -657,29 +704,55 @@ if options.clean:
         if skip_next_line:
             skip_next_line = False
             continue
-        if re.search("TurboReg_",line):
-            continue
-        if re.search("TransformJ_",line):
-            continue
-        if re.search("(^\s*jars|precompiled)/jython.jar",line):
-            continue
-        if re.search("(^\s*jars|precompiled)/clojure.jar",line):
-            continue
-        if re.search("(^\s*jars|precompiled)/junit-4.5.jar",line):
-            continue
-        if re.search("(^\s*jars|precompiled)/batik.jar",line):
-            continue
+        # Don't exclude the dummy targets:
+        if not re.search('\[\] *<- *$',line):
+            if re.search("TurboReg_",line):
+                continue
+            if re.search("TransformJ_",line):
+                continue
+            if re.search("(^\s*jars|precompiled)/clojure.jar",line):
+                continue
+            if re.search("(^\s*jars|precompiled)/javassist.jar",line):
+                continue
+            if re.search("(^\s*jars|precompiled)/jsch.jar",line):
+                continue
+            if re.search("(^\s*jars|precompiled)/junit.jar",line):
+                continue
+            if re.search("(^\s*jars|precompiled)/batik.jar",line):
+                continue
         if re.search("^\s*missingPrecompiledFallBack",line):
             skip_next_line = True
             continue
-        # grrr, src-plugins/Jama-1.0.2 seems particularly awkward to
+        for old_file, replacement_tuple in replacement_files.items():
+            replacement_string = ':'.join(replacement_tuple)
+            line = re.sub(re.escape(old_file), replacement_string, line)
+        # grrr, src-plugins/Jama seems particularly awkward to
         # get rid of.  Probably should do everything like this, just
         # rewrite the Fakefile entirely, with a proper parser of the
         # format.  FIXME FIXME FIXME
-        line = re.sub('\s+jars/Jama-1\.0\.2\.jar\s+',' ',line)
-        line = re.sub('jars/Jama-1\.0\.2\.jar','/usr/share/java/jama.jar',line)
+        line = re.sub('\s+jars/Jama.jar\s+',' ',line)
+        line = re.sub('jars/Jama.jar','/usr/share/java/jama.jar',line)
         fp.write(line)
     fp.close()
+
+    # Hopefully there'll be a better fix for this at some stage, but
+    # for the moment rewrite any occurence of "ImageJ --ant" in
+    # staged-plugins/* and bin/build-jython.sh to include the
+    # --java-home parameter:
+
+    files_to_rewrite = [ os.path.join('staged-plugins',s) for s in os.listdir('staged-plugins') ]
+    files_to_rewrite.append('bin/build-jython.sh')
+
+    for filename in files_to_rewrite:
+        original_permissions = stat.S_IMODE(os.stat(filename).st_mode)
+        with NamedTemporaryFile(delete=False) as tfp:
+            with open(filename) as original:
+                for line in original:
+                    line = re.sub('../../ImageJ\s+',"../../ImageJ --java-home '%s' "%(java_home,),line)
+                    line = re.sub('/../bin/jar','/bin/jar',line)
+                    tfp.write(line)
+        os.chmod(tfp.name, original_permissions)
+        os.rename(tfp.name, original.name)
 
     # Remove all the files in precompiled - we want to build
     # everything from source:
@@ -693,7 +766,7 @@ if options.generate_complete_control or options.all_dependencies or options.depe
     # generated by looking at which classes are referenced in each jar
     # file, and finding the jar that contains those classes.)
 
-    package_url = 'http://pacific.mpi-cbg.de/update/db.xml.gz'
+    package_url = 'http://fiji.sc/update/db.xml.gz'
 
     if True:
         f = urllib2.urlopen(package_url)
@@ -943,7 +1016,7 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
             for package_name, most_recent_requirement in required_packages.items():
                 print "   requires "+ package_version_to_string(package_name,most_recent_requirement)
 
-            dependencies = []
+            dependencies = ['openjdk-6-jdk']
             if required_packages:
                 for dependent_package, timestamp in required_packages.items():
                     dependencies.append(package_version_to_string(dependent_package,timestamp))

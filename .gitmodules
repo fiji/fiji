@@ -1,69 +1,36 @@
 [submodule "ImageJA"]
-	path = ImageJA
-	url = ssh://mob@repo.or.cz/srv/git/imageja.git
-[submodule "TrakEM2"]
-	path = TrakEM2
-	url = ssh://mob@repo.or.cz/srv/git/trakem2.git
+	path = modules/ImageJA
+	url = git://github.com/fiji/ImageJA
 [submodule "java/linux"]
 	path = java/linux
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/java/linux.git
+	url = http://fiji.sc/java/linux.git
 [submodule "java/linux-amd64"]
 	path = java/linux-amd64
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/java/linux-amd64.git
+	url = http://fiji.sc/java/linux-amd64.git
 [submodule "java/macosx-java3d"]
 	path = java/macosx-java3d
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/java/macosx-java3d.git
+	url = http://fiji.sc/java/macosx-java3d.git
 [submodule "java/win32"]
 	path = java/win32
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/java/win32.git
+	url = http://fiji.sc/java/win32.git
 [submodule "java/win64"]
 	path = java/win64
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/java/win64.git
-[submodule "micromanager1.1"]
-	path = micromanager1.1
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/micromanager1.1/.git
+	url = http://fiji.sc/java/win64.git
 [submodule "mpicbg"]
-	path = mpicbg
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/mpicbg.git
-[submodule "clojure"]
-	path = clojure
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/clojure/
-[submodule "bio-formats"]
-	path = bio-formats
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/bio-formats
+	path = modules/mpicbg
+	url = https://github.com/axtimwalde/mpicbg
+[submodule "TrakEM2"]
+	path = modules/TrakEM2
+	url = https://github.com/fiji/TrakEM2
 [submodule "ij-plugins"]
-	path = ij-plugins
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/ij-plugins
-[submodule "Retrotranslator"]
-	path = Retrotranslator
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/Retrotranslator
-[submodule "tcljava"]
-	path = tcljava
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/tcljava
-[submodule "batik"]
-	path = batik
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/batik/.git
-[submodule "junit"]
-	path = junit
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/junit
-[submodule "RSyntaxTextArea"]
-	path = RSyntaxTextArea
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/RSyntaxTextArea
-[submodule "AutoComplete"]
-	path = AutoComplete
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/AutoComplete
-[submodule "live-helper"]
-	path = live-helper
-	url = git://git.debian.net/git/debian-live/live-helper.git
+	path = modules/ij-plugins
+	url = http://fiji.sc/ij-plugins/.git
 [submodule "weka"]
-	path = weka
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/weka/
-[submodule "jython"]
-	path = jython
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/jython/.git
+	path = modules/weka
+	url = http://fiji.sc/weka/.git
 [submodule "imglib"]
-	path = imglib
-	url = contrib@pacific.mpi-cbg.de:/srv/git/imglib.git
-[submodule "commons-math"]
-	path = commons-math
-	url = contrib@pacific.mpi-cbg.de:/srv/git/commons-math
+	path = modules/imglib
+	url = git://github.com/imagej/imglib
+[submodule "imagej2"]
+	path = modules/imagej2
+	url = git://github.com/imagej/imagej

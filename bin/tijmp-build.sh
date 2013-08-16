@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"/..
 
-JAVA_HOME="$(./fiji --print-java-home 2>&1)" &&
+JAVA_HOME="$(./ImageJ --print-java-home 2>&1)" &&
 case "$1" in
 mingw*)
 	JAVA_HOME_BUILD=$JAVA_HOME &&
@@ -27,7 +27,7 @@ mingw*)
 esac &&
 if test ! -d tijmp
 then
-	git clone git://pacific.mpi-cbg.de/tijmp
+	git clone git://fiji.sc/tijmp
 fi &&
 (cd tijmp &&
  if ! grep no-undefined src/Makefile.am 2>/dev/null > /dev/null

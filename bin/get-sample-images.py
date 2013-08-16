@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/ImageJ.sh --jython "$0" "$@" # (call again with fiji)'''
 
 # Fetch all the samples into a local directory
 
@@ -22,10 +22,10 @@ import urllib
 # force initialization
 IJ.runMacro("", "")
 
-menu = User_Plugins.getMenuItem('File>Open Samples')
+menu = FijiTools.getMenuItem('File>Open Samples')
 commands = Menus.getCommands()
 plugin = 'ij.plugin.URLOpener("'
-samples = System.getProperty('fiji.dir') + '/samples'
+samples = System.getProperty('ij.dir') + '/samples'
 
 class FileSizeReporter(Thread):
 	def __init__(self, name, path):

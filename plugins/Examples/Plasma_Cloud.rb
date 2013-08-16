@@ -2,7 +2,7 @@
 # JRuby.  This is *very* slow way of implementing this, but hopefully
 # it's an instructive example.  See this page for more details:
 #
-#   http://pacific.mpi-cbg.de/wiki/index.php/JRuby_Scripting
+#   http://fiji.sc/wiki/index.php/JRuby_Scripting
 
 # ------------------------------------------------------------------------
 

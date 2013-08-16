@@ -1,0 +1,38 @@
+09th January 2012:
+------------------
+* Buf fixes.
+* Make mesh import/export macro-recordable
+  (thanks to Johannes Schindelin)
+* Bug fixes in the surface plot functions, thanks to Johannes Schindelin
+* Make 'Export transformed' macro-recordable
+* Correct drawing of 4D buttons on Mac OSX
+* Make bounding-box text always aligned in x- and y-direction of the view.
+* Real annotations: display text together with landmark points
+* User-adjustable keyboard shortcuts.
+* A completely restructured menu bar
+* A context menu
+* Possibility to add primitive 3D shapes like spheres, boxes, cones & tubes.
+* Mesh decimation to simplify and surface meshes and make them less
+  memory-consuming and thus faster renderable
+* Snapshots are now macro-recordable.
+
+06th July 2011:
+---------------
+* Support for exporting meshes to .u3d files, which can be embedded into PDFs, allowing for interactive 3D content in PDFs (using Adobe's Acrobat Reader)
+  (find a screencast at http://3dviewer.neurofly.de/?category=Documentation&page=Screencasts).
+* Allow to change light color and intensity of the 3D universe.
+* Volume renderings can now be 'saturated': This mode provides a better visualization of thin fibres in images (thanks to Stephan Saalfeld)
+* Support for a new Content type, MultiOrthoslices (with help from Albert Cardona)
+* The color of landmark points can now be changed, thanks to Johannes Schindelin
+* New controllable mesh smoothing (thanks to Albert Cardona)
+* Fullscreen support.
+* A 'Take snapshot' menu item which lets you choose the target image size.
+* Replace AWT with Swing for the GUI.
+* Syncing of several 3D Viewer windows.
+* Several menu items like 'Change Color' will now work without selectiing an object,
+  if only one object is present.
+* Transfer functions: Arbitrary transfer functions for each individual channel
+  (find a screencast at http://3dviewer.neurofly.de/?category=Documentation&page=Screencasts).
+* Reader and exporter for the STL format (thanks to Michael Doube)
+* Calibration ticks on bounding boxes
+* Several bug fixes

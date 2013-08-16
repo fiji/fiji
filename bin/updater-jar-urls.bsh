@@ -1,0 +1,26 @@
+import imagej.updater.ui.CommandLine;
+
+setAccessibility(true);
+
+c = new CommandLine();
+c.ensureChecksummed();
+swingUI = c.files.get("jars/ij-ui-swing-updater.jar");
+list = new ArrayList();
+prefix = null;
+for (Object f : swingUI.getFileDependencies(c.files, true)) {
+	url = c.files.getURL(f);
+	if (prefix == null) prefix = url;
+	else while (!url.startsWith(prefix)) {
+		prefix = prefix.substring(0, prefix.length() - 1);
+	}
+	list.add(url);
+}
+builder = new StringBuilder();
+builder.append("baseURL = '" + prefix + "';\n");
+builder.append("jars = [\n");
+for (String url : list) {
+	builder.append("\t'" + url.substring(prefix.length()) + "',\n");
+}
+builder.setLength(builder.length() - 2);
+builder.append("\n];\n");
+print(builder.toString());

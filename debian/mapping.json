@@ -1,0 +1,47 @@
+{"fiji:junit:4.5":
+ {"package": "junit4",
+  "jar": "/usr/share/java/junit4.jar"},
+ "fiji:Jama:1.0.2":
+ {"package": "libjama-java",
+  "jar": "/usr/share/java/jama.jar"},
+ "fiji:jzlib:1.0.7":
+ {"package": "libjzlib-java",
+  "jar": "/usr/share/java/jzlib.jar"},
+ "junit:junit:4.8.1":
+ {"package": "junit4",
+  "jar": "/usr/share/java/junit4.jar"},
+ "com.miglayout:miglayout:${miglayout.version}":
+ {"package": "libmiglayout-java",
+  "jar": "/usr/share/java/miglayout.jar"},
+ "org.slf4j:slf4j-api:1.5.10":
+ {"package": "libslf4j-java",
+  "jar" : "/usr/share/java/slf4j-api.jar"},
+ "log4j:log4j:1.2.14":
+ {"package": "liblog4j1.2-java",
+  "jar" : "/usr/share/java/log4j-1.2.jar"},
+ "org.slf4j:slf4j-log4j12:1.5.10":
+ {"package": "libslf4j-java",
+  "jar": "/usr/share/java/log4j-over-slf4j.jar"},
+ "org.testng:testng:5.12.1":
+ {"package": "testng",
+  "jar": "/usr/share/java/testng.jar"},
+ "com.jgoodies:forms:1.2.1":
+ {"package": "libjgoodies-forms-java",
+  "jar": "/usr/share/java/forms.jar"},
+ "imagej:ij:1.43u":
+ {"package": "imagej",
+  "jar": "/usr/share/java/ij.jar"},
+ "essi-unidata:netcdf-java:4.0.41":
+ {"error": "missing: see ITP http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=641447"},
+ "xalan:serializer:2.7.1":
+ {"package": "libxalan2-java",
+  "jar": "/usr/share/java/serializer.jar"},
+ "xalan:xalan:2.7.1":
+ {"package": "libxalan2-java",
+  "jar": "/usr/share/java/xalan2.jar"},
+ "com.sun:clibwrapper_jiio":
+ {"error": "missing: need to find"},
+ "commons-logging:commons-logging:1.1.1":
+ {"package": "libcommons-logging-java",
+  "jar": "/usr/share/java/commons-logging.jar"}
+}

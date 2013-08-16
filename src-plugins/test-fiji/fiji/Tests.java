@@ -11,13 +11,13 @@ import junit.framework.TestSuite;
 import org.junit.runner.JUnitCore;
 
 public class Tests extends TestSuite {
-	
+
 	public Tests() {
 		addScriptTests();
 	}
 
 	void addScriptTests() {
-		String path = System.getProperty("fiji.dir") + "/tests";
+		String path = System.getProperty("ij.dir") + "/tests";
 		File dir = new File(path);
 		String[] list = dir.list();
 		for (String file : list)
@@ -48,18 +48,18 @@ public class Tests extends TestSuite {
 		return new Tests();
 	}
 
-	protected static String fijiExecutable;
+	protected static String ijExecutable;
 
 	public static boolean runFiji(String[] args) {
-		if (fijiExecutable == null) {
-			fijiExecutable = System.getProperty("fiji.executable");
-			if (fijiExecutable == null)
+		if (ijExecutable == null) {
+			ijExecutable = System.getProperty("ij.executable");
+			if (ijExecutable == null)
 				throw new RuntimeException("Could not find the "
-					+ "fiji executable");
+					+ "ImageJ executable");
 		}
 
 		String[] newArgs = new String[args.length + 1];
-		newArgs[0] = fijiExecutable;
+		newArgs[0] = ijExecutable;
 		System.arraycopy(args, 0, newArgs, 1, args.length);
 
 		try {

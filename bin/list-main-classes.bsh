@@ -1,0 +1,50 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh --bsh "$0" "$@" # exec with fiji */
+
+import fiji.FijiClassLoader;
+
+import java.util.Collections;
+
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+if (bsh.args.length < 1) {
+	print("Usage: " + this.interpreter.getSourceFileInfo() + "( --all | <file.jar>...)");
+	System.exit(1);
+}
+
+if (bsh.args.length == 1 && bsh.args[0].equals("--all"))
+	jars = System.getProperty("java.class.path").split(File.pathSeparator);
+else
+	jars = bsh.args;
+
+classLoader = new FijiClassLoader();
+args = new Class[] { String[].class };
+
+hasMainMethod(name) {
+	try {
+		c = classLoader.loadClass(name);
+		return c.getMethod("main", args) != null;
+	} catch (NoSuchMethodException e) {
+		return false;
+	} catch (Throwable e) {
+		e.printStackTrace();
+		return false;
+	}
+}
+
+for (String jar : jars) try {
+	classLoader.addPath(jar);
+	zip = new ZipFile(jar);
+	for (ZipEntry entry : Collections.list(zip.entries())) {
+		// ["fiji/updater/Main.class"]: # zip.namelist():
+		file = entry.getName();
+		if (!file.endsWith(".class"))
+			continue;
+		name = file.substring(0, file.length() - 6).replace('/', '.');
+		if (hasMainMethod(name))
+			print("main class " + name + " found in jar " + jar);
+	}
+} catch (Throwable e) {
+	e.printStackTrace();
+}

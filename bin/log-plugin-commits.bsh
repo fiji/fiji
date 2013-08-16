@@ -1,43 +1,13 @@
 #!/bin/sh
-/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+/*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji */
 
 /*
  * This script helps to identify the commits performed on plugins since they
  * were uploaded last time.
  */
 
-import fiji.CheckClassVersions;
-
-import fiji.build.Fake;
-
-import fiji.updater.Updater;
-
-import fiji.updater.logic.PluginCollection;
-import fiji.updater.logic.XMLFileReader;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-
-import java.net.URL;
-
-import java.text.SimpleDateFormat;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-
-import java.util.jar.JarInputStream;
-import java.util.jar.Manifest;
-
-import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipEntry;
+import fiji.scripting.FileFunctions;
+import fiji.scripting.LogComponentCommits;
 
 usage() {
 	usage(null);
@@ -55,6 +25,7 @@ usage(message) {
 fuzz = 0;
 verbose = 0;
 gui = false;
+color = false;
 extraArgs = new ArrayList();
 
 while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
@@ -66,6 +37,8 @@ while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
 		handled = 2;
 	}
 	else if (bsh.args[0].equals("-p") || bsh.args[0].equals("--color")) {
+		if (bsh.args[0].equals("--color"))
+			color = true;
 		extraArgs.add(bsh.args[0]);
 		if (bsh.args[0].equals("-p")) {
 			extraArgs.add("-M");
@@ -88,321 +61,9 @@ while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
 if (bsh.args.length == 0)
 	usage();
 
-// Read the database
-
-fijiDir = System.getProperty("fiji.dir");
-dbPath = fijiDir + "/db.xml.gz";
-new XMLFileReader(new GZIPInputStream(new FileInputStream(dbPath)), 0);
-
-plugins = PluginCollection.getInstance();
-
-// Read the Fakefile
-
-fake = new Fake();
-parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
-parser.parseRules(new ArrayList());
-
-public class Outputter extends Thread {
-	InputStream in;
-	PrintStream out;
-
-	public Outputter(InputStream in, PrintStream out) {
-		this.in = in;
-		this.out = out;
-	}
-
-	public void run() {
-		byte[] buffer = new byte[65536];
-		for (;;) {
-			int count = in.read(buffer);
-			if (count < 0)
-				break;
-			out.write(buffer, 0, count);
-		}
-		in.close();
-	}
-}
-
-int execute(String[] cmdarray, File directory) {
-	return execute(cmdarray, directory, System.out);
-}
-
-int execute(String[] cmdarray, File directory, OutputStream out) {
-	return execute(cmdarray, directory, new PrintStream(out));
-}
-
-int execute(String[] cmdarray, File directory, PrintStream outWriter) {
-	process = Runtime.getRuntime().exec(cmdarray, null, directory);
-	new Outputter(process.getInputStream(), outWriter).start();
-	new Outputter(process.getErrorStream(), System.err).start();
-	return process.waitFor();
-}
-
-ArrayList getZipItems(URL url) {
-	result = new ArrayList();
-	try {
-		in = new JarInputStream(url.openStream());
-		for (;;) {
-			entry = in.getNextEntry();
-			if (entry == null)
-				break;
-			result.add(entry);
-		}
-		in.close();
-	} catch (FileNotFoundException e) {
-		return result;
-	}
-	Collections.sort(result, new Comparator() {
-		public int compare(Object o1, Object o2) {
-			return ((ZipEntry)o1).getName().compareTo(((ZipEntry)o2).getName());
-		}
-
-		public boolean equals(Object o) {
-			return false;
-		}
-	});
-	return result;
-}
-
-tempDir = null;
-
-getTempDir() {
-	if (tempDir == null) {
-		file = File.createTempFile("jar-dir-", "");
-		file.delete();
-		file.mkdir();
-		tempDir = file.getAbsolutePath();
-	}
-	return tempDir;
-}
-
-void copyFile(InputStream in, OutputStream out) {
-	byte[] buffer = new byte[16384];
-	for (;;) {
-		count = in.read(buffer);
-		if (count < 0)
-			break;
-		out.write(buffer, 0, count);
-	}
-	in.close();
-	out.close();
-}
-
-toStringArray(list) {
-	return list.toArray(new String[list.size()]);
-}
-
-javap(String jar, String className, String outputFile) {
-	args = new ArrayList(Arrays.asList(new String[] {
-		System.getProperty("fiji.executable"),
-			"--javap", "-cp", jar, "-c",
-	}));
-	if (verbose > 1)
-		args.add("-verbose");
-	args.add(className);
-	execute(toStringArray(args), null, new FileOutputStream(outputFile));
-}
-
-// file == outputFile is handled correctly, thanks to the byte array
-hexdump(String file, String outputFile) {
-	out = new ByteArrayOutputStream();
-	execute(new String[] { "hexdump", "-C", file }, null, out);
-	copyFile(new ByteArrayInputStream(out.toByteArray()), new FileOutputStream(outputFile));
-}
-
-String toString(Map map, Object key) {
-	return "'" + key + "' => '" + map.get(key) + "'";
-}
-
-void showMapDiff(String label, Map remoteMap, localMap) {
-	remote = new ArrayList(remoteMap.keySet());
-	local = new ArrayList(localMap.keySet());
-
-	int i = 0, j = 0;
-	while (i < remote.size() || j < local.size())
-		if (i == remote.size() || (j < local.size() && remote.get(i).toString().compareTo(local.get(j).toString()) > 0)) {
-			System.out.println("Local " + label + ": " + toString(localMap, local.get(j)));
-			j++;
-		} else if (j == local.size() || (i < remote.size() && remote.get(i).toString().compareTo(local.get(j).toString()) < 0)) {
-			System.out.println("Remote " + label + ": " + toString(remoteMap, remote.get(i)));
-			i++;
-		} else {
-			e1 = remoteMap.get(local.get(j));
-			e2 = localMap.get(local.get(j));
-			if (!e1.equals(e2))
-				System.out.println("Differences in " + label + ": '" + local.get(j) + "' => '" + e1 + "' != '" + e2 + "'");
-			i++; j++;
-		}
-}
-
-void showManifestDiff(remoteURL, localURL) {
-	remoteIn = new JarInputStream(new URL(remoteURL).openStream());
-	localIn = new JarInputStream(new URL(localURL).openStream());
-	remoteManifest = remoteIn.getManifest();
-	localManifest = localIn.getManifest();
-	if (remoteManifest == null)
-		remoteManifest = new Manifest();
-	if (localManifest == null)
-		localManifest = new Manifest();
-	showMapDiff("manifest", remoteManifest.getEntries(), localManifest.getEntries());
-	showMapDiff("main attribute", remoteManifest.getMainAttributes(), localManifest.getMainAttributes());
-	remoteIn.close();
-	localIn.close();
-}
-
-void compareToUploaded(String plugin) {
-	p = plugins.getPlugin(plugin);
-	if (p == null) {
-		System.out.println(plugin + " is not a Fiji component");
-		return;
-	}
-	remotePath = null;
-	remoteURL = Updater.MAIN_URL + p.filename + "-" + p.timestamp;
-	remote = getZipItems(new URL(remoteURL));
-	localPath = System.getProperty("fiji.dir") + "/" + plugin;
-	localURL = "file:" + localPath;
-	local = getZipItems(new URL(localURL));
-
-	System.out.println("Differences between the local and remote " + plugin);
-	showManifestDiff(remoteURL, localURL);
-
-	int i = 0, j = 0;
-	while (i < remote.size() || j < local.size())
-		if (i == remote.size()) {
-			System.out.println("Local file: " + local.get(j));
-			j++;
-		} else if (j == local.size()) {
-			System.out.println("Remote file: " + remote.get(i));
-			i++;
-		} else {
-			e1 = remote.get(i);
-			e2 = local.get(j);
-			if (e1.getName().equals(e2.getName())) {
-				s1 = e1.getSize();
-				s2 = e2.getSize();
-				h1 = e1.getCrc();
-				h2 = e2.getCrc();
-				if (s1 != s2 || h1 != h2) {
-					System.out.println("Differences in " + e1);
-					System.out.println((s1 != s2 ? ("Size difference " + s1 + " != " + s2) : "")
-						+ " " + (h1 != h2 ? ("Hash difference " + h1 + " != " + h2) : ""));
-					if (verbose > 0) {
-						tmp = getTempDir();
-						tmpJar = tmp + "/tmp.jar";
-						if (remotePath == null)
-							copyFile(new URL(remoteURL).openStream(), new FileOutputStream(tmpJar));
-						localFile = tmp + "/local";
-						remoteFile = tmp + "/remote";
-						copyFile(new URL("jar:" + remoteURL + "!/" + e1.getName()).openStream(), new FileOutputStream(remoteFile));
-						copyFile(new URL("jar:" + localURL + "!/" + e1.getName()).openStream(), new FileOutputStream(localFile));
-						if (e1.getName().endsWith(".class")) {
-							remoteVersion = CheckClassVersions.getClassVersion(new FileInputStream(remoteFile));
-							localVersion = CheckClassVersions.getClassVersion(new FileInputStream(localFile));
-							if (remoteVersion != localVersion)
-								System.out.println("class versions differ! remote: " + remoteVersion + ", local: " + localVersion);
-						}
-						if (verbose > 2) {
-							hexdump(remoteFile, remoteFile);
-							hexdump(localFile, localFile);
-						}
-						else if (e1.getName().endsWith(".class")) {
-							className = e1.getName();
-							className = className.substring(0, className.length() - 6).replace('/', '.');
-							javap(tmpJar, className, remoteFile);
-							javap(localPath, className, localFile);
-						}
-						execute(new String[] { "git", "diff", "--no-index", remoteFile, localFile }, null);
-					}
-				}
-				i++; j++;
-			} else if (e1.getName().compareTo(e2.getName()) < 0) {
-				System.out.println("Remote file: " + remote.get(i));
-				i++;
-			} else {
-				System.out.println("Local file: " + local.get(j));
-				j++;
-			}
-		}
-}
-
-calendar = Calendar.getInstance();
-dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-for (String arg : bsh.args) {
-	if (gui) {
-		import fiji.scripting.FileFunctions;
-		new FileFunctions(null).showPluginChangesSinceUpload(arg, verbose);
-		continue;
-	}
-	plugin = arg;
-	if (plugin.startsWith("precompiled/"))
-		plugin = plugin.substring(12);
-	p = plugins.getPlugin(plugin);
-	if (p == null) {
-		System.out.println("Not uploaded: " + plugin);
-		continue;
-	}
-	timestamp = p.getTimestamp();
-	calendar.set((int)((timestamp / 10000000000l) % 10000),
-		(int)((timestamp / 100000000l) % 100) - 1,
-		(int)((timestamp / 1000000l) % 100),
-		(int)((timestamp / 10000l) % 100),
-		(int)((timestamp / 100l) % 100),
-		(int)(timestamp % 100));
-	message = since = dateFormat.format(calendar.getTime());
-	if (fuzz != 0) {
-		calendar.setTimeInMillis(calendar.getTimeInMillis() - 60000l * fuzz);
-		since = dateFormat.format(calendar.getTime());
-		message += " (-" + fuzz + " minutes) = " + since;
-	}
-
-	rule = parser.getRule(arg);
-
-	extraFiles = new ArrayList();
-	if (rule != null && !rule.getClass().getName().endsWith("SubFake")) {
-		baseName = plugin.substring(plugin.lastIndexOf('/') + 1);
-		if (baseName.endsWith(".jar"))
-			baseName = baseName.substring(0, baseName.length() - 4);
-		for (String file : new String[] {
-			"staged-plugins/" + baseName + ".config",
-			"staged-plugins/" + baseName + ".Fakefile"
-		})
-			extraFiles.add(file);
-	}
-
-	System.out.println("*** Changes in " + arg + " since " + message + " ***");
-	compareToUploaded(arg);
-
-	since = "--since=" + since;
-	String[] cmdarray = new String[5 + extraArgs.size() + extraFiles.size()];
-	i = 0;
-	cmdarray[i++] = "git";
-	cmdarray[i++] = "log";
-	cmdarray[i++] = since;
-	for (String extra : extraArgs)
-		cmdarray[i++] = extra;
-	cmdarray[i++] = "--";
-	for (String extra : extraFiles)
-		cmdarray[i++] = extra;
-	cmdarray[i++] = ".";
-
-	if (rule != null && rule.getClass().getName().endsWith("SubFake"))
-		execute(cmdarray,
-			new File(fijiDir + "/" + rule.getLastPrerequisite()));
-	else if (arg.startsWith("precompiled/fiji-") || arg.startsWith("fiji-")) {
-		cmdarray[cmdarray.length - 1] = "fiji.c";
-		execute(cmdarray, new File(fijiDir));
-	}
-	else {
-		setAccessibility(true);
-		path = rule.prerequisiteString;
-		starstar = path.indexOf("**");
-		if (starstar >= 0)
-			path = path.substring(0, starstar);
-		cmdarray[cmdarray.length - 1] = path;
-		execute(cmdarray, new File(fijiDir));
-	}
-}
-
-if (tempDir != null)
-	execute(new String[] { "rm", "-rf", tempDir }, null);
+if (gui) {
+	f = new FileFunctions(null);
+	for (String component : bsh.args)
+		f.showPluginChangesSinceUpload(component);
+} else
+	new LogComponentCommits(verbose, fuzz, color, System.out, System.err, extraArgs).showChanges(bsh.args);

@@ -1,5 +1,5 @@
 #!/bin/sh
-/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+/*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji */
 
 /*
  * This script helps to identify the plugins that depend directly or
@@ -20,11 +20,11 @@ import java.util.zip.GZIPInputStream;
 
 // Read the database
 
-fijiDir = System.getProperty("fiji.dir");
-dbPath = fijiDir + "/db.xml.gz";
-new XMLFileReader(new GZIPInputStream(new FileInputStream(dbPath)), 0);
+ijDir = System.getProperty("ij.dir");
+dbPath = ijDir + "/db.xml.gz";
+plugins = new PluginCollection();
+new XMLFileReader(plugins).read(null, new GZIPInputStream(new FileInputStream(dbPath)), 0);
 
-plugins = PluginCollection.getInstance();
 dependencees = new TreeMap();
 
 for (PluginObject plugin : plugins)
@@ -49,6 +49,6 @@ addDependencee(filename) {
 			addDependencee(dep);
 }
 
-addDependencee("jars/mpicbg.jar");
+addDependencee(bsh.args.length == 1 ? bsh.args[0] : "jars/mpicbg.jar");
 
 print(deps);

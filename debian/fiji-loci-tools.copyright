@@ -1,0 +1,24 @@
+Bio-Formats is OME software developed by UW-Madison LOCI and Glencoe
+Software.
+
+The library is written by Melissa Linkert, Curtis Rueden, Chris Allan
+and Brian Loranger with past contributions from Eric Kjellman. Other
+contributors include Eric Albert, Jonathan Armond, Simon Blanchoud,
+Ghislain Bonamy, Michel Boudinot, Thomas Caswell, Tony Collins, Dmitry
+Fedorov, Zack Galbreath, Shawn Garbett, Bram Gerritsen, John Hansen,
+Sebastien Huart, Greg Jefferis, Lee Kamentsky, Mikhail Kovtun, Chris
+Lesiak, Cris Luengo, Rubén Muñoz, Martin Offterdinger, Jim Paris, Nick
+Perry, Ville Rantanen, Wayne Rasband, Johannes Schindelin and Brett
+Shoelson.
+
+You can read more about the OME development team on the OME web site:
+
+   https://www.openmicroscopy.org/site/about/development-teams
+
+Bio-Formats is open source software licensed under the GNU General
+Public License (GPL).  The full text of this license can be found in
+/usr/share/common-licenses/GPL
+
+For more information, visit the Bio-Formats web site at:
+
+   http://loci.wisc.edu/software/bio-formats"

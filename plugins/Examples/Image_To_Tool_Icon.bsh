@@ -1,0 +1,64 @@
+/**
+ * This script turns the top left 16x16 pixels of the current image
+ * into an icon string suitable for Tool Icons as described here:
+ * http://rsb.info.nih.gov/ij/developer/macro/macros.html#icons
+ *
+ * It was inspired by Albert Cardona's Image_To_Tool plugin:
+ * http://rierol.net/plugins/Image_To_Tool.java
+ */
+import ij.IJ;
+
+import ij.gui.Toolbar;
+
+ip = IJ.getImage().getProcessor().convertToRGB();
+w = Math.max(16, ip.getWidth());
+h = Math.max(16, ip.getHeight());
+
+toHexString(int x, int y) {
+	return Integer.toHexString(x) + Integer.toHexString(y);
+}
+
+toHexString(double number) {
+	int i = Math.max(0, Math.min(15, (int)Math.round(number)));
+	return Integer.toHexString(i);
+}
+
+toColorString(int value) {
+	return toHexString(((value >> 16) & 0xff) / 16.0)
+		+ toHexString(((value >> 8) & 0xff) / 16.0)
+		+ toHexString((value & 0xff) / 16.0);
+}
+
+backgroundColor = toColorString(Toolbar.getBackgroundColor().getRGB());
+previousColor = "";
+plainIconString = "";
+iconString = "";
+for (int y = 0; y < h; y++) {
+	line = "";
+	for (int x = 0; x < w; x++) {
+		color = toColorString(ip.getPixel(x, y));
+		if (color.equals(backgroundColor))
+			continue;
+		if (!color.equals(previousColor)) {
+			line += "C" + color;
+			previousColor = color;
+		}
+		int x2 = x + 1;
+		while (x2 < w && toColorString(ip.getPixel(x2, y)).equals(color))
+			x2++;
+		if (x2 > x + 1) {
+			line += "L" + toHexString(x, y) + toHexString(x2 - 1, y);
+			x = x2 - 1;
+		}
+		else
+			line += "D" + toHexString(x, y);
+	}
+	if (!line.equals("")) {
+		plainIconString += line;
+		if (iconString.length() > 0)
+			iconString += "+ ";
+		iconString += ("\"" + line + "\"\n");
+	}
+}
+IJ.log("plain icon string:\n" + plainIconString);
+IJ.log("Java icon string:\n" + iconString);

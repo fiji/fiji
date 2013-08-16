@@ -1,0 +1,26 @@
+import ij.IJ;
+import ij.ImagePlus;
+
+import ij.gui.PolygonRoi;
+import ij.gui.ProfilePlot;
+
+image = IJ.getImage();
+roi = image.getRoi();
+if (roi == null) {
+	IJ.error("Need a ROI!");
+	return;
+}
+
+if (roi.isLine()) {
+	new ProfilePlot(image, true).createWindow();
+	return;
+}
+
+polygon = roi.getPolygon();
+// close the polygon
+polygon.addPoint(polygon.xpoints[0], polygon.ypoints[0]);
+roi = new PolygonRoi(polygon, roi.POLYLINE);
+roi.fitSpline();
+dummyImage = new ImagePlus(image.getTitle(), image.getProcessor());
+dummyImage.setRoi(roi);
+new ProfilePlot(dummyImage, true).createWindow();

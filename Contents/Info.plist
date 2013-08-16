@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>ImageJ-tiger</string>
+	<key>CFBundleGetInfoString</key>
+	<string>Fiji for Mac OS X</string>
+	<key>CFBundleIconFile</key>
+	<string>Fiji.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>org.fiji</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Fiji</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleVersion</key>
+	<string>1.0</string>
+	<key>LSArchitecturePriority</key>
+	<array>
+		<string>x86_64</string>
+		<string>i386</string>
+		<string>ppc64</string>
+		<string>ppc</string>
+	</array>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>*</string>
+			</array>
+			<key>CFBundleTypeMIMETypes</key>
+			<array>
+				<string>*/*</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>any</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSTypeIsPackage</key>
+			<false/>
+		</dict>
+	</array>
+	<key>fiji</key>
+	<dict>
+		<key>memory</key>
+		<string>auto</string>
+		<key>system</key>
+		<string>0</string>
+		<key>allowMultiple</key>
+		<string>false</string>
+		<key>JVMOptions</key>
+		<string></string>
+		<key>DefaultArguments</key>
+		<string></string>
+	</dict>
+</dict>
+</plist>

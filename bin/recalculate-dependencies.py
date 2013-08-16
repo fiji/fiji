@@ -1,18 +1,17 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/ImageJ.sh --jython "$0" "$@" # (call again with fiji)'''
 
 from os import system
 from sys import argv
 
 from fiji.updater.logic import PluginCollection, XMLFileReader, XMLFileWriter
-from java.io import FileInputStream
+from java.io import FileInputStream, FileOutputStream
 from java.lang.System import getProperty
-from java.util.zip import GZIPInputStream
+from java.util.zip import GZIPInputStream, GZIPOutputStream
 
-dbPath = getProperty('fiji.dir') + '/db.xml.gz'
-XMLFileReader(GZIPInputStream(FileInputStream(dbPath)), 0)
-
-plugins = PluginCollection.getInstance()
+dbPath = getProperty('ij.dir') + '/db.xml.gz'
+plugins = PluginCollection()
+XMLFileReader(plugins).read(None, GZIPInputStream(FileInputStream(dbPath)), 0)
 
 for plugin in plugins:
 	if plugin.current == None or not plugin.filename.endswith('.jar'):
@@ -46,5 +45,6 @@ for plugin in plugins:
 		if not dependency in seen:
 			plugin.removeDependency(dependency)
 
-XMLFileWriter.writeAndValidate(dbPath[:-3])
-system('gzip -9f ' + dbPath[:-3])
+writer = XMLFileWriter(plugins)
+writer.validate()
+writer.write(GZIPOutputStream(FileOutputStream(dbPath)))

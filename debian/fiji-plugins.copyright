@@ -1,0 +1,314 @@
+The fiji-plugins package contains all the code in a complete build of
+Fiji that has not explicitly been assigned to one of the other Debian
+packages.  The plan is to continue to create new packages for these
+plugins.
+
+Author lists for each plugin, inferred from git using the
+debian/generate-debian-fiji-plugins-copyright.sh script, are included
+below.  It is possible that there are errors in this list, in
+particular in cases where someone may have committed the original
+version of the plugin without setting the author to the original
+upstream author.  If you spot an error of this kind, please email:
+
+  Mark Longair <mark-imagej@longair.net>
+
+... and I will correct this.
+
+We believe that all of these plugins are free software that meets the
+Debian Free Software Guidelines, but are still assembling precise
+license and author information for each.  Please consult
+/usr/share/doc/fiji-base/LICENSES.gz or license information within the
+source files until we finish assembling this information.
+
+3D_Blob_Segmentation
+   Copyright 2011 Albert Cardona
+
+3D_Objects_Counter
+   Copyright  Daniel James White
+   Copyright 2010 Johannes Schindelin
+
+Action_Bar
+   Copyright 2010 Jerôme Mutterer
+   Copyright 2010 Johannes Schindelin
+
+Algorithm_Launcher
+   Copyright 2010 Johannes Schindelin
+   Copyright 2010 Curtis Rueden
+
+Analyze_Reader_Writer
+   Copyright 2009, 2010 Johannes Schindelin
+
+AnalyzeSkeleton_
+   Copyright 2010 Daniel Hornung
+   Copyright  Ignacio Arganda Carreras
+   Copyright 2009, 2010, 2011 Johannes Schindelin
+   Copyright 2010, 2011 Jan Eglinger
+
+Anisotropic_Diffusion_2D
+   Copyright 2010, 2011 Johannes Schindelin
+   Copyright  Ignacio Arganda Carreras
+
+Arrow_
+   Copyright 2009, 2010, 2011 Johannes Schindelin
+   Copyright 2009, 2010 Jean-Yves Tinevez
+
+Auto_Threshold
+   Copyright 2009, 2010, 2011 Gabriel Landini
+   Copyright 2010, 2011 Johannes Schindelin
+
+Calculator_Plus
+   Copyright 2009 Daniel Hornung
+   Copyright 2010 Johannes Schindelin
+
+Colocalisation_Analysis
+   Copyright 2010, 2011 Tom Kazimiers
+   Copyright 2010, 2011 Daniel James White
+   Copyright 2009, 2010 Johannes Schindelin
+
+commons-math
+
+CPU_Meter
+   Copyright 2010 Johannes Schindelin
+
+Daltonize_
+   Copyright 2009, 2010 Johannes Schindelin
+
+Differentials_
+   Copyright 2010 Johannes Schindelin
+
+Directionality_
+   Copyright 2010 Johannes Schindelin
+   Copyright 2010 Jean-Yves Tinevez
+   Copyright 2011 Jan Eglinger
+
+Extended_Depth_Field
+   Copyright 2010 Daniel Sage
+   Copyright 2010 Johannes Schindelin
+
+Feature_Detection
+   Copyright 2011 Johannes Schindelin
+   Copyright 2010, 2011 Mark Longair
+
+FeatureJ_
+   Copyright 2010, 2011 Johannes Schindelin
+
+Fiji
+   Copyright 2011 Ignacio Arganda Carreras
+   Copyright  Jacques Pecreaux
+   Copyright 2009, 2010, 2011 Johannes Schindelin
+
+Fiji_Plugins
+   Copyright 2010 Francisco Jiménez Hernández
+   Copyright 2009, 2010 Stephan Preibisch
+   Copyright 2009 Albert Cardona
+   Copyright 2009 Jean-Yves Tinevez
+   Copyright  Ignacio Arganda Carreras
+   Copyright 2009, 2010, 2011 Johannes Schindelin
+
+FlowJ_
+   Copyright 2009 Jean-Yves Tinevez
+   Copyright 2009, 2010 Johannes Schindelin
+
+Graph_Cut
+   Copyright 2011 Johannes Schindelin
+   Copyright 2010 Albert Cardona
+   Copyright 2010 Jan Funke
+
+Gray_Morphology
+   Copyright 2009, 2010 Johannes Schindelin
+
+IJ_Robot
+   Copyright 2009, 2010 Johannes Schindelin
+
+Image_5D
+   Copyright 2010 Jan Eglinger
+   Copyright 2009 Johannes Schindelin
+
+Image_Expression_Parser
+   Copyright 2010 Stephan Saalfeld
+   Copyright 2010 Albert Cardona
+   Copyright 2010 Jean-Yves Tinevez
+   Copyright 2010, 2011 Johannes Schindelin
+
+imagescience
+   Copyright 2010 Johannes Schindelin
+
+imageware
+   Copyright 2010 Daniel Sage
+   Copyright 2011 Johannes Schindelin
+
+imglib-algorithms
+
+imglib-ij
+
+imglib-io
+
+imglib-scripting
+
+IsoData_Classifier
+   Copyright 2009, 2010 Johannes Schindelin
+
+jep
+   Copyright 2010 Jean-Yves Tinevez
+   Copyright 2010 Johannes Schindelin
+
+jna
+
+Kuwahara_Filter
+   Copyright 2011 Wayne Rasband
+
+Lasso_and_Blow_Tool
+   Copyright 2010 Johannes Schindelin
+
+level_sets
+   Copyright 2009, 2010 Albert Cardona
+   Copyright 2009 Erwin Frise
+   Copyright 2009, 2010, 2011 Johannes Schindelin
+
+Linear_Kuwahara
+   Copyright 2010 Johannes Schindelin
+   Copyright 2010 Christian Tischer
+
+LocalThickness_
+   Copyright 2009, 2010 Johannes Schindelin
+
+Manual_Tracking
+   Copyright 2009, 2010 Johannes Schindelin
+
+mij
+   Copyright 2010 Daniel Sage
+   Copyright 2010 Johannes Schindelin
+
+MosaicJ_
+   Copyright 2010 Johannes Schindelin
+
+Multi_Kymograph
+   Copyright 2011 Johannes Schindelin
+
+pal-optimization
+   Copyright 2010 Johannes Schindelin
+
+panorama_
+   Copyright 2011 Albert Cardona
+   Copyright 2011 Johannes Schindelin
+   Copyright 2011 Stephan Saalfeld
+
+PIV_analyser
+   Copyright 2009, 2010 Jean-Yves Tinevez
+   Copyright 2009, 2010 Johannes Schindelin
+
+PointPicker_
+   Copyright 2010 Johannes Schindelin
+
+QuickPALM_
+   Copyright 2010 Jan Eglinger
+   Copyright 2010 Mark Longair
+   Copyright 2010 Ricardo Henriques
+   Copyright 2010 Johannes Schindelin
+
+RandomJ_
+   Copyright 2010, 2011 Johannes Schindelin
+
+RATS_
+   Copyright 2009, 2010 Johannes Schindelin
+   Copyright 2009 Ben Tupper
+
+Record_Screen
+   Copyright 2009 Albert Cardona
+   Copyright 2009 Johannes Schindelin
+
+register_virtual_stack_slices
+   Copyright 2010 Stephan Saalfeld
+   Copyright  Ignacio Arganda Carreras
+   Copyright 2009 Albert Cardona
+   Copyright 2009, 2010, 2011 Johannes Schindelin
+
+registration_3d
+   Copyright 2009, 2010 Johannes Schindelin
+
+Samples_
+   Copyright 2010, 2011 Johannes Schindelin
+
+Series_Labeler
+   Copyright 2010, 2011 Tom Kazimiers
+   Copyright 2010 Daniel James White
+   Copyright 2010, 2011 Johannes Schindelin
+
+SheppLogan_
+   Copyright 2010 Johannes Schindelin
+
+Siox_Segmentation
+   Copyright 2010 Johannes Schindelin
+   Copyright  Ignacio Arganda Carreras
+
+Skeletonize3D_
+   Copyright 2010 Daniel Hornung
+   Copyright 2009, 2010 Johannes Schindelin
+
+Snakuscule_
+   Copyright 2010 Philippe Thévenaz
+
+SPIM_Registration
+   Copyright 2010 Stephan Preibisch
+   Copyright 2010 Stephan Saalfeld
+   Copyright 2010, 2011 Johannes Schindelin
+
+SplineDeformationGenerator_
+   Copyright 2009, 2010 Johannes Schindelin
+
+Stack_Manipulation
+   Copyright 2009, 2010, 2011 Johannes Schindelin
+   Copyright 2009, 2010 Jean-Yves Tinevez
+
+StackReg_
+   Copyright 2010 Johannes Schindelin
+
+Statistical_Region_Merging
+   Copyright 2009, 2010 Johannes Schindelin
+
+Stitching_
+   Copyright  Ignacio Arganda Carreras
+   Copyright 2009, 2010, 2011 Stephan Preibisch
+   Copyright 2009, 2010, 2011 Johannes Schindelin
+
+Sync_Win
+   Copyright 2009, 2010 Johannes Schindelin
+
+Thread_Killer
+   Copyright 2010 Johannes Schindelin
+
+Time_Stamper
+   Copyright 2009 Daniel James White
+   Copyright 2010 Jean-Yves Tinevez
+   Copyright 2010 Johannes Schindelin
+
+ToAST_
+   Copyright 2009 Misha Kudryashev
+   Copyright 2009, 2010 Johannes Schindelin
+
+TopoJ_
+   Copyright 2010 David Hovis
+   Copyright 2010, 2011 Johannes Schindelin
+
+Trainable_Segmentation
+   Copyright 2010 Jan Funke
+   Copyright 2010 Verena Kaynig
+   Copyright 2010, 2011 Ignacio Arganda Carreras
+   Copyright 2010 Albert Cardona
+   Copyright 2010, 2011 Johannes Schindelin
+
+UnwarpJ_
+   Copyright 2010 Johannes Schindelin
+
+VectorString
+
+Video_Editing
+   Copyright 2009 Benjamin Schmid
+   Copyright 2010 Johannes Schindelin
+
+wavelets
+   Copyright 2010 Daniel Sage
+
+weave_jy2java
+   Copyright 2011 Albert Cardona
+

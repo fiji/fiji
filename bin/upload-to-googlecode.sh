@@ -1,6 +1,6 @@
 #!/bin/sh
 
-URL=http://pacific.mpi-cbg.de
+URL=http://fiji.sc
 
 DOWNLOADS=$(curl $URL/wiki/index.php/Downloads |
 	sed -n 's|^.*a href="'$URL'/downloads/\([^/]*\).*$|\1|p' |
@@ -29,7 +29,7 @@ do
 	fiji-usb-*)
 		summary="Fiji USB stick image"
 		;;
-	fiji-linux-*)
+	fiji-linux32-*)
 		summary="Fiji for Linux (32-bit AMD/Intel)"
 		;;
 	fiji-linux64-*)

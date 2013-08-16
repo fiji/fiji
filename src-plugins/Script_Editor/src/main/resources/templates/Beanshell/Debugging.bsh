@@ -1,0 +1,63 @@
+// For debugging: allow access to protected and private fields and methods
+setAccessibility(true);
+
+// Set some variables
+ijDir = System.getProperty("ij.dir");
+image = WindowManager.getCurrentImage();
+frames = WindowManager.getNonImageWindows();
+
+// Useful functions
+fullClassName(className) {
+	names = new fiji.scripting.completion.ClassNames(null);
+	functions = new fiji.scripting.ClassNameFunctions(names);
+	return functions.getFullName(className);
+}
+
+dir(className, methodNameRegex) { // return methods matching regex
+	try {
+		clazz = IJ.getClassLoader().loadClass(className);
+	} catch (Exception e) {
+		className = fullClassName(className);
+		clazz = IJ.getClassLoader().loadClass(className);
+	}
+	result = new java.util.ArrayList();
+	for (java.lang.reflect.Method method : clazz.getMethods())
+		if (methodNameRegex == null || method.getName().matches(methodNameRegex))
+			result.add(method);
+	return result;
+}
+dir(className) {
+	return dir(className, null);
+}
+
+getWindow(regex) {
+	for (Object image : WindowManager.imageList)
+		if (image.getTitle().matches(regex))
+			return image;
+	for (Object frame : WindowManager.nonImageList)
+		if (frame.getTitle().matches(regex))
+			return frame;
+	throw new Exception("Not found: " + regex);
+}
+
+import java.awt.Component;
+import java.awt.Container;
+getDescendants(container, regex) {
+	result = new java.util.ArrayList();
+	for (Component child : container.getComponents()) {
+		if (child.getClass().getName().matches(regex))
+			result.add(child);
+		if (child instanceof Container)
+			result.addAll(getDescendants(child, regex));
+	}
+	return result;
+}
+
+// Useful commands
+// print(ijDir);
+// image.unlock();
+// fiji.debugging.Object_Inspector.openFrame("Inspector", image);
+// print(dir("ImagePlus", ".*Color.*"));
+// clown = getWindow("(?i)clown").getImagePlus();
+// print(ij.io.OpenDialog.class.getConstructors());
+// print(getDescendants(getWindow(".*bsh.*"), ".*Text.*"));

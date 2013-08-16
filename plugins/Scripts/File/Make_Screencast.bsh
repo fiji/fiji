@@ -1,0 +1,256 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../../../bin/ImageJ.sh "$0" "$@" # exec with fiji */
+
+import ij.IJ;
+import ij.gui.GenericDialog;
+import ij.io.SaveDialog;
+
+import fiji.User_Plugins;
+
+import imagej.util.LineOutputStream;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+
+import java.io.File;
+import java.io.PrintStream;
+
+import java.util.ArrayList;
+import java.util.regex.Pattern;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+import org.scijava.util.ReadInto;
+
+class IJLogOutputStream extends LineOutputStream {
+	void println(String line) {
+		IJ.log(line);
+	}
+}
+
+class Options {
+	boolean isWindows = System.getProperty("os.name").startsWith("Windows");
+	boolean isMac = System.getProperty("os.name").startsWith("Mac");
+
+	String vlc;
+	File outputFile;
+	double fps = 15;
+	int outputWidth = 640;
+	int top = -1, left = -1, width = -1, height = -1;
+	boolean interactive = false;
+
+	void error(message) {
+		if (interactive) IJ.error(message);
+		else print(message);
+	}
+
+	void showStatus(message) {
+		if (interactive) IJ.showStatus(message);
+		else print(message);
+	}
+
+	PrintStream getPrintStream() {
+		if (interactive) return new PrintStream(new IJLogOutputStream());
+		return System.err;
+	}
+}
+
+discoverVLC(options) {
+	if (options.vlc != null) return;
+	if (options.isWindows) {
+		options.vlc = "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe";
+		if (new File(options.vlc).exists())
+			return;
+		options.vlc = "C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe";
+		if (!new File(options.vlc).exists())
+			options.vlc = null;
+	}
+	else {
+		for (String dir : System.getenv("PATH").split(":")) {
+			file = new File(dir, "vlc");
+			if (file.exists())
+				options.vlc = file.getAbsolutePath();
+		}
+		if (options.isMac) {
+			file = new File("/Applications/VLC.app/Contents/MacOS/", "VLC");
+			if (file.exists()) {
+				options.vlc = file.getAbsolutePath();
+			}
+		}
+	}
+}
+
+startScreencast(options) {
+	outputPath = options.outputFile.getAbsolutePath();
+	options.showStatus("Screencasting to '" + options.outputFile + "'");
+	mux = "avi";
+	vcodec = "mp4v";
+	if (options.outputFile.getName().endsWith(".ogv")) {
+		mux = "ogg";
+		vcodec = "theora";
+	}
+	else if (options.outputFile.getName().endsWith(".mov")) {
+		mux = "mov";
+		vcodec = "h264";
+	}
+	commandLine = new ArrayList();
+	commandLine.add(options.vlc);
+	commandLine.add("-I");
+	commandLine.add("dummy");
+	//commandLine.add("-vvv");
+	commandLine.add("screen://");
+	commandLine.add("--screen-fps=" + options.fps);
+	if (options.left >= 0) {
+		commandLine.add("--screen-left=" + options.left);
+		commandLine.add("--screen-top=" + options.top);
+		commandLine.add("--screen-width=" + options.width);
+		commandLine.add("--screen-height=" + options.height);
+	}
+	if (options.isWindows) {
+		commandLine.add("--dshow-fps=" + options.fps);
+	}
+	commandLine.add("--sout=#transcode{"
+			+ "vcodec=" + vcodec + ","
+			+ "vb=800,"
+			+ "fps=" + options.fps + ","
+			+ "width=" + options.outputWidth + ","
+			+ "acodec=vorb,"
+			+ "ab=128,"
+			+ "channels=2,"
+			+ "samplerate=22050"
+		+ "}:standard{"
+			+ "access=file,"
+			+ "mux=" + mux + ","
+			+ "dst='" + outputPath + "'"
+		+ "}");
+	commandLine.add("vlc://quit");
+	commandLine = commandLine.toArray(new String[commandLine.size()]);
+	if (!options.interactive) {
+		print("Calling " + java.util.Arrays.toString(commandLine));
+	}
+	Process process = Runtime.getRuntime().exec(commandLine, null, null);
+	process.getOutputStream().close();
+	out = options.getPrintStream();
+	err = new ReadInto(process.getErrorStream(), out);
+	out = new ReadInto(process.getInputStream(), out);
+
+	ij = options.interactive ? IJ.getInstance() : null;
+	if (ij != null) {
+		item = fiji.FijiTools.getMenuItem("File>Make Screencast");
+		listeners = item.getActionListeners();
+		for (ActionListener listener : listeners)
+			item.removeActionListener(listener);
+		actionListener = new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				item.removeActionListener(this);
+				IJ.showStatus("Stopping screencast");
+				process.destroy();
+				err.interrupt();
+				err.join();
+				out.interrupt();
+				out.join();
+				IJ.showStatus("Saved '" + options.outputFile + "'");
+				if (ij == null)
+					System.exit(0);
+				for (ActionListener listener : listeners)
+					item.addActionListener(listener);
+				item.setLabel("Make Screencast");
+			}
+		};
+		item.setLabel("Stop Screencast");
+		item.addActionListener(actionListener);
+	}
+}
+
+run(options) {
+	discoverVLC(options);
+	if (options.vlc == null) {
+		options.error("Could not find VLC, please install");
+		if (options.interactive) {
+			IJ.runPlugIn("ij.plugin.BrowserLauncher", "http://www.videolan.org/index.html");
+		}
+		return;
+	}
+
+	startScreencast(options);
+}
+
+showUI() {
+	options = new Options();
+	options.interactive = true;
+
+	SaveDialog od = new SaveDialog("Save screencast as...", null, ".ogv");
+	directory = od.getDirectory();
+	fileName = od.getFileName();
+	if (directory == null || fileName == null)
+		return null;
+
+	options.outputFile = new File(directory, fileName);
+	if (options.outputFile == null) return null; // canceled
+	if (options.outputFile.exists() && options.outputFile.length() != 0 &&
+			!IJ.showMessageWithCancel("Overwrite?", "The file '" + options.outputFile + "' appears to exist already. Overwrite?")) {
+		return null;
+	}
+
+	options.outputWidth = (int)IJ.getNumber("Width", Toolkit.getDefaultToolkit().getScreenSize().width);
+
+	if (options.outputWidth < 0) return null;
+	return options;
+}
+
+usage() {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+                + " [--force] [--width <width>] [--fps <fps>] [--geometry <geometry>] <output-file>");
+        System.exit(1);
+}
+
+parseCommandLine() {
+	options = new Options();
+
+	force = false;
+	for (i = 0; i < bsh.args.length && bsh.args[i].startsWith("-"); i++) {
+		if (bsh.args[i].equals("--force")) {
+			force = true;
+		} else if (bsh.args[i].equals("--width")) {
+			options.outputWidth = Integer.parseInt(bsh.args[++i]);
+		} else if (bsh.args[i].equals("--fps")) {
+			options.fps = Double.parseDouble(bsh.args[++i]);
+		} else if (bsh.args[i].equals("--geometry")) {
+			pattern = Pattern.compile("(\\d+)x(\\d+)\\+(\\d+)\\+(\\d+)");
+			matcher = pattern.matcher(bsh.args[++i]);
+			if (!matcher.matches()) {
+				print("Invalid geometry: " + bsh.args[i]);
+				usage();
+			}
+			options.width = Integer.parseInt(matcher.group(1));
+			options.height = Integer.parseInt(matcher.group(2));
+			options.left = Integer.parseInt(matcher.group(3));
+			options.top = Integer.parseInt(matcher.group(4));
+		} else {
+			print("Unknown option: " + bsh.args[i]);
+			usage();
+		}
+	}
+	if (i + 1 != bsh.args.length) {
+		print("The last argument must be the output file!");
+		usage();
+	}
+	options.outputFile = new File(bsh.args[i]);
+	if (!force && options.outputFile.exists()) {
+		print("File '" + options.outputFile + "' exists already.");
+		System.exit(1);
+	}
+
+	return options;
+}
+
+if (IJ.getInstance() == null) options = parseCommandLine();
+else options = showUI();
+
+if (options != null) {
+	run(options);
+}

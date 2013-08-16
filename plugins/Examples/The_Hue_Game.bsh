@@ -1,0 +1,296 @@
+/*
+ * This Beanshell example demonstrates
+ *
+ * - how to override mouse listeners on an ImageCanvas
+ * - how to reinstate the mouse listeners after we're done
+ * - that you can have fun with Fiji
+ */
+import color.CIELAB;
+
+import fiji.util.gui.GenericDialogPlus;
+
+import ij.gui.Overlay;
+
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+
+import java.util.Random;
+
+import stitching.CommonFunctions;
+
+class Rainbow {
+	protected int[] rainbow, indices;
+
+	public Rainbow(float l, float a0, float b0, float a1, float b1, int n) {
+		rainbow = new int[n];
+		indices = new int[n];
+
+		float[] lab = new float[3], rgb = new float[3];
+		lab[0] = l;
+		for (int i = 0; i < n; i++) {
+			lab[1] = (a0 * (n - 1 - i) + a1 * i) / (n - 1);
+			lab[2] = (b0 * (n - 1 - i) + b1 * i) / (n - 1);
+			CIELAB.CIELAB2sRGB(lab, rgb);
+			rainbow[i] = packRGB(rgb);
+			indices[i] = i;
+		}
+
+		permute();
+	}
+
+	protected int packRGB(float[] rgb) {
+		return (toByte(rgb[0] * 256) << 16) | (toByte(rgb[1] * 256) << 8) | toByte(rgb[2] * 256);
+	}
+
+	protected int toByte(float f) {
+		if (f < 0)
+			return 0;
+		if (f > 255)
+			return 255;
+		return (int)Math.round(f);
+	}
+
+	public void paint(ColorProcessor slice, int gap, int x0, int y0, int x1, int y1) {
+		int n = rainbow.length;
+		for (int i = 0; i < n; i++) {
+			int x2 = x0 + (x1 - x0 + gap) * i / n;
+			int x3 = x0 + (x1 - x0 + gap) * (i + 1) / n - gap;
+			fillRectangle(slice, x2, y0, x3, y1, rainbow[i]);
+		}
+	}
+
+	protected void fillRectangle(ColorProcessor slice, int x0, int y0, int x1, int y1, int color) {
+		int[] pixels = (int[])slice.getPixels();
+		int width = slice.getWidth();
+		for (int y = y0; y < y1; y++)
+			Arrays.fill(pixels, y * width + x0, y * width + x1, color);
+	}
+
+	public void permute() {
+		Random random = new Random();
+		for (int i = rainbow.length - 2; i > 0; i--) {
+			int random = random.nextInt(i) + 1;
+			if (random != i) {
+				int save = rainbow[random];
+				rainbow[random] = rainbow[i];
+				rainbow[i] = save;
+				save = indices[random];
+				indices[random] = indices[i];
+				indices[i] = save;
+			}
+		}
+	}
+
+	public void move(int from, int to) {
+		if (from < 1 || from > rainbow.length - 2 || to < 1 || to > rainbow.length || from == to)
+			return;
+		if (from < to) {
+			int save = rainbow[from];
+			int index = indices[from];
+			while (from < to) {
+				rainbow[from] = rainbow[from + 1];
+				indices[from] = indices[++from];
+			}
+			rainbow[to] = save;
+			indices[to] = index;
+		}
+		else {
+			int save = rainbow[from];
+			int index = indices[from];
+			while (from > to) {
+				rainbow[from] = rainbow[from - 1];
+				indices[from] = indices[--from];
+			}
+			rainbow[to] = save;
+			indices[to] = index;
+		}
+	}
+}
+
+class Rainbows {
+	protected int width, height, squareSize, gap, n;
+	protected Rainbow[] rainbows;
+	public Rainbows(float l, float[] a, float[] b, int n, int squareSize, int gap) {
+		int m = a.length < b.length ? a.length : b.length;
+		this.n = n;
+		this.squareSize = squareSize;
+		this.gap = gap;
+		width = gap + n * (squareSize + gap);
+		height = gap + m * (squareSize + gap);
+
+		rainbows = new Rainbow[m];
+		for (int i = 0; i < m - 1; i++)
+			rainbows[i] = new Rainbow(l, a[i], b[i], a[i + 1], b[i + 1], n);
+		rainbows[m - 1] = new Rainbow(l, a[m - 1], b[m - 1], a[0], b[0], n);
+	}
+
+	public void paint(ColorProcessor slice) {
+		for (int i = 0; i < rainbows.length; i++)
+			rainbows[i].paint(slice, gap, gap, gap + i * (squareSize + gap), width - gap, gap + (i + 1) * (squareSize + gap) - gap);
+	}
+
+	public ColorProcessor createSlice() {
+		ColorProcessor slice = new ColorProcessor(width, height);
+		paint(slice);
+		return slice;
+	}
+
+	public Rainbow getRainbow(int y) {
+		if (y < 0 || (y % (squareSize + gap)) <= gap)
+			return null;
+		int index = y / (squareSize + gap);
+		if (index >= rainbows.length)
+			return null;
+		return rainbows[index];
+	}
+
+	public int getIndex(int x) {
+		if (x < 0 || (x % (squareSize + gap)) <= gap)
+			return -1;
+		int index = x / (squareSize + gap);
+		return index < 1 || index > n - 2 ? -1 : index;
+	}
+
+	public void showOverlay(ImagePlus image) {
+		Overlay overlay = new Overlay();
+		for (int i = 0; i < rainbows.length; i++) {
+			int y = gap + i * (squareSize + gap);
+			Rainbow rainbow = rainbows[i];
+			for (int j = 0; j < n; j++) {
+				int x = gap + j * (squareSize + gap);
+				overlay.add(new TextRoi(x, y, "" + rainbow.indices[j]));
+			}
+		}
+		image.setOverlay(overlay);
+	}
+
+	public boolean showMistakes(ImagePlus image) {
+		int score = 0;
+		Roi roi = null;
+		for (int i = 0; i < rainbows.length; i++) {
+			int y = gap + i * (squareSize + gap);
+			Rainbow rainbow = rainbows[i];
+			for (int j = 1; j < n - 1; j++) {
+				int x = gap + j * (squareSize + gap);
+				if (rainbow.indices[j] != j) {
+					score += Math.abs(rainbow.indices[j] - j);
+					if (roi == null)
+						roi = new Roi(x, y, squareSize, squareSize);
+					else {
+						if (!(roi instanceof ShapeRoi))
+							roi = new ShapeRoi(roi);
+						roi.or(new ShapeRoi(new Roi(x, y, squareSize, squareSize)));
+					}
+				}
+			}
+		}
+		if (score > 0 && !IJ.showMessageWithCancel("Really?", "Do you really want to quit playing? (Your score is " + score + "...)"))
+			return false;
+		image.setRoi(roi);
+		showOverlay(image);
+		IJ.showMessage((score == 0 ? "Congratulations!" : "Sorry!") + "\nYour score is" + (score > 30 ? " only" : "") + ": " + score);
+		IJ.showStatus("Score: " + score);
+		return true;
+	}
+}
+
+class Game implements MouseListener, MouseMotionListener {
+	protected Rainbows rainbows;
+	protected ColorProcessor slice;
+	protected ImagePlus image;
+	protected ImageCanvas canvas;
+	protected MouseListener[] mouseListeners;
+	protected MouseMotionListener[] mouseMotionListeners;
+	protected Rainbow rainbow;
+	protected int index = -1;
+
+	public Game(float l, float[] a, float[] b, int n, int squareSize, int gap) {
+		rainbows = new Rainbows(l, a, b, n, squareSize, gap);
+		slice = rainbows.createSlice();
+		image = new ImagePlus("Game", slice);
+	}
+
+	/* for debugging */
+	public void stopPreviousGames() {
+		for (int i = WindowManager.getImageCount(); i > 0; i--) {
+			image = WindowManager.getImage(i);
+			if (image.getTitle().startsWith("Game"))
+				image.close();
+		}
+	}
+
+	public void play() {
+		image.show();
+		canvas = image.getCanvas();
+		mouseListeners = canvas.getMouseListeners();
+		for (MouseListener listener : mouseListeners)
+			canvas.removeMouseListener(listener);
+		mouseMotionListeners = canvas.getMouseMotionListeners();
+		for (MouseMotionListener listener : mouseMotionListeners)
+			canvas.removeMouseMotionListener(listener);
+		canvas.addMouseListener(this);
+		canvas.addMouseMotionListener(this);
+	}
+
+	public void stop() {
+		index = Integer.MIN_VALUE;
+		canvas.removeMouseListener(this);
+		canvas.removeMouseMotionListener(this);
+		for (MouseListener listener : mouseListeners)
+			canvas.addMouseListener(listener);
+		for (MouseMotionListener listener : mouseMotionListeners)
+			canvas.addMouseMotionListener(listener);
+	}
+
+	protected int getX(MouseEvent e) {
+		return canvas.offScreenX(e.getX());
+	}
+
+	protected int getY(MouseEvent e) {
+		return canvas.offScreenY(e.getY());
+	}
+
+	public void mousePressed(MouseEvent event) {
+		if (index < -1)
+			return;
+		index = rainbows.getIndex(getX(event));
+		if (index > 0)
+			rainbow = rainbows.getRainbow(getY(event));
+	}
+
+	public void mouseDragged(MouseEvent event) {
+		if (index < 0)
+			return;
+		int newIndex = rainbows.getIndex(getX(event));
+		if (newIndex < 0 || newIndex == index)
+			return;
+		rainbow.move(index, newIndex);
+		index = newIndex;
+		rainbows.paint(slice);
+		image.updateAndDraw();
+	}
+
+	public void mouseClicked(MouseEvent event) {
+		if (event.getClickCount() > 1) {
+			if (rainbows.showMistakes(image))
+				stop();
+		}
+	}
+
+	public void mouseReleased(MouseEvent event) {}
+	public void mouseMoved(MouseEvent event) {}
+	public void mouseEntered(MouseEvent event) {}
+	public void mouseExited(MouseEvent event) {}
+}
+
+String url = "http://www.xrite.com/custom_page.aspx?PageID=77&Lang=en";
+gd = new GenericDialogPlus("The Hue Game");
+gd.addMessage("Rules:\n \nOrder the tiles by hue by dragging the fields horizontally.\nThe outermost tiles cannot be moved.\n \nDouble-click to finish and see your score!\n \nThis game is based on the idea and the colors presented at:\n" + url);
+gd.addNumericField("Difficulty?", 22, 0);
+CommonFunctions.addHyperLinkListener(gd.getMessage(), url);
+gd.showDialog();
+if (!gd.wasCanceled()) {
+	int n = (int)gd.getNextNumber();
+	new Game(72, new float[] { 26, -10, -30, 5 }, new float[] { 12, 43, 0, -21 }, n, 40, 3).play();
+}
