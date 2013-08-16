@@ -8,6 +8,7 @@ import ij.ImagePlus;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
+import imagej.updater.core.Diff;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -57,6 +58,9 @@ import plugin.Descriptor_based_series_registration;
 
 public class Matching 
 {
+	public static boolean applyScaling = false;
+	public static float factor = 1f; 
+	
 	/**
 	 * 
 	 * @param imp1
@@ -217,7 +221,30 @@ public class Matching
 			final ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>> peaks = new ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>>();
 			for ( int t = 0; t < numImages; ++t )
 				peaks.add( filterForROI( params.roi1, peaksComplete.get( t ) ) );
+
+			if ( applyScaling )
+			{
+				IJ.log( "WARNING: MULTIPLYING TO ALL COORDINATES: " + factor + "!!!" );
+				for ( final ArrayList<DifferenceOfGaussianPeak<FloatType>> list : peaks )
+				{
+					for ( final DifferenceOfGaussianPeak<FloatType> peak : list )
+					{
+						final int[] position = peak.getPosition();
+						final float[] subpixel = peak.getSubPixelPositionOffset();
+						
+						for ( int d = 0; d < position.length; ++d )
+						{
+							position[ d ] *= factor;
+							subpixel[ d ] *= factor;
+						}
+						
+						peak.setPixelLocation( position );
+						peak.setSubPixelLocationOffset( subpixel );
+					}
+				}
+			}
 			
+
 			// add the offset if wanted
 			if ( Descriptor_based_series_registration.offset != null )
 			{
