@@ -108,7 +108,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	protected int tabsMenuTabsStart;
 	protected Set<JMenuItem> tabsMenuItems;
 	protected FindAndReplaceDialog findDialog;
-	protected JCheckBoxMenuItem autoSave, showDeprecation, wrapLines;
+	protected JCheckBoxMenuItem autoSave, showDeprecation, wrapLines, tabsEmulated;
 	protected JTextArea errorScreen = new JTextArea();
 
 	protected final String templateFolder = "templates/";
@@ -242,6 +242,15 @@ public class TextEditor extends JFrame implements ActionListener,
 			}
 		});
 		edit.add(wrapLines);
+
+		// Add Tab inserts as spaces
+		tabsEmulated = new JCheckBoxMenuItem("Tab key inserts spaces");
+		tabsEmulated.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				getEditorPane().setTabsEmulated(tabsEmulated.getState());
+			}
+		});
+		edit.add(tabsEmulated);
 		edit.addSeparator();
 
 		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
