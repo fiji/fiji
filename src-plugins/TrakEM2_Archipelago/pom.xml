@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>TrakEM2_</artifactId>
-			<version>1.0b-SNAPSHOT</version>
+			<version>${trakem2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>

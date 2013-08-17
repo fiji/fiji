@@ -31,7 +31,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Skeletonize3D_</artifactId>
-			<version>1.0</version>
+			<version>${skeletonize3d.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -41,19 +41,19 @@
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core</artifactId>
-			<version>1.5.2</version>
+			<version>${java3d.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core-utils</artifactId>
-			<version>1.5.2</version>
+			<version>${java3d.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>vecmath</artifactId>
-			<version>1.5.2</version>
+			<version>${java3d.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

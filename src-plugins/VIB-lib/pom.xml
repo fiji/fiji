@@ -32,7 +32,7 @@
 		<dependency>
 			<groupId>jama</groupId>
 			<artifactId>jama</artifactId>
-			<version>1.0.2</version>
+			<version>${jama.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -53,7 +53,7 @@
 		<dependency>
 			<groupId>com.jcraft</groupId>
 			<artifactId>jzlib</artifactId>
-			<version>1.0.7</version>
+			<version>${jzlib.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>

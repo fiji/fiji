@@ -16,10 +16,6 @@
 	<name>jars/fiji-compat.jar</name>
 	<description></description>
 
-	<properties>
-		<imagej1.version>1.47v</imagej1.version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>net.imagej</groupId>
@@ -29,7 +25,7 @@
 		<dependency>
 			<groupId>org.javassist</groupId>
 			<artifactId>javassist</artifactId>
-			<version>3.16.1-GA</version>
+			<version>${javassist.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>${scijava-common.groupId}</groupId>
