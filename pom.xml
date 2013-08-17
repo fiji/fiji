@@ -44,6 +44,7 @@
 		<jruby.version>1.6.7.2</jruby.version>
 		<js.version>1.7R2</js.version>
 		<jsch.version>0.1.49</jsch.version>
+		<jython.version>2.5.2</jython.version>
 		<jzlib.version>1.0.7</jzlib.version>
 		<level_sets.version>1.0</level_sets.version>
 		<mpicbg.version>0.6.1-SNAPSHOT</mpicbg.version>
