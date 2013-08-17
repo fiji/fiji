@@ -48,6 +48,7 @@
 		<mpicbg.version>0.6.1-SNAPSHOT</mpicbg.version>
 		<rsyntaxtextarea.version>2.0.4.1</rsyntaxtextarea.version>
 		<trakem2.version>1.0b-SNAPSHOT</trakem2.version>
+		<weka.version>3.7.6</weka.version>
 	</properties>
 
 	<modules>
