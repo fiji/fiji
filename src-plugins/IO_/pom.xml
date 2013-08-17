@@ -33,9 +33,9 @@
 			<version>${itextpdf.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.jpedal</groupId>
+			<groupId>${jpedal.groupId}</groupId>
 			<artifactId>jpedalSTD</artifactId>
-			<version>2.80b11</version>
+			<version>${jpedal.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.jcraft</groupId>
