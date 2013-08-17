@@ -36,6 +36,7 @@
 		<java3d.version>1.5.2</java3d.version>
 		<jama.version>1.0.2</jama.version>
 		<jcommon.version>1.0.17</jcommon.version>
+		<jdom.version>2.0.2</jdom.version>
 		<jep.version>2.4.1-fiji1-SNAPSHOT</jep.version>
 		<jfreechart.version>1.0.14</jfreechart.version>
 		<jna.version>3.2.7</jna.version>
