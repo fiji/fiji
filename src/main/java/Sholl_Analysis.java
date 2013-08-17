@@ -56,7 +56,7 @@ import java.util.Vector;
 public class Sholl_Analysis implements PlugIn, DialogListener {
 
     /* Plugin Information */
-    public static final String VERSION = "3.1";
+    public static final String VERSION = "3.2";
     private static final String URL = "http://fiji.sc/Sholl_Analysis";
 
     /* Sholl Type Definitions */
@@ -88,6 +88,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     private static final int SMALLEST_DATASET = 6;
     private static final String SHOLLTABLE = "Sholl Results";
     private static double[] centroid;
+    private static int enclosingCutOff = 1;
 
 	/* Image path and Output Options */
     private static boolean validPath;
@@ -173,18 +174,20 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 				try {
 					rt = ResultsTable.open("");
 					if (rt!=null) {
-						rt.show("Results");
+						rt.show("Results"); // could be omitted
 						validPath = true;
 						imgPath = OpenDialog.getLastDirectory();
+						imgTitle = trimExtension(OpenDialog.getLastName());
 					} else	//user pressed "Cancel" in file prompt
 						return;
-				} catch(IOException e) {
+				} catch(final IOException e) {
 					sError(e.getMessage());
 					return;
 				}
 			} else {
 				imgPath = null;
 				validPath = false;
+				imgTitle = "Imported data";
 			}
 
 			if (!csvPrompt(rt))
@@ -459,9 +462,10 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		if (!validPath || (validPath && !hideSaved))
             rt.show(profileTable);
 
-		if (isCSV) return;
-
 		String exitmsg = "Done. ";
+
+		if (isCSV)
+			{ IJ.showStatus(exitmsg); return; }
 
         // Create intersections mask, but check first if it is worth proceeding
         if (mask) {
@@ -525,7 +529,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			} else {
 				IJ.showStatus("Choosing polynomial of best fit...");
 	    		if (verbose)
-	    			IJ.log("Choosing polynomial of best fit for "+ imgTitle +"...");
+	    			IJ.log("*** Choosing polynomial of best fit for "+ imgTitle +"...");
 				cf.doFit(getBestPolyFit(x,y), false);
 			}
 		} else if (method == SHOLL_NS) {
@@ -725,11 +729,12 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         // Part III: Indices and Curve Fitting
         gd.setInsets(10, 0, 2);
-        gd.addMessage("III. Ramification Indices and Curve Fitting:", headerFont);
-        gd.addNumericField("           #_Primary branches", primaryBranches, 0);
+        gd.addMessage("III. Descriptors and Curve Fitting:", headerFont);
+        gd.addNumericField("Enclosing radius cutoff", enclosingCutOff, 0, 6, "intersection(s)");
+        gd.addNumericField("#_Primary branches", primaryBranches, 0);
         gd.setInsets(0, 2*xIndent, 0);
         gd.addCheckbox("Infer from Starting radius", inferPrimary);
-        gd.setInsets(5, xIndent, 0);
+        gd.setInsets(6, xIndent, 0);
         gd.addCheckbox("Fit profile and compute descriptors", fitCurve);
         gd.setInsets(3, 2*xIndent, 0);
         gd.addCheckbox("Show fitting details", verbose);
@@ -837,6 +842,8 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         }
 
         // Part III: Indices and Curve Fitting
+        enclosingCutOff = (int)Math.max(1, gd.getNextNumber());
+        fieldCounter++;
         primaryBranches = (int)Math.max(1, gd.getNextNumber());
         final TextField ieprimaryBranches = (TextField)numericfields.elementAt(fieldCounter++);
         inferPrimary = gd.getNextBoolean();
@@ -907,7 +914,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         // Part I: Importing data
         gd.setInsets(0, 0, 0);
         gd.addMessage("I. Results Table Import Options:", headerFont);
-        gd.addStringField("Name of dataset", "Imported data", 20);
+        gd.addStringField("Name of dataset", imgTitle, 20);
         gd.addChoice("Distance column", headings, headings[0]);
         gd.addChoice("Intersections column", headings, headings[1]);
         gd.setInsets(0, xIndent, 0);
@@ -915,9 +922,10 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         // Part II: Indices and Curve Fitting
         gd.setInsets(15, 0, 2);
-        gd.addMessage("II. Ramification Indices:", headerFont);
+        gd.addMessage("II. Descriptors and Ramification Indices:", headerFont);
+        gd.addNumericField("Enclosing radius cutoff", enclosingCutOff, 0, 6, "intersection(s)");
         gd.addNumericField(" #_Primary branches", primaryBranches, 0);
-        gd.setInsets(0, xIndent, 0);
+        gd.setInsets(0, 2*xIndent, 0);
         gd.addCheckbox("Infer from values in first row", inferPrimary);
 
         // Part III: Sholl Methods
@@ -967,6 +975,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         final int cColumn = gd.getNextChoiceIndex();
         is3D = gd.getNextBoolean();
 
+        enclosingCutOff = (int)Math.max(1, gd.getNextNumber());
         primaryBranches = (int)Math.max(1, gd.getNextNumber());
         inferPrimary = gd.getNextBoolean();
 
@@ -1672,7 +1681,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		else
 			rt = ((TextWindow) window).getTextPanel().getResultsTable();
 
-			double sumY = 0, maxIntersect = 0, maxR = 0;
+			double sumY = 0, maxIntersect = 0, maxR = 0, enclosingR = 0;
 
 		// Retrieve simple statistics
 		final int size = values.length;
@@ -1681,13 +1690,15 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		for (int i=0; i <size; i++) {
 			x[i] = values[i][0];
 			y[i] = values[i][1];
-			if( y[i] > maxIntersect )
+			if ( y[i] > maxIntersect )
 				{ maxIntersect = y[i]; maxR = x[i]; }
+			if (y[i] >= enclosingCutOff)
+				enclosingR = x[i];
 			sumY += y[i];
 		}
 
 		// Calculate the smallest circle/sphere enclosing the arbor
-		final double lastR = x[size-1];
+		//final double lastR = x[size-1];
 		//final double field = is3D ? Math.PI*4/3*lastR*lastR*lastR : Math.PI*lastR*lastR;
 
 		// Calculate ramification index, the maximum of intersection divided by the n.
@@ -1706,6 +1717,10 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		rt.addValue("Ending radius", isCSV ? Double.NaN : endRadius);
 		rt.addValue("Radius step", stepRadius);
 		rt.addValue("Samples/radius", (isCSV || is3D) ? 1 : nSpans);
+		rt.addValue("Enclosing radius cutoff", enclosingCutOff);
+		rt.addValue("I branches (User)", (inferPrimary || primaryBranches==0) ? Double.NaN : primaryBranches);
+		rt.addValue("I branches (Inferred)", (inferPrimary || primaryBranches==0) ? y[0] : Double.NaN);
+
 		rt.addValue("Intersecting radii", size);
 		rt.addValue("Sum inters.", sumY);
 		rt.addValue("Mean inters.", sumY/size);
@@ -1713,15 +1728,14 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		rt.addValue("Max inters.", maxIntersect);
 		rt.addValue("Max inters. radius", maxR);
 		rt.addValue("Ramification index (sampled)", ri);
-		rt.addValue("I branches (User)", (inferPrimary || primaryBranches==0) ? Double.NaN : primaryBranches);
-		rt.addValue("I branches (Inferred)", (inferPrimary || primaryBranches==0) ? y[0] : Double.NaN);
 
 		// Calculate the 'center of mass' for the sampled curve (linear Sholl);
 		centroid = baryCenter(x, y);
 		rt.addValue("Centroid radius", centroid[0]);
 		rt.addValue("Centroid inters.", centroid[1]);
 
-		rt.addValue("Enclosing radius", lastR);
+		rt.addValue("Enclosing radius", enclosingR);
+
 		//rt.addValue("Enclosed field", field);
 		rt.show(SHOLLTABLE);
 		return rt;
@@ -2029,6 +2043,14 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 	/** Extended error message */
     private void lError(final String msg) {
         error(msg, true);
+    }
+
+    /** Returns a filename that does not include extension */
+    private String trimExtension(String filename) {
+        final int index = filename.lastIndexOf(".");
+        if (index>0)
+            filename = filename.substring(0, index);
+        return filename;
     }
 
 }
