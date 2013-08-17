@@ -31,7 +31,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Skeletonize3D_</artifactId>
-			<version>1.0</version>
+			<version>${skeletonize3d.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
