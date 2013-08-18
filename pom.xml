@@ -53,6 +53,7 @@
 		<level_sets.version>1.0</level_sets.version>
 		<mpicbg.version>0.6.1-SNAPSHOT</mpicbg.version>
 		<rsyntaxtextarea.version>2.0.4.1</rsyntaxtextarea.version>
+		<scala.version>2.10.0</scala.version>
 		<skeletonize3d.version>1.0</skeletonize3d.version>
 		<trakem2.version>1.0b-SNAPSHOT</trakem2.version>
 		<weka.version>3.7.6</weka.version>
