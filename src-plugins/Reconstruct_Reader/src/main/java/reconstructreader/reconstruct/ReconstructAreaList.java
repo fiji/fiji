@@ -104,7 +104,6 @@ public class ReconstructAreaList implements ContourSet {
                 sb.append("<t2_path d=\"");
                 Utils.appendClosedPathXML(sb, pts);
                 sb.append("\" />\n");
-
             }
 
             sb.append("</t2_area>\n");

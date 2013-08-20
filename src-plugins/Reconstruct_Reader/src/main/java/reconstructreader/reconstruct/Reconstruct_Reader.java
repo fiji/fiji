@@ -37,16 +37,19 @@ public class Reconstruct_Reader implements PlugIn
             float pTime = ((float)(System.currentTimeMillis() - sTime)) / 1000;
             IJ.log("Done translating, took " + pTime + " seconds. Writing XML");
             projectFileName = translator.writeTrakEM2();
+
+            if (!translator.getPostTranslationMessage().isEmpty())
+            {
+                IJ.showMessage(translator.getPostTranslationMessage());
+            }
+
             if (projectFileName != null)
             {
                 Project t2p;
                 IJ.log("Opening project " + projectFileName);
                 t2p = Project.openFSProject(projectFileName);
                 t2p.getRootLayerSet().setMinimumDimensions();
-                if (!translator.postTranslationMessage().isEmpty())
-                {
-                    IJ.showMessage(translator.postTranslationMessage());
-                }
+
             }
         }
         else

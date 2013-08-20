@@ -128,12 +128,12 @@ public class ReconstructTranslator {
     private final ArrayList<ReconstructProfileList> openContours;
     private final ArrayList<ReconstructZTrace> zTraces;
 
-    //private final String fileName;
     private final String projectName;
     private final String unuid;
     private final String nuid;
     private final File inputFile;
 
+    private String postTranslationMessage;
     private String errorMessage;
     private File lastFile;
 
@@ -147,9 +147,6 @@ public class ReconstructTranslator {
     private boolean ready;
     
     private TranslationMessenger messenger;
-
-    private boolean displayTransformWarning;
-
 
 
     public static InputSource getISO8559Source(final File f) throws FileNotFoundException, UnsupportedEncodingException
@@ -174,6 +171,7 @@ public class ReconstructTranslator {
         // Parse out the path
         final String localFile = inputFile.getName();
 
+        postTranslationMessage = "";
         errorMessage = "";
         lastFile = null;
 
@@ -192,8 +190,6 @@ public class ReconstructTranslator {
         unuid = Long.toString(System.currentTimeMillis()) + "." + nuid;
 
         layerSetOID = nextOID();
-
-        displayTransformWarning = false;
 
         ready = true;
 
@@ -252,7 +248,7 @@ public class ReconstructTranslator {
             {
                 //Read and parse all of the files (series and sections)
                 final DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder builder;
+                final DocumentBuilder builder;
 
                 // DTDs aren't commonly included with Reconstruct projects, so ignore them.
                 builderFactory.setValidating(false);
@@ -268,9 +264,8 @@ public class ReconstructTranslator {
                     addSection(sectionDocuments, builder, f);
                 }
 
-                //It has become somewhat obvious that ReconstructTranslator should be rewritten,
-                //however, it also (mostly) works, and that would take time.
-                fixNonlinearTransforms(sectionDocuments);
+                //Fix the XML before translation
+                postTranslationMessage = fixXML(sectionDocuments);
 
                 //Sort section files by index.
                 Collections.sort(sectionDocuments, new Utils.ReconstructSectionIndexComparator());
@@ -337,6 +332,11 @@ public class ReconstructTranslator {
         }
     }
 
+    public String getPostTranslationMessage()
+    {
+        return postTranslationMessage;
+    }
+
     public String getLastErrorMessage()
     {
         return errorMessage;
@@ -372,7 +372,7 @@ public class ReconstructTranslator {
 
     protected void collectContoursAndSections(List<Document> sectionDocs)
     {
-        double[] sectionThickness;
+        //double[] sectionThickness;
 
         //Collect contours
         for (Document doc : sectionDocs)
@@ -862,7 +862,8 @@ public class ReconstructTranslator {
     protected void appendCalibration(final StringBuilder sb)
     {
         Element image = (Element) sectionDocuments.get(0).getElementsByTagName("Image").item(0);
-        String mag = image.getAttribute("mag");
+        String mag = image.hasAttribute("t2mag") ?
+                image.getAttribute("t2mag") : image.getAttribute("mag");
         String thickness = sectionDocuments.get(0).getDocumentElement().getAttribute("thickness");
 
         sb.append("<t2_calibration\n" +
@@ -959,6 +960,160 @@ public class ReconstructTranslator {
         return defaultMag;
     }
 
+
+    /**
+     * Reconstruct XML Section Documents may be broken in several ways, with respect to
+     * TrakEM2 translation. This function fixes that.
+     * @param secDocs Reconstruct XML section documents to be fixed.
+     * @return a message to display to the user if the XML fix requires some attention.
+     */
+    private String fixXML(final Collection<Document> secDocs)
+    {
+        String message;
+        message = fixNonlinearTransforms(secDocs);
+        message += fixTransformScale(secDocs);
+        return message;
+    }
+
+    private String fixTransformScale(final Collection<Document> secDocs)
+    {
+        double scale = calculateTransformScale(secDocs);
+        System.out.println("Got scale " + scale);
+        if (scale != 1.0 && !Double.isInfinite(scale))
+        {
+            for (final Document d : secDocs)
+            {
+                if (!nonlinearDocument(d))
+                {
+                    final NodeList nl = d.getElementsByTagName("Transform");
+                    for (int i = 0; i < nl.getLength(); ++i)
+                    {
+                        unscaleTransform((Element)nl.item(i), scale);
+                    }
+                }
+            }
+        }
+        return "";
+    }
+
+    private double calculateTransformScale(final Collection<Document> secDocs)
+    {
+        double scale = Double.POSITIVE_INFINITY;
+        double scaleDistance = scale - 1.0;
+
+        System.out.println("Processing " + secDocs.size() + " sections for scale");
+
+        for (final Document doc : secDocs)
+        {
+            final Element trans = Utils.getFirstImageTransformElement(doc);
+            System.out.println("Document " + doc.getDocumentElement().getAttribute("index"));
+
+            // If there actually *is* an image transform (sometimes there isn't), and if that
+            // image transform hasn't been explicity set to the identity...
+            if (trans != null && !nonlinearDocument(doc))
+            {
+                double[] xcoefs = Utils.createNodeValueVector(trans.getAttribute("xcoef"));
+                double[] ycoefs = Utils.createNodeValueVector(trans.getAttribute("ycoef"));
+                Utils.nodeValueToVector(trans.getAttribute("xcoef"), xcoefs);
+                Utils.nodeValueToVector(trans.getAttribute("ycoef"), ycoefs);
+
+                boolean ok = true;
+
+                // We consider only transforms that consist of at most a scale and translation
+                for (int i : new int[]{2, 3, 4, 5})
+                {
+                    ok &= xcoefs[i] == 0;
+                }
+                for (int i : new int[]{1, 3, 4, 5})
+                {
+                    ok &= ycoefs[i] == 0;
+                }
+                ok &= xcoefs[1] == ycoefs[2];
+
+                if (ok)
+                {
+                    System.out.println("Transform ok");
+                    double transScale = xcoefs[1];
+                    double transScaleDistance = Math.abs(transScale - 1.0);
+
+                    if (transScaleDistance == 0.0)
+                    {
+                        System.out.println("xcoefs " + trans.getAttribute("xcoef"));
+                        System.out.println("ycoefs " + trans.getAttribute("ycoef"));
+                        System.out.println("No scale!");
+                        return 1;
+                    }
+                    else if (transScaleDistance < scaleDistance)
+                    {
+                        scale = transScale;
+                        scaleDistance = transScaleDistance;
+                    }
+                    System.out.println("Scale: " + transScale);
+                }
+            }
+            else
+            {
+                System.out.println("Null transform");
+            }
+        }
+
+        System.out.println("Found scale: " + scale);
+
+        return scale;
+    }
+
+    private void unscaleTransform(final Element trans, final double scale)
+    {
+        final int dim = Integer.valueOf(trans.getAttribute("dim"));
+        final double unscale = 1 / scale;
+        final double[] xcoefs = Utils.createNodeValueVector(trans.getAttribute("xcoef"));
+        final double[] ycoefs = Utils.createNodeValueVector(trans.getAttribute("ycoef"));
+        final NodeList nl = trans.getChildNodes();
+
+        Utils.nodeValueToVector(trans.getAttribute("xcoef"), xcoefs);
+        Utils.nodeValueToVector(trans.getAttribute("ycoef"), ycoefs);
+
+        switch (dim)
+        {
+            case 0:
+                trans.setAttribute("dim", "2");
+                trans.setAttribute("xcoef", "0 " + unscale + " 0 0 0 0");
+                trans.setAttribute("ycoef", "0 " + unscale + " 0 0 0 0");
+                break;
+            case 1:
+                trans.setAttribute("dim", "2");
+                trans.setAttribute("xcoef", "" + xcoefs[0] + " " + unscale + " 0 0 0 0");
+                trans.setAttribute("ycoef", "" + ycoefs[0] + " " + unscale + " 0 0 0 0");
+                break;
+            case 2:
+                trans.setAttribute("xcoef", "" + xcoefs[0] + " " + (unscale * xcoefs[1]) +
+                        " 0 0 0 0");
+                trans.setAttribute("ycoef", "" + ycoefs[0] + " " + (unscale * ycoefs[1]) +
+                        " 0 0 0 0");
+                break;
+            default:
+                //fixNonlinearTransforms should precede this call, so we don't treat dim > 3
+                //any differently
+                trans.setAttribute("xcoef", "" + xcoefs[0] + " " + (unscale * xcoefs[1]) +
+                        " " + (unscale * xcoefs[2]) + " 0 0 0");
+                trans.setAttribute("ycoef", "" + ycoefs[0] + " " + (unscale * ycoefs[1]) +
+                        " " + (unscale * ycoefs[2]) + " 0 0 0");
+                break;
+        }
+
+        for (int i = 0; i < nl.getLength(); ++i)
+        {
+            if (nl.item(i).getNodeName().equals("Image"))
+            {
+                final Element im = (Element)nl.item(i);
+                final double mag = Double.parseDouble(im.getAttribute("mag"));
+                messenger.sendMessage("Image mag changed from " + mag + " to " + (mag * unscale));
+                im.setAttribute("t2mag", "" + (mag * unscale));
+            }
+
+        }
+    }
+
     /**
      * This function fixes the XML so that we present TrakEM2 with only affine transforms. TrakEM2
      * can't handle Reconstruct's nonliner transforms, and mucking around with the translation code
@@ -973,35 +1128,76 @@ public class ReconstructTranslator {
      * to the trace, then set the transform to the identity.
      *
      * @param secDocs a List of XML Documents representing the Section files
+     * @return a message to display to the user, if a nonlinear image transform was fixed.
      */
-    private void fixNonlinearTransforms(final Collection<Document> secDocs)
+    private String fixNonlinearTransforms(final Collection<Document> secDocs)
     {
+        String message = "";
+        String unalignedMessage = "Nonlinear Reconstruct alignments are incompatible with TrakEM2.\n" +
+                "At least one was found in your project.\n" +
+                "Each such section has been reset to an unaligned section.";
+
         for (final Document secDoc : secDocs)
         {
-            Element image = null;
-            NodeList transforms = secDoc.getElementsByTagName("Transform");
-            for (int i = 0; i < transforms.getLength() && image == null; ++i)
+            // Check the image transform for non-linearity
+            // If the image is nonlinear, we rewrite the whole section
+            Element transform;
+            if (isNonLinear(transform = Utils.getFirstImageTransformElement(secDoc)))
             {
-                Element transform = (Element)transforms.item(i);
-                int dim = Integer.parseInt(transform.getAttribute("dim"));
-                if (dim > 3)
+                message = unalignedMessage;
+                fixImageTransform(secDoc, imageElement(transform));
+            }
+            else
+            {
+                // If the image has a linear transforms, then we iterate through the contour
+                // transforms. When we find a nonlinear transform here, we simply apply it to the
+                // trace points, then set the transform to the identity.
+                final NodeList transforms = secDoc.getElementsByTagName("Transform");
+                for (int i = 0; i < transforms.getLength(); ++i)
                 {
-                    messenger.sendMessage("Got transform with dim " + dim + ". Fixing to dim = 0.");
-                    if ((image = hasImage(transform)) != null)
+                    transform = (Element)transforms.item(i);
+
+                    if (isNonLinear(transform) && imageElement(transform) == null)
                     {
-                        displayTransformWarning = true;
-                        fixImageTransform(secDoc, image);
-                    }
-                    else
-                    {
+                        messenger.sendMessage("Got nonlinear transform. Fixing to dim = 0.");
                         fixContourTransforms(transform);
                     }
                 }
             }
         }
+        return message;
+    }
+
+    private boolean isNonLinear(final Element transform)
+    {
+
+        final int dim = Integer.parseInt(transform.getAttribute("dim"));
+
+        if (dim > 3)
+        {
+
+            final double[] xcoef = new double[6];
+            final double[] ycoef = new double[6];
+            boolean test = false;
+
+            Utils.nodeValueToVector(transform.getAttribute("xcoef"), xcoef);
+            Utils.nodeValueToVector(transform.getAttribute("ycoef"), ycoef);
+
+            for (int j = 3; j < 6 && !test; ++j)
+            {
+                test |= xcoef[j] != 0;
+                test |= ycoef[j] != 0;
+            }
+
+            return test;
+        }
+        else
+        {
+            return false;
+        }
     }
     
-    private Element hasImage(final Element transform)
+    private Element imageElement(final Element transform)
     {
         final NodeList children = transform.getChildNodes();
         for (int i = 0; i < children.getLength(); ++i)
@@ -1013,7 +1209,12 @@ public class ReconstructTranslator {
         }
         return null;
     }
-    
+
+    private boolean nonlinearDocument(final Document doc)
+    {
+        return doc.getDocumentElement().hasAttribute("nonlinear");
+    }
+
     private void fixImageTransform(final Document secDoc, final Element image)
     {
         final Element imageTransform = (Element)image.getParentNode();
@@ -1041,6 +1242,8 @@ public class ReconstructTranslator {
         imageTransform.setAttribute("xcoef", "0 1 0 0 0 0");
         imageTransform.setAttribute("ycoef", "0 0 1 0 0 0");
         imageTransform.setAttribute("dim", "0");
+
+        secDoc.getDocumentElement().setAttribute("nonlinear", "true");
     }
     
     private NodeList fixContourTransforms(final Element transform)
@@ -1230,20 +1433,6 @@ public class ReconstructTranslator {
                 pts[j] = x0;
                 pts[j + 1] = y0;
             }
-        }
-    }
-
-    public String postTranslationMessage()
-    {
-        if (displayTransformWarning)
-        {
-            return "Nonlinear Reconstruct alignments are incompatible with TrakEM2.\n" +
-                    "At least one was found in your project.\n" +
-                    "Each such section has been reset to an unaligned section.";
-        }
-        else
-        {
-            return "";
         }
     }
 
