@@ -4,19 +4,25 @@ WISH LIST
 =========
     - Obtain a mask for every chosen method (slices of an ImageStack?)
     - Fix dialog prompt: Can become higher than 700px and may not be displayed on netbooks
-
     - Restrict analysis to area ROIs (rather than hemicircles/spheres?)
+
 
 RELEASE NOTES
 =============
-Version 3.1 (July 2013) [latest]
+   (Unfortunately, the numbering scheme is somewhat arbitrary and not that meaningful.
+    However, large increments usually indicate changes in the user interface).
+
+Version 3.2 (August 2013) [latest]
+    - Enclosing radius is defined as the widest distance associated with a specified
+      cutoff value of intersection counts. At the default cutoff (1), it is the largest
+      of intersecting radii.
+
+Version 3.1
     - Hold dow "Alt" to analyze profiles obtained elsewhere, including those from Simple
       Neurite Tracer, http://fiji.sc/Simple_Neurite_Tracer
     - Multiple profiles can be obtained at once
     - Plugin can now predict (or at least try) the polynomial of best approximation
-    - New descriptors: Median and Barycenter of sampled profile. Enclosing radius: The
-      largest distance at which a specified cutoff value of intersection counts was found.
-      At the default cutoff (1), it is the largest of intersecting radii.
+    - New descriptors: Median and Barycenter of sampled profile
     - Added a "batch mode" option that saves profiles without displaying them
     - Sholl decay is calculated using the full rage of data or values within percentiles
       10 and 90, which usually provides a better fit. However, Sholl decay is only
