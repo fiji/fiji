@@ -977,9 +977,11 @@ public class ReconstructTranslator {
 
     private String fixTransformScale(final Collection<Document> secDocs)
     {
-        double scale = calculateTransformScale(secDocs);
-        System.out.println("Got scale " + scale);
-        if (scale != 1.0 && !Double.isInfinite(scale))
+        double[] sectionScale = new double[secDocs.size()];
+        double minScale = calculateTransformScale(secDocs, sectionScale);
+        double maxScale = minScale;
+
+        if (minScale != 1.0 && !Double.isInfinite(minScale))
         {
             for (final Document d : secDocs)
             {
@@ -988,25 +990,55 @@ public class ReconstructTranslator {
                     final NodeList nl = d.getElementsByTagName("Transform");
                     for (int i = 0; i < nl.getLength(); ++i)
                     {
-                        unscaleTransform((Element)nl.item(i), scale);
+                        unscaleTransform((Element)nl.item(i), minScale);
                     }
                 }
             }
         }
-        return "";
+
+        for (double scale : sectionScale)
+        {
+            if (scale != 0 && !Double.isInfinite(scale))
+            {
+                if (Math.abs(scale - 1) > Math.abs(maxScale - 1))
+                {
+                    maxScale = scale;
+                }
+            }
+        }
+
+        if (maxScale != minScale)
+        {
+            return "This Reconstruct project has been re-calibrated using the scale method.\n" +
+                    "The detected scale was " + minScale + ", but multiple valid scales were" +
+                    " detected,\nthe extremum of which was " + maxScale + ".\nPlease verify that " +
+                    " the areas of your traces have not changed.";
+
+        }
+        else if (minScale != 1)
+        {
+            return "This Reconstruct project has been re-calibrated using the scale method.\n" +
+                    "The detected scale was " + minScale + ".\nPlease verify that " +
+                    " the areas of your traces have not changed.";
+        }
+        else
+        {
+            return "";
+        }
     }
 
-    private double calculateTransformScale(final Collection<Document> secDocs)
+    private double calculateTransformScale(final Collection<Document> secDocs,
+                                           double[] sectionScale)
     {
         double scale = Double.POSITIVE_INFINITY;
         double scaleDistance = scale - 1.0;
-
-        System.out.println("Processing " + secDocs.size() + " sections for scale");
+        int sIndex = 0;
 
         for (final Document doc : secDocs)
         {
             final Element trans = Utils.getFirstImageTransformElement(doc);
-            System.out.println("Document " + doc.getDocumentElement().getAttribute("index"));
+
+            sectionScale[sIndex] = 0;
 
             // If there actually *is* an image transform (sometimes there isn't), and if that
             // image transform hasn't been explicity set to the identity...
@@ -1032,32 +1064,22 @@ public class ReconstructTranslator {
 
                 if (ok)
                 {
-                    System.out.println("Transform ok");
                     double transScale = xcoefs[1];
                     double transScaleDistance = Math.abs(transScale - 1.0);
 
-                    if (transScaleDistance == 0.0)
-                    {
-                        System.out.println("xcoefs " + trans.getAttribute("xcoef"));
-                        System.out.println("ycoefs " + trans.getAttribute("ycoef"));
-                        System.out.println("No scale!");
-                        return 1;
-                    }
-                    else if (transScaleDistance < scaleDistance)
+                    sectionScale[sIndex] = scale;
+
+                    if (transScaleDistance < scaleDistance)
                     {
                         scale = transScale;
                         scaleDistance = transScaleDistance;
                     }
-                    System.out.println("Scale: " + transScale);
                 }
             }
-            else
-            {
-                System.out.println("Null transform");
-            }
-        }
 
-        System.out.println("Found scale: " + scale);
+            ++sIndex;
+
+        }
 
         return scale;
     }
@@ -1135,7 +1157,7 @@ public class ReconstructTranslator {
         String message = "";
         String unalignedMessage = "Nonlinear Reconstruct alignments are incompatible with TrakEM2.\n" +
                 "At least one was found in your project.\n" +
-                "Each such section has been reset to an unaligned section.";
+                "Each such section has been reset to an unaligned section.\n\n";
 
         for (final Document secDoc : secDocs)
         {
