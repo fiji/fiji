@@ -264,6 +264,7 @@ hs_err*.log
 
 # Bio-Formats #
 /jars/bio-formats-[0-9]*.jar
+/jars/bio-formats/scifio-[0-9]*.jar
 /jars/commons-logging-[0-9]*.jar
 /jars/forms-[0-9]*.jar
 /jars/jai-codec-[0-9]*.jar
@@ -278,12 +279,15 @@ hs_err*.log
 /jars/netcdf-java-[0-9]*.jar
 /jars/ome-xml-[0-9]*.jar
 /jars/poi-loci-[0-9]*.jar
-/jars/scifio-[0-9]*.jar
 /jars/serializer-[0-9]*.jar
 /jars/slf4j-api-[0-9]*.jar
 /jars/slf4j-log4j12-[0-9]*.jar
 /jars/xalan-[0-9]*.jar
 /jars/xml-apis-[0-9]*.jar
+
+# SCIFIO #
+/jars/scifio-[0-9]*.jar
+/jars/mapdb-0.9.3.jar
 
 # ImageJ2 #
 /jars/commons-lang3-[0-9]*.jar
@@ -318,6 +322,9 @@ hs_err*.log
 /jars/object-inspector-[0-9]*.jar
 /jars/sezpoz-[0-9]*.jar
 /plugins/readme.txt
+
+# Java3D #
+/jars/j3d-core-1.5.2.jar
 
 # Miscellaneous #
 /jars/Updater_Fix-[0-9]*.jar
