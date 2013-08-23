@@ -21,6 +21,7 @@ public class StitchingParameters
 	public int checkPeaks;
 	public boolean computeOverlap, subpixelAccuracy;
 	public boolean invertX, invertY;
+	public boolean ignoreZStage;
 	public double xOffset;
 	public double yOffset;
 	public double zOffset;

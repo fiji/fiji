@@ -63,6 +63,7 @@ public class Stitching_Grid implements PlugIn
 	public static boolean defaultComputeOverlap = true;
 	public static boolean defaultInvertX = false;
 	public static boolean defaultInvertY = false;
+	public static boolean defaultIgnoreZStage = false;
 	public static boolean defaultSubpixelAccuracy = true;
 	public static boolean writeOnlyTileConfStatic = false;
 	
@@ -173,6 +174,7 @@ public class Stitching_Grid implements PlugIn
 		
 		gd.addCheckbox( "Invert_X coordinates", defaultInvertX );
 		gd.addCheckbox( "Invert_Y coordinates", defaultInvertY );
+		gd.addCheckbox( "Ignore_Z_stage position", defaultIgnoreZStage);
 		gd.addCheckbox( "Subpixel_accuracy", defaultSubpixelAccuracy );
 		gd.addCheckbox( "Use_virtual_input_images (Slow! Even slower when combined with subpixel accuracy during fusion!)", defaultVirtualInput );
 		gd.addChoice( "Computation_parameters", CommonFunctions.cpuMemSelect, CommonFunctions.cpuMemSelect[ defaultMemorySpeedChoice ] );
@@ -293,6 +295,7 @@ public class Stitching_Grid implements PlugIn
 		
 		final boolean invertX = params.invertX = defaultInvertX = gd.getNextBoolean();
 		final boolean invertY = params.invertY = defaultInvertY = gd.getNextBoolean();
+		final boolean ignoreZStage = params.ignoreZStage = defaultIgnoreZStage = gd.getNextBoolean();
 
 		params.subpixelAccuracy = defaultSubpixelAccuracy = gd.getNextBoolean();
 		params.virtual = defaultVirtualInput = gd.getNextBoolean();
@@ -357,7 +360,7 @@ public class Stitching_Grid implements PlugIn
 		else if ( gridType == 5 || gridType == 7)
 			elements = getAllFilesInDirectory( directory, confirmFiles );
 		else if ( gridType == 6 && gridOrder == 1 )
-			elements = getLayoutFromMultiSeriesFile( seriesFile, increaseOverlap, ignoreCalibration, invertX, invertY );
+			elements = getLayoutFromMultiSeriesFile( seriesFile, increaseOverlap, ignoreCalibration, invertX, invertY, ignoreZStage );
 		else if ( gridType == 6 )
 			elements = getLayoutFromFile( directory, outputFile );
 		else
@@ -569,7 +572,7 @@ public class Stitching_Grid implements PlugIn
     		element.close();
 	}
 	
-	protected ArrayList< ImageCollectionElement > getLayoutFromMultiSeriesFile( final String multiSeriesFile, final double increaseOverlap, final boolean ignoreCalibration, final boolean invertX, final boolean invertY )
+	protected ArrayList< ImageCollectionElement > getLayoutFromMultiSeriesFile( final String multiSeriesFile, final double increaseOverlap, final boolean ignoreCalibration, final boolean invertX, final boolean invertY, final boolean ignoreZStage )
 	{
 		if ( multiSeriesFile == null || multiSeriesFile.length() == 0 )
 		{
@@ -628,7 +631,7 @@ public class Stitching_Grid implements PlugIn
 				for ( int t = 0; t < maxT; ++t )
 				{
 					double[] location =
-						CommonFunctions.getPlanePosition( r, retrieve, series, t, invertX, invertY );
+						CommonFunctions.getPlanePosition( r, retrieve, series, t, invertX, invertY, ignoreZStage );
 					double locationX = location[0];
 					double locationY = location[1];
 					double locationZ = location[2];
