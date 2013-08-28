@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>batik</groupId>
 			<artifactId>batik</artifactId>
-			<version>1.8</version>
+			<version>${batik.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
@@ -30,17 +30,17 @@
 		<dependency>
 			<groupId>com.itextpdf</groupId>
 			<artifactId>itextpdf</artifactId>
-			<version>5.1.1</version>
+			<version>${itextpdf.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.jpedal</groupId>
+			<groupId>${jpedal.groupId}</groupId>
 			<artifactId>jpedalSTD</artifactId>
-			<version>2.80b11</version>
+			<version>${jpedal.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.jcraft</groupId>
 			<artifactId>jzlib</artifactId>
-			<version>1.0.7</version>
+			<version>${jzlib.version}</version>
 		</dependency>
 	</dependencies>
 

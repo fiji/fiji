@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>edu.mines</groupId>
 			<artifactId>mines-jtk</artifactId>
-			<version>20100113</version>
+			<version>${edu.mines.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>

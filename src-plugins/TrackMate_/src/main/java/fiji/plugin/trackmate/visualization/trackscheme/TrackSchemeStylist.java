@@ -29,21 +29,23 @@ public class TrackSchemeStylist {
 	private String globalStyle = DEFAULT_STYLE_NAME;
 
 	static final Map<String, Map<String, Object>> VERTEX_STYLES;
-	static final String 			DEFAULT_STYLE_NAME = "full";
+	static final String 			FULL_STYLE_NAME = "full";
 	static final String 			SIMPLE_STYLE_NAME = "simple";
+	static final String 			DEFAULT_STYLE_NAME = SIMPLE_STYLE_NAME;
 
-	private static final HashMap<String, Object> DEFAULT_VERTEX_STYLE = new HashMap<String, Object>();
+	private static final HashMap<String, Object> FULL_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> SIMPLE_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
 	static {
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, "black");
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_RIGHT);
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_SHAPE, mxScaledLabelShape.SHAPE_NAME);
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_IMAGE_ALIGN, mxConstants.ALIGN_LEFT);
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_ROUNDED, true);
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.RectanglePerimeter);
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, DEFAULT_COLOR);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, "black");
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_RIGHT);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_SHAPE, mxScaledLabelShape.SHAPE_NAME);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_IMAGE_ALIGN, mxConstants.ALIGN_LEFT);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_ROUNDED, true);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.RectanglePerimeter);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, DEFAULT_COLOR);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_NOLABEL, false);
 
 		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
 		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, "black");
@@ -64,7 +66,7 @@ public class TrackSchemeStylist {
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKECOLOR, DEFAULT_COLOR);
 
 		VERTEX_STYLES = new HashMap<String, Map<String, Object> >(2);
-		VERTEX_STYLES.put(DEFAULT_STYLE_NAME, DEFAULT_VERTEX_STYLE);
+		VERTEX_STYLES.put(FULL_STYLE_NAME, FULL_VERTEX_STYLE);
 		VERTEX_STYLES.put(SIMPLE_STYLE_NAME, SIMPLE_VERTEX_STYLE);
 
 	}
@@ -77,8 +79,8 @@ public class TrackSchemeStylist {
 		// Prepare styles
 		mxStylesheet styleSheet = graphx.getStylesheet();
 		styleSheet.setDefaultEdgeStyle(BASIC_EDGE_STYLE);
-		styleSheet.setDefaultVertexStyle(DEFAULT_VERTEX_STYLE);
-		styleSheet.putCellStyle(DEFAULT_STYLE_NAME, DEFAULT_VERTEX_STYLE);
+		styleSheet.setDefaultVertexStyle(SIMPLE_VERTEX_STYLE);
+		styleSheet.putCellStyle(FULL_STYLE_NAME, FULL_VERTEX_STYLE);
 		styleSheet.putCellStyle(SIMPLE_STYLE_NAME, SIMPLE_VERTEX_STYLE);
 	}
 
@@ -139,28 +141,37 @@ public class TrackSchemeStylist {
 
 	public void updateVertexStyle(Collection<mxCell> vertices) {
 
-		for (mxCell vertex : vertices) {
+		graphx.getModel().beginUpdate();
+		try {
 
-			int nedges = vertex.getEdgeCount();
-			if (nedges == 0) {
-				continue;
-			}
-			mxICell edge;
-			for (int i = 0; i < vertex.getEdgeCount(); i++) {
-				edge = vertex.getEdgeAt(i);
-				if (null != edge.getStyle()) {
-					setVertexStyleFromEdge(vertex, edge);
-					break;
+			for (mxCell vertex : vertices) {
+
+				int nedges = vertex.getEdgeCount();
+				if (nedges == 0) {
+					/*
+					 * A lonely spot. We paint it with default color, 
+					 * according to current style.
+					 */
+					setVertexStyle(vertex, DEFAULT_COLOR);
+					continue;
+				}
+				mxICell edge;
+				for (int i = 0; i < vertex.getEdgeCount(); i++) {
+					edge = vertex.getEdgeAt(i);
+					if (null != edge.getStyle()) {
+						setVertexStyleFromEdge(vertex, edge);
+						break;
+					}
 				}
 			}
-
+		} finally {
+			graphx.getModel().endUpdate();
 		}
 	}
 
-	private final void setVertexStyleFromEdge(final mxICell vertex, final mxICell edge) {
+	private void setVertexStyle(mxICell vertex, String colorstr) {
 		String targetStyle = vertex.getStyle();
 		targetStyle = mxStyleUtils.removeAllStylenames(targetStyle);
-		String colorstr = getStyleValue(edge.getStyle(), mxConstants.STYLE_STROKECOLOR);
 		targetStyle = mxStyleUtils.setStyle(targetStyle , mxConstants.STYLE_STROKECOLOR, colorstr );
 
 		// Style specifics
@@ -178,7 +189,12 @@ public class TrackSchemeStylist {
 
 		graphx.getModel().setStyle(vertex, targetStyle);
 		graphx.getModel().getGeometry(vertex).setWidth(width);
-		graphx.getModel().getGeometry(vertex).setHeight(height);
+		graphx.getModel().getGeometry(vertex).setHeight(height);	
+	}
+
+	private final void setVertexStyleFromEdge(final mxICell vertex, final mxICell edge) {
+		String colorstr = getStyleValue(edge.getStyle(), mxConstants.STYLE_STROKECOLOR);
+		setVertexStyle(vertex, colorstr);
 	}
 
 

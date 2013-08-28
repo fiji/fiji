@@ -5,6 +5,7 @@ import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.TRACK_
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -21,7 +22,8 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.TrackModel;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
 
 public abstract class AbstractFeatureGrapher {
@@ -31,9 +33,9 @@ public abstract class AbstractFeatureGrapher {
 	protected final InterpolatePaintScale paints = InterpolatePaintScale.Jet; 
 	protected final String xFeature;
 	protected final Set<String> yFeatures;
-	protected final TrackMateModel model;
+	protected final Model model;
 
-	public AbstractFeatureGrapher(final String xFeature, final Set<String> yFeatures,final TrackMateModel model) {
+	public AbstractFeatureGrapher(final String xFeature, final Set<String> yFeatures,final Model model) {
 		this.xFeature = xFeature;
 		this.yFeatures = yFeatures;
 		this.model = model;
@@ -126,24 +128,15 @@ public abstract class AbstractFeatureGrapher {
 	/**
 	 * @return the list of links that have their source and target in the given spot list.
 	 */
-	protected final List<DefaultWeightedEdge> getInsideEdges(final List<Spot> spots) {
-		ArrayList<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>();
+	protected final List<DefaultWeightedEdge> getInsideEdges(final Collection<Spot> spots) {
 		int nspots = spots.size();
-		Spot source, target;
-		for (int i = 0; i < nspots; i++) {
-			source = spots.get(i);
-			for (int j = i+1; j < nspots; j++) {
-				target = spots.get(j);
-
-				if (model.getTrackModel().containsEdge(source, target)) {
-					DefaultWeightedEdge edge = model.getTrackModel().getEdge(source, target);
-					edges.add(edge);
-				}
-				if(model.getTrackModel().containsEdge(target, source)) { // careful for directed edge
-					DefaultWeightedEdge edge = model.getTrackModel().getEdge(target, source);
-					edges.add(edge);
-				}
-
+		ArrayList<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>(nspots);
+		TrackModel trackModel = model.getTrackModel();
+		for (DefaultWeightedEdge edge : trackModel.edgeSet()) {
+			Spot source = trackModel.getEdgeSource(edge);
+			Spot target = trackModel.getEdgeTarget(edge);
+			if (spots.contains(source) && spots.contains(target)) {
+				edges.add(edge);
 			}
 		}
 		return edges;

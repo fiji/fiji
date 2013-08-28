@@ -1,8 +1,10 @@
 package fiji.plugin.trackmate.gui;
 
+import java.awt.event.ActionEvent;
 import java.util.Map;
 
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.gui.panels.ActionListenablePanel;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 
 /**
@@ -15,6 +17,11 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 public abstract class ConfigurationPanel extends ActionListenablePanel {
 
 	private static final long serialVersionUID = 1L;
+	/**
+	 * This event is fired when a preview button is fired within this configuration panel.
+	 * It is the responsibility of concrete implementation to do whatever they want with it.
+	 */
+	public final ActionEvent PREVIEW_BUTTON_PUSHED = new ActionEvent(this, 0, "PreviewButtonPushed");
 
 	/**
 	 * Echo the parameters of the given instance of {@link DetectorSettings} on
@@ -27,6 +34,5 @@ public abstract class ConfigurationPanel extends ActionListenablePanel {
 	 * by this panel.
 	 */
 	public abstract Map<String, Object> getSettings();
-	
-	
+
 }

@@ -14,14 +14,18 @@ import org.jdom2.Element;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.io.IOUtils;
 import fiji.plugin.trackmate.util.TMUtils;
 
 public class ExportTracksToXML extends AbstractTMAction {
+
+
 
 	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_save.png"));
 	public static final String NAME = "Export tracks to XML file";
@@ -43,7 +47,8 @@ public class ExportTracksToXML extends AbstractTMAction {
 	 * CONSTRUCTOR
 	 */
 
-	public ExportTracksToXML() {
+	public ExportTracksToXML(TrackMate trackmate, TrackMateGUIController controller) {
+		super(trackmate, controller);
 		this.icon = ICON;
 	}
 
@@ -52,35 +57,35 @@ public class ExportTracksToXML extends AbstractTMAction {
 	 */
 
 	@Override
-	public void execute(TrackMate_ plugin) {
+	public void execute() {
 
 		logger.log("Exporting tracks to simple XML format.\n");
-		final TrackMateModel model = plugin.getModel();
-		int ntracks = model.getTrackModel().getNFilteredTracks();
+		final Model model = trackmate.getModel();
+		int ntracks = model.getTrackModel().nTracks(true);
 		if (ntracks == 0) {
 			logger.log("No visible track found. Aborting.\n");
 			return;
 		}
 
 		logger.log("  Preparing XML data.\n");
-		Element root = marshall(model);
+		Element root = marshall(model, trackmate.getSettings());
 
 		File folder; 
 		try {
-			folder = new File(plugin.getModel().getSettings().imp.getOriginalFileInfo().directory);
+			folder = new File(trackmate.getSettings().imp.getOriginalFileInfo().directory);
 		} catch (NullPointerException npe) {
 			folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 		}
 		
 		File file;
 		try {
-			String filename = plugin.getModel().getSettings().imageFileName;
+			String filename = trackmate.getSettings().imageFileName;
 			filename = filename.substring(0, filename.indexOf("."));
 			file = new File(folder.getPath() + File.separator + filename +"_Tracks.xml");
 		} catch (NullPointerException npe) {
 			file = new File(folder.getPath() + File.separator + "Tracks.xml");
 		}
-		file = IOUtils.askForFile(file, wizard, logger);
+		file = IOUtils.askForFileForSaving(file, controller.getGUI(), logger);
 		if (null == file) {
 			return;
 		}
@@ -108,22 +113,22 @@ public class ExportTracksToXML extends AbstractTMAction {
 		return NAME;
 	}
 
-	private Element marshall(TrackMateModel model) {
+	private Element marshall(Model model, Settings settings) {
 		logger.setStatus("Marshalling...");
 		Element content = new Element(CONTENT_KEY);
 		
-		content.setAttribute(NTRACKS_ATT, ""+model.getTrackModel().getNFilteredTracks());
-		content.setAttribute(PHYSUNIT_ATT, model.getSettings().spaceUnits);
-		content.setAttribute(FRAMEINTERVAL_ATT, ""+model.getSettings().dt);
-		content.setAttribute(FRAMEINTERVALUNIT_ATT, ""+model.getSettings().timeUnits);
+		content.setAttribute(NTRACKS_ATT, ""+model.getTrackModel().nTracks(true));
+		content.setAttribute(PHYSUNIT_ATT, model.getSpaceUnits());
+		content.setAttribute(FRAMEINTERVAL_ATT, ""+settings.dt);
+		content.setAttribute(FRAMEINTERVALUNIT_ATT, ""+model.getTimeUnits());
 		content.setAttribute(DATE_ATT, TMUtils.getCurrentTimeString());
-		content.setAttribute(FROM_ATT, TrackMate_.PLUGIN_NAME_STR + " v" + TrackMate_.PLUGIN_NAME_VERSION);
+		content.setAttribute(FROM_ATT, TrackMate.PLUGIN_NAME_STR + " v" + TrackMate.PLUGIN_NAME_VERSION);
 
-		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
+		Set<Integer> trackIDs = model.getTrackModel().trackIDs(true);
 		int i = 0;
 		for (Integer trackID : trackIDs) {
 
-			Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
+			Set<Spot> track = model.getTrackModel().trackSpots(trackID);
 			
 			Element trackElement = new Element(TRACK_KEY);
 			trackElement.setAttribute(NSPOTS_ATT, ""+track.size());
@@ -133,7 +138,7 @@ public class ExportTracksToXML extends AbstractTMAction {
 			sortedTrack.addAll(track);
 
 			for (Spot spot : sortedTrack) {
-				int frame = model.getFilteredSpots().getFrame(spot);
+				int frame = spot.getFeature(Spot.FRAME).intValue();
 				double x = spot.getFeature(Spot.POSITION_X);
 				double y = spot.getFeature(Spot.POSITION_Y);
 				double z = spot.getFeature(Spot.POSITION_Z);
@@ -146,7 +151,7 @@ public class ExportTracksToXML extends AbstractTMAction {
 				trackElement.addContent(spotElement);
 			}
 			content.addContent(trackElement);
-			logger.setProgress(i++ / (0d + model.getTrackModel().getNFilteredTracks()));
+			logger.setProgress(i++ / (0d + model.getTrackModel().nTracks(true)));
 		}
 
 		logger.setStatus("");

@@ -1,24 +1,26 @@
 package fiji.plugin.trackmate.tests;
 
-import fiji.plugin.trackmate.FeatureFilter;
-import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzer;
-import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
-import fiji.plugin.trackmate.gui.FilterGuiPanel;
+import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel.Category;
+import fiji.plugin.trackmate.gui.panels.components.FilterGuiPanel;
 import fiji.plugin.trackmate.util.SpotNeighborhood;
-import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.FeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 import ij.ImagePlus;
 import ij.process.StackConverter;
+import ij3d.Image3DUniverse;
 import ij3d.Install_J3D;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -99,14 +101,14 @@ public class SpotDisplayer3DTestDrive {
 		Spot spot;
 		for (int i = 0; i < N_BLOBS; i++)  {
 			spot = new Spot(centers.get(i), "Spot "+i);
-			spot.putFeature(Spot.POSITION_T, 0);
+			spot.putFeature(Spot.POSITION_T, Double.valueOf(0));
 			spot.putFeature(Spot.RADIUS, RADIUS);
 			spot.putFeature(Spot.QUALITY, RADIUS);
 			spots.add(spot);
 		}
 		
 		System.out.println("Grabbing features...");
-		SpotIntensityAnalyzer<UnsignedByteType> analyzer = new SpotIntensityAnalyzer<UnsignedByteType>(img, spots);
+		SpotIntensityAnalyzer<UnsignedByteType> analyzer = new SpotIntensityAnalyzer<UnsignedByteType>(img, spots.iterator());
 		analyzer.process();
 		for (Spot s : spots) 
 			System.out.println(s);
@@ -114,37 +116,41 @@ public class SpotDisplayer3DTestDrive {
 		// Launch renderer
 		final SpotCollection allSpots = new SpotCollection();
 		allSpots.put(0, spots);
-		final TrackMate_ plugin = new TrackMate_();
-		plugin.getModel().setSpots(allSpots, false);
-		plugin.getModel().getSettings().imp = imp;
-		final SpotDisplayer3D displayer = new SpotDisplayer3D(plugin.getModel());
+		final TrackMate trackmate = new TrackMate();
+		trackmate.getModel().setSpots(allSpots, false);
+		trackmate.getSettings().imp = imp;
+		Image3DUniverse universe = new Image3DUniverse();
+		universe.show();
+		final SpotDisplayer3D displayer = new SpotDisplayer3D(trackmate.getModel(), new SelectionModel(trackmate.getModel()), universe);
 		displayer.render();
 		
 		// Launch threshold GUI
 		List<FeatureFilter> ff = new ArrayList<FeatureFilter>();
-		final FilterGuiPanel gui = new FilterGuiPanel();
-		gui.setTarget(
-				SpotIntensityAnalyzerFactory.FEATURES, 
-				ff,
-				SpotIntensityAnalyzerFactory.FEATURE_NAMES,
-				TMUtils.getSpotFeatureValues(allSpots, SpotIntensityAnalyzerFactory.FEATURES, Logger.DEFAULT_LOGGER),
-				"spots");
+		final FilterGuiPanel gui = new FilterGuiPanel(trackmate.getModel(), Arrays.asList(new Category[] { Category.SPOTS } ) );
+		gui.setFilters(ff);
 
 		// Set listeners
 		gui.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				plugin.getModel().getSettings().setSpotFilters(gui.getFeatureFilters());
-				plugin.execSpotFiltering(false);
+				trackmate.getSettings().setSpotFilters(gui.getFeatureFilters());
+				trackmate.execSpotFiltering(false);
 			}
 		});
 		gui.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (e == gui.COLOR_FEATURE_CHANGED) {
-					String feature = gui.getColorByFeature();
-					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, feature);
-					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_RADIUS_RATIO, RAN.nextFloat());
-					displayer.refresh();
+					new Thread() {
+						public void run() {
+							String feature = gui.getColorFeature();
+							@SuppressWarnings("unchecked")
+							FeatureColorGenerator<Spot> spotColorGenerator = (FeatureColorGenerator<Spot>) displayer.getDisplaySettings(TrackMateModelView.KEY_SPOT_COLORING);
+							spotColorGenerator.setFeature(feature);
+							displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLORING, spotColorGenerator);
+							displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_RADIUS_RATIO, RAN.nextFloat()+1);
+							displayer.refresh();
+						};
+					}.start();
 				}
 			}
 		});
@@ -157,7 +163,7 @@ public class SpotDisplayer3DTestDrive {
 		frame.setVisible(true);
 
 		// Add a panel
-		gui.addFilterPanel(SpotIntensityAnalyzerFactory.MEAN_INTENSITY);		
+		gui.addFilterPanel(Spot.POSITION_Z);
 		
 	}
 	

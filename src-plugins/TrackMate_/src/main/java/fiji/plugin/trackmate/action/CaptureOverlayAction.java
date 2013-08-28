@@ -15,11 +15,12 @@ import java.awt.Robot;
 
 import javax.swing.ImageIcon;
 
-import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class CaptureOverlayAction extends AbstractTMAction {
+
 
 	public static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_go.png"));
 	public static final String NAME = "Capture overlay";
@@ -34,17 +35,17 @@ public class CaptureOverlayAction extends AbstractTMAction {
 			"Also, make sure nothing is moved over the image while capturing. "+
 			"</html>";
 
-	public CaptureOverlayAction() {
+	public CaptureOverlayAction(TrackMate trackmate, TrackMateGUIController controller) {
+		super(trackmate, controller);
 		this.icon = ICON;
 	}
 
 	@Override
-	public void execute(TrackMate_ plugin) {
+	public void execute() {
 		logger.log("Capturing TrackMate overlay.\n");
 		logger.log("  Preparing and allocating memory...");
 		try {
-			final TrackMateModel model = plugin.getModel();
-			final ImagePlus imp =  model.getSettings().imp;
+			final ImagePlus imp =  trackmate.getSettings().imp;
 			final ImageWindow win = imp.getWindow();
 			win.toFront();
 			final Point loc = win.getLocation();

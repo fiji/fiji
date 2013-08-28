@@ -24,7 +24,7 @@ public class DetectorKeys {
 	 * <ul>*/
 	public static final String KEY_TARGET_CHANNEL = "TARGET_CHANNEL";
 	
-	/** A defayult value for the {@link #KEY_TARGET_CHANNEL} parameter. */
+	/** A default value for the {@link #KEY_TARGET_CHANNEL} parameter. */
 	public static final int DEFAULT_TARGET_CHANNEL = 1;
 	
 	/** The key identifying the parameter that sets the target radius for the detector. 

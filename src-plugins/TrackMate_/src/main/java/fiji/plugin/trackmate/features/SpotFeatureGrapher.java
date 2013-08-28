@@ -5,6 +5,7 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,9 +20,8 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Dimension;
-import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.util.XYEdgeRenderer;
@@ -30,7 +30,7 @@ import fiji.plugin.trackmate.util.XYEdgeSeriesCollection;
 
 public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 
-	private final List<Spot> spots;
+	private final Collection<Spot> spots;
 	private final Dimension xDimension;
 	private final Map<String, Dimension> yDimensions;
 	private final Map<String, String> featureNames;
@@ -39,13 +39,12 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 	 * CONSTRUCTOR
 	 */
 
-	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final List<Spot> spots, final TrackMateModel model) {
+	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final Collection<Spot> spots, final Model model) {
 		super(xFeature, yFeatures, model);
 		this.spots = spots;
 		this.xDimension = model.getFeatureModel().getSpotFeatureDimensions().get(xFeature);
 		this.yDimensions = model.getFeatureModel().getSpotFeatureDimensions();
 		this.featureNames = model.getFeatureModel().getSpotFeatureNames();
-
 	}
 	
 	/*
@@ -56,10 +55,8 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 	@Override
 	public void render() {
 				
-		final Settings settings = model.getSettings();
-		
 		// X label
-		String xAxisLabel = xFeature + " (" + TMUtils.getUnitsFor(xDimension, settings)+")";
+		String xAxisLabel = xFeature + " (" + TMUtils.getUnitsFor(xDimension, model.getSpaceUnits(), model.getTimeUnits())+")";
 		
 		// Find how many different dimensions
 		Set<Dimension> dimensions = getUniqueValues(yFeatures, yDimensions);
@@ -69,7 +66,7 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 		for (Dimension dimension : dimensions) {
 			
 			// Y label
-			String yAxisLabel = TMUtils.getUnitsFor(dimension, settings);
+			String yAxisLabel = TMUtils.getUnitsFor(dimension, model.getSpaceUnits(), model.getTimeUnits());
 			
 			// Collect suitable feature for this dimension
 			List<String> featuresThisDimension = getCommonKeys(dimension, yFeatures, yDimensions);
@@ -150,7 +147,7 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 	 * the given spots. The dataset returned is a {@link XYEdgeSeriesCollection}, made to plot the lines
 	 * between 2 points representing 2 spot. We therefore retrieve 
 	 */
-	private XYEdgeSeriesCollection buildEdgeDataSet(final Iterable<String> targetYFeatures, final List<Spot> spots) {
+	private XYEdgeSeriesCollection buildEdgeDataSet(final Iterable<String> targetYFeatures, final Collection<Spot> spots) {
 		// Collect edges
 		List<DefaultWeightedEdge> edges = getInsideEdges(spots);
 		

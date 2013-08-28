@@ -359,12 +359,19 @@ if test $# = 0
 then
 	eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install
 	update_launcher
+	for name in fiji ImageJ
+	do
+		uptodate "$LAUNCHER" "$name$exe" ||
+		cp "$LAUNCHER" "$name$exe"
+	done
 else
 	for name in "$@"
 	do
 		case "$name" in
 		fiji|ImageJ)
 			update_launcher
+			uptodate "$LAUNCHER" "$name$exe" ||
+			cp "$LAUNCHER" "$name$exe"
 			continue
 			;;
 		clean)
@@ -378,11 +385,13 @@ else
 		artifactId="${artifactId%%-[0-9]*}"
 		case "$name" in
 		*-rebuild)
+			artifactId=${artifactId%-rebuild}
+			artifactId="${artifactId%.jar}"
 			eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven \
-				"$OPTIONS" -DartifactId="$artifactId" clean
+				"$OPTIONS" -DartifactId="$artifactId" -- clean
 			;;
 		esac
 		eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven \
-			"$OPTIONS" -DartifactId="$artifactId" install
+			"$OPTIONS" -DartifactId="$artifactId" -- install
 	done
 fi

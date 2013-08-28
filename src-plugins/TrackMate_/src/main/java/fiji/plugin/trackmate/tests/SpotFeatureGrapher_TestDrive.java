@@ -4,16 +4,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 import org.jdom2.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleDirectedWeightedGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
+import org.scijava.util.AppUtils;
 
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.SpotFeatureGrapher;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -24,29 +27,24 @@ public class SpotFeatureGrapher_TestDrive {
 	public static void main(String[] args) throws JDOMException, IOException {
 
 		// Load objects 
-		File file = new File("/Users/tinevez/Desktop/Data/Tree.xml");
-//		File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
-		TrackMate_ plugin = new TrackMate_();
-		plugin.initModules();
-		TmXmlReader reader = new TmXmlReader(file, plugin);
-		if (!reader.checkInput() || !reader.process()) {
-			System.err.println("Problem loading the file:");
-			System.err.println(reader.getErrorMessage());
-			return;
-		}
-		TrackMateModel model = plugin.getModel();
+		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
+		TmXmlReader reader = new TmXmlReader(file);
+		Model model = reader.getModel();
 
-		List<Spot> spots = model.getFilteredSpots().getAllSpots();
-		
 		HashSet<String> Y = new HashSet<String>(1);
 		Y.add(Spot.POSITION_T);
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(Spot.POSITION_X, Y, spots, model);
+		List<Spot> spots = new ArrayList<Spot>(model.getSpots().getNSpots(true));
+		for (Iterator<Spot> it = model.getSpots().iterator(true); it.hasNext();) {
+			spots.add(it.next());
+		}
+		
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(Spot.POSITION_X, Y, spots , model);
 		grapher.render();
 		
 		TrackIndexAnalyzer analyzer = new TrackIndexAnalyzer(model);
-		analyzer.process(model.getTrackModel().getFilteredTrackIDs()); // need for trackScheme
+		analyzer.process(model.getTrackModel().trackIDs(true)); // needed for trackScheme
 		
-		TrackScheme trackScheme = new TrackScheme(model);
+		TrackScheme trackScheme = new TrackScheme(model, new SelectionModel(model));
 		trackScheme.render();
 		
 	}
@@ -55,7 +53,7 @@ public class SpotFeatureGrapher_TestDrive {
 	 *  Another example: spots that go in spiral
 	 */
 	@SuppressWarnings("unused")
-	private static TrackMateModel getSpiralModel() {
+	private static Model getSpiralModel() {
 		
 		final int N_SPOTS = 50;
 		List<Spot> spots = new ArrayList<Spot>(N_SPOTS);
@@ -66,21 +64,21 @@ public class SpotFeatureGrapher_TestDrive {
 			coordinates[1] = 100 + 100 * i / 100. * Math.sin(i / 100. * 5 * 2*Math.PI);
 			coordinates[2] = 0;
 			Spot spot = new Spot(coordinates);
-			spot.putFeature(Spot.POSITION_T, i);
-			spot.putFeature(Spot.RADIUS, 2);
+			spot.putFeature(Spot.POSITION_T, Double.valueOf(i));
+			spot.putFeature(Spot.RADIUS, Double.valueOf(2));
 			
 			spots.add(spot);
 			
 			List<Spot> ts = new ArrayList<Spot>(1);
 			ts.add(spot);
 			sc.put(i, ts);
+			spot.putFeature(SpotCollection.VISIBLITY, SpotCollection.ONE);
 		}
 		
-		TrackMateModel model = new TrackMateModel();
+		Model model = new Model();
 		model.setSpots(sc, false);
-		model.setFilteredSpots(sc, false);
 		
-		SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		for (Spot spot : spots) {
 			graph.addVertex(spot);
 		}

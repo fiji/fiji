@@ -20,7 +20,7 @@ public class SpotNeighborhoodTest {
 		ArrayImg<UnsignedShortType, ShortArray> image = ArrayImgs.unsignedShorts(100, 100, 100);
 		ImgPlus<UnsignedShortType> img = new ImgPlus<UnsignedShortType>(image);
 		Spot spot = new Spot(new double[] { 50, 50, 50 } );
-		spot.putFeature(Spot.RADIUS, 30);
+		spot.putFeature(Spot.RADIUS, 30d);
 		SpotNeighborhood<UnsignedShortType> neighborhood = new SpotNeighborhood<UnsignedShortType>(spot, img);
 		SpotNeighborhoodCursor<UnsignedShortType> cursor = neighborhood.cursor();
 		while(cursor.hasNext()) {
@@ -33,7 +33,7 @@ public class SpotNeighborhoodTest {
 		ArrayImg<UnsignedShortType, ShortArray> image2 = ArrayImgs.unsignedShorts(100, 100);
 		ImgPlus<UnsignedShortType> img2 = new ImgPlus<UnsignedShortType>(image2);
 		Spot spot2 = new Spot(new double[] { 50, 50, 0} );
-		spot2.putFeature(Spot.RADIUS, 30);
+		spot2.putFeature(Spot.RADIUS, 30d);
 		SpotNeighborhood<UnsignedShortType> neighborhood2 = new SpotNeighborhood<UnsignedShortType>(spot2, img2);
 		SpotNeighborhoodCursor<UnsignedShortType> cursor2 = neighborhood2.cursor();
 		while(cursor2.hasNext()) {

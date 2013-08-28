@@ -86,6 +86,8 @@ public class Fusion
 		{
 			for ( int c = 1; c <= numChannels; ++c )
 			{
+				IJ.showStatus("Fusing time point: " + t + " of " + numTimePoints + ", " +
+					"channel: " + c + " of " + numChannels + "...");
 				// create the 2d/3d target image for the current channel and timepoint 
 				final Image< T > out;
 				
@@ -200,6 +202,8 @@ public class Fusion
 			}
 		}
 
+		IJ.showStatus("Fusion complete.");
+
 		// has been written to disk ...
 		if ( stack == null )
 			return null;
@@ -244,6 +248,14 @@ public class Fusion
 		
 		for ( int d = 1; d < output.getNumDimensions(); ++d )
 			imageSize *= output.getDimension( d );
+		
+		final long steps = imageSize;
+
+		// global progress variable. Needs to be final to be used in subordinate
+		// threads, but needs to be an object so it can be passed by value and updated
+		// statically.
+		final int[] globalProgress = {0};
+		IJ.showProgress(0);
 
 		final int[][] max = new int[ numImages ][ numDimensions ];
 		for ( int i = 0; i < numImages; ++i )
@@ -278,6 +290,12 @@ public class Fusion
             		final float[][] tmp = new float[ numImages ][ output.getNumDimensions() ];
             		final PixelFusion myFusion = fusion.copy();
             		
+            		// tracks the progress [0-100/#threads] made by this thread
+            		int[] localProgress = {0};
+            		
+            		// number of pixels processed
+            		long stepsTaken = 0;
+            		
             		try 
             		{
                 		// move to the starting position of the current thread
@@ -287,6 +305,10 @@ public class Fusion
                         for ( long j = 0; j < loopSize; ++j )
                         {
             				out.fwd();
+            				stepsTaken++;
+            				
+            				// update status message if necessary
+            				updateStatus(globalProgress, localProgress, stepsTaken, steps, output);
             				
             				// get the current position in the output image
             				for ( int d = 0; d < numDimensions; ++d )
@@ -342,6 +364,16 @@ A:        					for ( int i = 0; i < numImages; ++i )
 	{
 		final int numDimensions = output.getNumDimensions();
 		final int numImages = input.size();
+		long imageSize = output.getDimension( 0 );
+		
+		for ( int d = 1; d < output.getNumDimensions(); ++d )
+			imageSize *= output.getDimension( d );
+		
+		final long steps = imageSize;
+		
+		// global progress variable. See #fuseBlock
+		final int[] globalProgress = {0};
+		IJ.showProgress(0);
 		
 		// run multithreaded
 		final AtomicInteger ai = new AtomicInteger(0);					
@@ -368,12 +400,21 @@ A:        					for ( int i = 0; i < numImages; ++i )
             		final LocalizableCursor< ? extends RealType<?> > cursor = image.createLocalizableCursor();
             		final LocalizableByDimCursor< ? extends RealType<?> > randomAccess = output.createLocalizableByDimCursor();
             		final int[] pos = new int[ numDimensions ];
+            		// tracks the progress [0-100/#threads] made by this thread
+            		int[] localProgress = {0};
+            		
+            		// number of pixels processed
+            		long stepsTaken = 0;
             		
             		while ( cursor.hasNext() )
             		{
             			cursor.fwd();
             			cursor.getPosition( pos );
-            			
+          				stepsTaken++;
+          				
+          				// update status message if necessary
+          				updateStatus(globalProgress, localProgress, stepsTaken, steps, output);
+          				
                 		for ( int d = 0; d < numDimensions; ++d )
                 		{
                 			pos[ d ] += translation[ d ];
@@ -402,6 +443,10 @@ A:        					for ( int i = 0; i < numImages; ++i )
 	{
 		final int numImages = input.size();
 		final int numDimensions = offset.length;
+		long imageSize = outputSlice.getDimension( 0 );
+		
+		for ( int d = 1; d < outputSlice.getNumDimensions(); ++d )
+			imageSize *= outputSlice.getDimension( d );
 
 		// the maximal dimensions of each image
 		final int[][] max = new int[ numImages ][ numDimensions ];
@@ -422,12 +467,24 @@ A:        					for ( int i = 0; i < numImages; ++i )
 		{
 			for ( int slice = 0; slice < numSlices; ++slice )
 			{
+				IJ.showStatus("Fusing time point: " + t + " of " + numTimePoints + ", " +
+						"channel: " + c + " of " + numChannels + ", slice: " + (slice + 1) + " of " +
+						numSlices + "...");
 				out.reset();
+				int stepsTaken = 0;
+				// Writing occurs on one thread only, so these can both be declared here.
+				int[] localProgress = {0};
+				int[] globalProgress = {0};
+				IJ.showProgress(0);
 				
 				// fill all pixels of the current slice
 				while ( out.hasNext() )
 				{
 					out.fwd();
+  				stepsTaken++;
+  				
+  				// update status message if necessary
+  				updateStatus(globalProgress, localProgress, stepsTaken, imageSize, outputSlice);
 					
 					// get the current position in the output image
 					for ( int d = 0; d < 2; ++d )
@@ -626,7 +683,48 @@ A:		        	for ( int i = 0; i < numImages; ++i )
 		//IJ.log( "size: " + Util.printCoordinates( size ) );
 		//IJ.log( "offset: " + Util.printCoordinates( offset ) );		
 	}
-	
+
+	/**
+	 * Threadsafe method to display ImageJ status updates. Takes a global progress
+	 * and local progress value (between 0 and 100), by reference, which are
+	 * updated if the given localPosition, relative to the global maximum value,
+	 * is a worthy increase in local progress (in which case both local and
+	 * global progress is updated).
+	 * <p>
+	 * The global/local progress split must be used
+	 * when running multithreaded, as it allows the local position to be
+	 * maintained per thread, instead of requiring a global position to be
+	 * maintained (which would require synchronized updates every step, which
+	 * effectively would nullify any multithreading benefits).
+	 * </p>
+	 * <p>
+	 * NB: will only enter a synchronized block if there is progress to report,
+	 * and only once per progress milestone. Synchronization will be locked on
+	 * the provided Image object, so multiple fusions can operate simultaneously
+	 * on separate images.
+	 * </p>
+	 */
+	private static void updateStatus(int[] globalProgress, int[] localProgress,
+		long localPosition, long globalMax, Image<?> imageLock) {
+		// assume a 0-100 % based update granularity
+		final int updates = 100;
+		// Compute the current progress. The actual value relative to the global
+		// is irrelevant. But if local progress is made, it implies global progress
+		// has been made.
+		final int currentProgress = (int)((double)localPosition / 
+				(globalMax - 1) * updates);
+
+		if (currentProgress > localProgress[0]) {
+			synchronized(imageLock) {
+				if (currentProgress > localProgress[0]) {
+					localProgress[0]++;
+					globalProgress[0]++;
+					IJ.showProgress((double)globalProgress[0] / updates);
+				}
+			}
+		}
+	}
+
 	public static void main( String[] args )
 	{
 		new ImageJ();

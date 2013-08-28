@@ -23,6 +23,7 @@ public class DownsampleLogDetectorFactory<T extends RealType<T> & NativeType<T>>
 	 * CONSTANTS
 	 */
 	
+
 	/** A string key identifying this factory. */ 
 	public static final String DETECTOR_KEY = "DOWNSAMPLE_LOG_DETECTOR";
 	/** The pretty name of the target detector. */

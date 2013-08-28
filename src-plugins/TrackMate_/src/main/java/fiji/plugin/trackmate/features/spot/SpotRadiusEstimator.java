@@ -2,7 +2,7 @@ package fiji.plugin.trackmate.features.spot;
 
 import static fiji.plugin.trackmate.features.spot.SpotRadiusEstimatorFactory.ESTIMATED_DIAMETER;
 
-import java.util.Collection;
+import java.util.Iterator;
 
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
@@ -31,7 +31,7 @@ public class SpotRadiusEstimator<T extends RealType<T>> extends IndependentSpotF
 	 * and <code>diameter</code> * {@value #MAX_DIAMETER_RATIO}. The optimum is them calculated by doing an interpolation
 	 * over calculated values.
 	 */
-	public SpotRadiusEstimator(ImgPlus<T> img, Collection<Spot> spots) {
+	public SpotRadiusEstimator(ImgPlus<T> img, Iterator<Spot> spots) {
 		super(img, spots);
 	}
 	

@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.action;
 
 import ij.measure.ResultsTable;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
@@ -12,11 +12,13 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 
 public class ExportStatsToIJAction extends AbstractTMAction {
+
 
 	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/calculator.png"));
 	public static final String NAME = "Export statistics to tables";
@@ -33,39 +35,30 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 				"of this export." +
 				"</html>";
 
-	public ExportStatsToIJAction() {
+	public ExportStatsToIJAction(TrackMate trackmate, TrackMateGUIController controller) {
+		super(trackmate, controller);
 		this.icon = ICON;
 	}
-	
+
 	@Override
-	public void execute(final TrackMate_ plugin) {
+	public void execute() {
 		logger.log("Exporting statistics.\n");
 		
-		// Compute links features Links
-		logger.log("  - Calculating statistics on links...");
-		plugin.computeEdgeFeatures(true);
-		logger.log(" Done.\n");
-		
-		// Compute track features
-		logger.log("  - Calculating statistics on tracks...");
-		plugin.computeTrackFeatures(true);
-		logger.log(" Done.\n");
-		
 		// Model
-		final TrackMateModel model = plugin.getModel();
+		final Model model = trackmate.getModel();
 		final FeatureModel fm = model.getFeatureModel();
 		
 		// Export spots
 		logger.log("  - Exporting spot statistics...");
-		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
-		List<String> spotFeatures = fm.getSpotFeatures();
+		Set<Integer> trackIDs = model.getTrackModel().trackIDs(true);
+		Collection<String> spotFeatures = trackmate.getModel().getFeatureModel().getSpotFeatures();
 
 		// Create table
 		ResultsTable spotTable = new ResultsTable();
 		
 		// Parse spots to insert values as objects
 		for (Integer trackID : trackIDs) {
-			Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
+			Set<Spot> track = model.getTrackModel().trackSpots(trackID);
 			for (Spot spot : track) {
 				spotTable.incrementCounter();
 				spotTable.addLabel(spot.getName());
@@ -86,7 +79,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		// Export edges
 		logger.log("  - Exporting links statistics...");
 		// Yield available edge feature
-		List<String> edgeFeatures = fm.getEdgeFeatures();
+		Collection<String> edgeFeatures = fm.getEdgeFeatures();
 		
 		// Create table
 		ResultsTable edgeTable = new ResultsTable();
@@ -94,7 +87,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		// Sort by track
 		for (Integer trackID : trackIDs) {
 			
-			Set<DefaultWeightedEdge> track = model.getTrackModel().getTrackEdges(trackID);
+			Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
 			for (DefaultWeightedEdge edge : track) {
 				edgeTable.incrementCounter();
 				edgeTable.addLabel(edge.toString());
@@ -114,7 +107,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		// Export tracks
 		logger.log("  - Exporting tracks statistics...");
 		// Yield available edge feature
-		List<String> trackFeatures = fm.getTrackFeatures();
+		Collection<String> trackFeatures = fm.getTrackFeatures();
 
 		// Create table
 		ResultsTable trackTable = new ResultsTable();
@@ -122,7 +115,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		// Sort by track
 		for (Integer trackID : trackIDs) {
 			trackTable.incrementCounter();
-			trackTable.addLabel(model.getTrackModel().getTrackName(trackID));
+			trackTable.addLabel(model.getTrackModel().name(trackID));
 			for (String feature : trackFeatures) {
 				Double val = fm.getTrackFeature(trackID, feature);
 				if (null == val) {

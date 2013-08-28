@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>jama</groupId>
 			<artifactId>jama</artifactId>
-			<version>1.0.2</version>
+			<version>${jama.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -40,19 +40,19 @@
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core</artifactId>
-			<version>1.5.2</version>
+			<version>${java3d.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core-utils</artifactId>
-			<version>1.5.2</version>
+			<version>${java3d.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>vecmath</artifactId>
-			<version>1.5.2</version>
+			<version>${java3d.version}</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

@@ -14,7 +14,7 @@ import com.mxgraph.model.mxICell;
 import com.mxgraph.view.mxGraph;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, DefaultWeightedEdge> {
 
@@ -22,13 +22,13 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 	private HashMap<DefaultWeightedEdge, mxCell> 	edgeToCellMap 		= new HashMap<DefaultWeightedEdge, mxCell>();
 	private HashMap<mxCell, Spot>					cellToVertexMap		= new HashMap<mxCell, Spot>();
 	private HashMap<mxCell, DefaultWeightedEdge>	cellToEdgeMap		= new HashMap<mxCell, DefaultWeightedEdge>();
-	private TrackMateModel tmm;
+	private Model tmm;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public JGraphXAdapter(final TrackMateModel tmm) {
+	public JGraphXAdapter(final Model tmm) {
 		super();
 		this.tmm = tmm;
 		insertTrackCollection(tmm);
@@ -185,16 +185,16 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 	 * Any other spot or edges will be ignored by the whole trackscheme
 	 * framework, and if they are needed, they will have to be imported "by hand".
 	 */
-	private void insertTrackCollection(final TrackMateModel tmm) {
+	private void insertTrackCollection(final Model tmm) {
 		model.beginUpdate();
 		try {
-			for (Integer trackID : tmm.getTrackModel().getFilteredTrackIDs()) {
+			for (Integer trackID : tmm.getTrackModel().trackIDs(true)) {
 				
-				for (Spot vertex : tmm.getTrackModel().getTrackSpots(trackID)) {
+				for (Spot vertex : tmm.getTrackModel().trackSpots(trackID)) {
 					addJGraphTVertex(vertex);
 				}
 
-				for (DefaultWeightedEdge edge : tmm.getTrackModel().getTrackEdges(trackID)) {
+				for (DefaultWeightedEdge edge : tmm.getTrackModel().trackEdges(trackID)) {
 					addJGraphTEdge(edge);
 				}
 			

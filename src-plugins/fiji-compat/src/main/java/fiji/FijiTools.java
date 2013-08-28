@@ -1,23 +1,28 @@
 package fiji;
 
 import ij.IJ;
+import ij.Menus;
+import imagej.legacy.LegacyExtensions;
 
 import java.awt.Frame;
-
+import java.awt.Menu;
+import java.awt.MenuBar;
+import java.awt.MenuContainer;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-
-import java.net.URL;
-
-import java.util.Enumeration;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.Map;
 
 public class FijiTools {
+
+	private static Field menuEntry2jarFile;
+	private static Field menuInstance;
+
 	/**
 	 * Get the path of the Fiji directory
 	 *
@@ -33,7 +38,7 @@ public class FijiTools {
 			return path;
 		final String prefix = "file:";
 		final String suffix = "/jars/fiji-compat.jar!/fiji/FijiTools.class";
-		path = fiji.FijiTools.class
+		path = FijiTools.class
 			.getResource("FijiTools.class").getPath();
 		if (path.startsWith(prefix))
 			path = path.substring(prefix.length());
@@ -80,17 +85,21 @@ public class FijiTools {
 		return false;
 	}
 
-	public static boolean openEditor(String title, String body) {
+	public static boolean openFijiEditor(String title, String body) {
 		try {
-			Class<?> clazz = IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
-			Constructor<?> ctor = clazz.getConstructor(new Class[] { String.class, String.class });
-			Frame frame = (Frame)ctor.newInstance(new Object[] { title, body });
+			Class<?> textEditor = ij.IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
+			Constructor<?> ctor = textEditor.getConstructor(String.class, String.class);
+			Frame frame = (Frame)ctor.newInstance(title, body);
+			if (frame == null) return false;
 			frame.setVisible(true);
 			return true;
-		} catch (Exception e) {
-			IJ.handleException(e);
+		} catch (Throwable t) {
+			t.printStackTrace();
 		}
+		return false;
+	}
 
+	public static boolean openIJ1Editor(String title, String body) {
 		try {
 			Class<?> clazz = IJ.getClassLoader().loadClass("ij.plugin.frame.Editor");
 			Constructor<?> ctor = clazz.getConstructor(new Class[] { Integer.TYPE, Integer.TYPE, Integer.TYPE, Integer.TYPE });
@@ -103,6 +112,11 @@ public class FijiTools {
 		}
 
 		return false;
+	}
+
+	public static boolean openEditor(String title, String body) {
+		if (openFijiEditor(title, body)) return true;
+		return openIJ1Editor(title, body);
 	}
 
 	/**
@@ -130,6 +144,20 @@ public class FijiTools {
 		return false;
 	}
 
+	public static boolean openFijiEditor(final File file) {
+		try {
+			Class<?> textEditor = ij.IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
+			Constructor<?> ctor = textEditor.getConstructor(String.class);
+			Frame frame = (Frame)ctor.newInstance(file.getAbsolutePath());
+			if (frame == null) return false;
+			frame.setVisible(true);
+			return true;
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+		return false;
+	}
+
 	public static String getFileExtension(String path) {
 		int dot = path.lastIndexOf('.');
 		if (dot < 0)
@@ -149,53 +177,165 @@ public class FijiTools {
 		return writer.toString().indexOf(needle) >= 0;
 	}
 
+	@Deprecated
 	public static boolean handleNoSuchMethodError(NoSuchMethodError error) {
-		String message = error.getMessage();
-		int paren = message.indexOf("(");
-		if (paren < 0)
-			return false;
-		int dot = message.lastIndexOf(".", paren);
-		if (dot < 0)
-			return false;
-		String path = message.substring(0, dot).replace('.', '/') + ".class";
-		Set<String> urls = new LinkedHashSet<String>();
-		try {
-			Enumeration<URL> e = IJ.getClassLoader().getResources(path);
-			while (e.hasMoreElements())
-				urls.add(e.nextElement().toString());
-			e = IJ.getClassLoader().getResources("/" + path);
-			while (e.hasMoreElements())
-				urls.add(e.nextElement().toString());
-		} catch (Throwable t) {
-			t.printStackTrace();
-			return false;
-		}
-
-		if (urls.size() == 0)
-			return false;
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("There was a problem with the class ").append(message.substring(0, dot)).append(" which can be found here:\n");
-		for (String url : urls) {
-			if (url.startsWith("jar:"))
-				url = url.substring(4);
-			if (url.startsWith("file:"))
-				url = url.substring(5);
-			int bang = url.indexOf("!");
-			if (bang < 0)
-				buffer.append(url);
-			else
-				buffer.append(url.substring(0, bang));
-			buffer.append("\n");
-		}
-		if (urls.size() > 1)
-			buffer.append("\nWARNING: multiple locations found!\n");
-
-		StringWriter writer = new StringWriter();
-		error.printStackTrace(new PrintWriter(writer));
-		buffer.append(writer.toString());
-
-		IJ.log(buffer.toString());
-		IJ.error("Could not find method " + message + "\n(See Log for details)\n");
-		return true;
+		return LegacyExtensions.handleNoSuchMethodError(error);
 	}
+
+	/**
+	 * Get the MenuItem instance for a given menu path
+	 *
+	 * @param menuPath the menu path, e.g. File>New>Bio-Formats
+	 */
+	public static MenuItem getMenuItem(String menuPath) {
+		return getMenuItem(Menus.getMenuBar(), menuPath, false);
+	}
+
+	/**
+	 * Get the MenuItem instance for a given menu path
+	 *
+	 * If the menu item was not found, create a {@link Menu} for the given path.
+	 *
+	 * @param container an instance of {@link MenuBar} or {@link Menu}
+	 * @param menuPath the menu path, e.g. File>New>Bio-Formats
+	 * @param createMenuIfNecessary if the menu item was not found, create a menu
+	 */
+	public static MenuItem getMenuItem(MenuContainer container,
+			String menuPath, boolean createMenuIfNecessary) {
+		String name;
+		MenuBar menuBar = (container instanceof MenuBar) ?
+			(MenuBar)container : null;
+		Menu menu = (container instanceof Menu) ?
+			(Menu)container : null;
+		while (menuPath.endsWith(">"))
+			menuPath = menuPath.substring(0, menuPath.length() - 1);
+		while (menuPath != null && menuPath.length() > 0) {
+			int croc = menuPath.indexOf('>');
+			if (croc < 0) {
+				name = menuPath;
+				menuPath = null;
+			}
+			else {
+				name = menuPath.substring(0, croc);
+				menuPath = menuPath.substring(croc + 1);
+			}
+			MenuItem current = getMenuItem(menuBar, menu, name,
+				createMenuIfNecessary);
+			if (current == null || menuPath == null)
+				return current;
+			menuBar = null;
+			menu = (Menu)current;
+		}
+		return null;
+	}
+
+	/*
+	 * Get the item with the given name either from the menuBar, or if
+	 * that is null, from the menu.
+	 */
+	protected static MenuItem getMenuItem(MenuBar menuBar, Menu menu,
+			String name, boolean createIfNecessary) {
+		if (menuBar == null && menu == null)
+			return null;
+		if (menuBar != null && name.equals("Help")) {
+			menu = menuBar.getHelpMenu();
+			if (menu == null && createIfNecessary) {
+				menu = new PopupMenu("Help");
+				menuBar.setHelpMenu(menu);
+			}
+			return menu;
+		}
+
+		int count = menuBar != null ?
+			menuBar.getMenuCount() : menu.getItemCount();
+		for (int i = 0; i < count; i++) {
+			MenuItem current = menuBar != null ?
+				menuBar.getMenu(i) : menu.getItem(i);
+			if (name.equals(current.getLabel()))
+				return current;
+		}
+
+		if (createIfNecessary) {
+			Menu newMenu = new PopupMenu(name);
+			if (menuBar != null)
+				menuBar.add(newMenu);
+			else
+				menu.add(newMenu);
+			return newMenu;
+		}
+		else
+			return null;
+	}
+
+	/**
+	 * Install a single menu item
+	 *
+	 * @param menuPath the menu into which to install it
+	 * @param name the label of the menu item
+	 * @param command the command to run (as per the plugins.config)
+	 * @return the added menu item
+	 */
+	public static MenuItem installPlugin(String menuPath, String name,
+			String command) {
+		return installPlugin(menuPath, name, command, null);
+	}
+
+	/**
+	 * Install a single menu item
+	 *
+	 * @param menuPath the menu into which to install it
+	 * @param name the label of the menu item
+	 * @param command the command to run (as per the plugins.config)
+	 * @param file the source file
+	 * @return the added menu item
+	 */
+	/* TODO: sorted */
+	@SuppressWarnings("unchecked")
+	public static MenuItem installPlugin(String menuPath, String name,
+			String command, File jarFile) {
+		if (Menus.getCommands().get(name) != null) {
+			IJ.log("The user plugin " + name
+				+ (jarFile == null ? "" : " (in " + jarFile + ")")
+				+ " would override an existing command!");
+			return null;
+		}
+
+		MenuItem item = null;
+		if (IJ.getInstance() != null) {
+			Menu menu = getMenu(menuPath);
+			item = new MenuItem(name);
+			menu.add(item);
+			item.addActionListener(IJ.getInstance());
+		}
+		Menus.getCommands().put(name, command);
+
+		if (jarFile != null) {
+			if (menuEntry2jarFile == null) try {
+				final Field instanceField = Menus.class.getDeclaredField("instance");
+				instanceField.setAccessible(true);
+				final Field field = Menus.class.getDeclaredField("menuEntry2jarFile");
+				field.setAccessible(true);
+				menuInstance = instanceField;
+				menuEntry2jarFile = field;
+			} catch (Throwable t) {
+				// be nice to ImageJ older than 1.43h
+//					if (IJ.debug)
+					t.printStackTrace();
+			}
+
+			if (menuEntry2jarFile != null) try {
+				Map<String, String> map = (Map<String, String>) menuEntry2jarFile.get(menuInstance.get(null));
+				map.put(name, jarFile.getPath());
+			} catch (Throwable t) {
+				t.printStackTrace();
+			}
+		}
+
+		return item;
+	}
+
+	public static Menu getMenu(String menuPath) {
+		return (Menu)getMenuItem(Menus.getMenuBar(), menuPath, true);
+	}
+
 }

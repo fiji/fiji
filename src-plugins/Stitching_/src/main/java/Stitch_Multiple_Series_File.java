@@ -57,6 +57,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 	public static boolean computeOverlapStatic = true;
 	public static double overlapStatic = 10;
 	public static boolean invertXStatic = false, invertYStatic = false;
+	public static boolean ignoreZStageStatic = false;
 
 	public static String fusionMethodStatic = methodListCollection[LIN_BLEND];
 	public static double alphaStatic = 1.5;
@@ -76,6 +77,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 		gd.addSlider( "Increase_overlap [%]", 0, 100, overlapStatic );
 		gd.addCheckbox( "Invert_X coordinates", invertXStatic );
 		gd.addCheckbox( "Invert_Y coordinates", invertYStatic );
+		gd.addCheckbox("Ignore_Z_stage position", ignoreZStageStatic);
 		             
 		gd.addChoice( "Fusion_Method", methodListCollection, fusionMethodStatic );
 		gd.addNumericField( "Fusion alpha", alphaStatic, 2 );
@@ -111,6 +113,9 @@ public class Stitch_Multiple_Series_File implements PlugIn
 		boolean invertY = gd.getNextBoolean();
 		invertYStatic = invertY;
 
+		boolean ignoreZStage = gd.getNextBoolean();
+		ignoreZStageStatic = ignoreZStage;
+
 		String fusionMethod = gd.getNextChoice();
 		fusionMethodStatic = fusionMethod;
 		
@@ -129,7 +134,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 		boolean previewOnly = gd.getNextBoolean();
 		previewOnlyStatic = previewOnly;
 
-		ArrayList<ImageInformation> imageInformationList = parseMultiSeriesFile( fileName, overlap,  ignoreCalibration, invertX, invertY );
+		ArrayList<ImageInformation> imageInformationList = parseMultiSeriesFile( fileName, overlap,  ignoreCalibration, invertX, invertY, ignoreZStage );
 		
 		if ( imageInformationList == null )
 			return;
@@ -159,7 +164,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 		new Stitch_Image_Collection().work( gridLayout, previewOnly, computeOverlap, fileName + ".txt", true );
 	}
 
-	protected ArrayList<ImageInformation> parseMultiSeriesFile( final String filename, final double increaseOverlap, final boolean ignoreCalibration, final boolean invertX, final boolean invertY )
+	protected ArrayList<ImageInformation> parseMultiSeriesFile( final String filename, final double increaseOverlap, final boolean ignoreCalibration, final boolean invertX, final boolean invertY, final boolean ignoreZStage )
 	{
 		if ( filename == null || filename.length() == 0 )
 		{
@@ -209,7 +214,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 				final MetadataRetrieve retrieve = service.asRetrieve(r.getMetadataStore());
 
 				// stage coordinates (per plane and series)
-				double[] location = CommonFunctions.getPlanePosition( r, retrieve, series, 0, invertX, invertY );
+				double[] location = CommonFunctions.getPlanePosition( r, retrieve, series, 0, invertX, invertY, ignoreZStage );
 				double locationX = location[0];
 				double locationY = location[1];
 				double locationZ = location[2];

@@ -3,7 +3,9 @@ package fiji.plugin.trackmate.features.track;
 import java.util.Collection;
 
 import net.imglib2.algorithm.Benchmark;
-import fiji.plugin.trackmate.TrackMateModel;
+import net.imglib2.algorithm.MultiThreaded;
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.features.FeatureAnalyzer;
 
 /**
  * Mother interface for the classes that can compute the feature of tracks.
@@ -24,12 +26,12 @@ import fiji.plugin.trackmate.TrackMateModel;
  * a lonely spot, or a new track is likely not to affect all tracks in some case).
  * <p>
  * So the {@link #process(Collection)} will be called selectively on new or modified
- * tracks every time a change happens. It will be called from the {@link TrackMateModel}
- * after a {@link TrackMateModel#endUpdate()}, before any listener gets notified.
+ * tracks every time a change happens. It will be called from the {@link Model}
+ * after a {@link Model#endUpdate()}, before any listener gets notified.
  * 
  * @author Jean-Yves Tinevez
  */
-public interface TrackAnalyzer extends Benchmark {
+public interface TrackAnalyzer extends Benchmark, FeatureAnalyzer, MultiThreaded {
 
 	/**
 	 * Score the track whose ID is given.
@@ -37,7 +39,7 @@ public interface TrackAnalyzer extends Benchmark {
 	public void process(final Collection<Integer> trackIDs);
 	
 	/**
-	 * @return <code>true</code> if this analyzer is a local analyzer. That is: a modification that
+	 * Returns <code>true</code> if this analyzer is a local analyzer. That is: a modification that
 	 * affects only one track requires the track features to be re-calculated only for
 	 * this track. If <code>false</code>, any model modification involving edges will trigger
 	 * a recalculation over all the visible tracks of the model.

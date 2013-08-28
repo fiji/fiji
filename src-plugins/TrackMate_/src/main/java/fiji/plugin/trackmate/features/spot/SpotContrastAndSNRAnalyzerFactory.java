@@ -2,20 +2,19 @@ package fiji.plugin.trackmate.features.spot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.HyperSliceImgPlus;
-
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
-public class SpotContrastAndSNRAnalyzerFactory<T extends RealType<T> & NativeType<T>> implements SpotFeatureAnalyzerFactory<T> {
+public class SpotContrastAndSNRAnalyzerFactory<T extends RealType<T> & NativeType<T>> implements SpotAnalyzerFactory<T> {
 	
 	/*
 	 * FIELDS
@@ -40,14 +39,16 @@ public class SpotContrastAndSNRAnalyzerFactory<T extends RealType<T> & NativeTyp
 	}
 	public static final String KEY = "Spot contrast and SNR"; 
 
-	private final TrackMateModel model;
+	private final Model model;
+	private final ImgPlus<T> img;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public SpotContrastAndSNRAnalyzerFactory(final TrackMateModel model) {
+	public SpotContrastAndSNRAnalyzerFactory(final Model model, final ImgPlus<T> img) {
 		this.model = model;
+		this.img = img;
 	}
 	
 	/*
@@ -56,10 +57,9 @@ public class SpotContrastAndSNRAnalyzerFactory<T extends RealType<T> & NativeTyp
 	
 	@Override
 	public SpotContrastAndSNRAnalyzer<T> getAnalyzer(int frame, int channel) {
-		final ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(model.getSettings().imp);
 		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img, channel);
 		final ImgPlus<T> imgCT = HyperSliceImgPlus.fixTimeAxis(imgC, frame);
-		final List<Spot> spots = model.getSpots().get(frame);
+		final Iterator<Spot> spots = model.getSpots().iterator(frame, false);
 		return new SpotContrastAndSNRAnalyzer<T>(imgCT, spots);
 	}
 

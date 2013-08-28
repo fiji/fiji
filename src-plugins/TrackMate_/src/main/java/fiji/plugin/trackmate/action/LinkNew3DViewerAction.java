@@ -1,12 +1,16 @@
 package fiji.plugin.trackmate.action;
 
+import ij3d.Image3DUniverse;
+
 import javax.swing.ImageIcon;
 
-import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.gui.DisplayerPanel;
+import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
+import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
 public class LinkNew3DViewerAction extends AbstractTMAction {
+
 
 	public static final String NAME = "Link with new 3D viewer";
 	public static final String INFO_TEXT = "<html>" +
@@ -15,24 +19,25 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 			"<p>" +
 			"Useful to have synchronized 2D vs 3D views." +
 			"</html>" ;
-	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_white_link.png"));
+	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_white_link.png"));
 	
-	public LinkNew3DViewerAction() {
+	public LinkNew3DViewerAction(TrackMate trackmate, TrackMateGUIController controller) {
+		super(trackmate, controller);
 		this.icon = ICON;
 	}
 	
 	@Override
-	public void execute(final TrackMate_ plugin) {
+	public void execute() {
 		new Thread("TrackMate new 3D viewer thread") {
 			public void run() {
 				logger.log("Rendering 3D overlay...\n");
-				SpotDisplayer3D newDisplayer = new SpotDisplayer3D(plugin.getModel());
-				newDisplayer.setRenderImageData(false);
-				DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
-				if (null != displayerPanel) {
-					displayerPanel.register(newDisplayer);
-					displayerPanel.updateDisplaySettings(newDisplayer.getDisplaySettings());
+				Image3DUniverse universe = new Image3DUniverse();
+				universe.show();
+				SpotDisplayer3D newDisplayer = new SpotDisplayer3D(trackmate.getModel(), controller.getSelectionModel(), universe );
+				for (String key : controller.getGuimodel().getDisplaySettings().keySet()) {
+					newDisplayer.setDisplaySettings(key, controller.getGuimodel().getDisplaySettings().get(key));
 				}
+				controller.getGuimodel().addView(newDisplayer);
 				newDisplayer.render();
 				logger.log("Done.\n");
 			}

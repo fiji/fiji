@@ -18,7 +18,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,13 +40,12 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
-import com.mxgraph.model.mxCell;
-import com.mxgraph.model.mxICell;
-
 import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeListener;
+import fiji.plugin.trackmate.SelectionModel;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.SpotFeatureGrapher;
 import fiji.plugin.trackmate.util.OnRequestUpdater;
 import fiji.plugin.trackmate.util.OnRequestUpdater.Refreshable;
@@ -57,49 +55,40 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 
 	private static final long serialVersionUID = -1L;
 
-	private class RowHeaderRenderer extends JLabel implements ListCellRenderer, Serializable {
-
-		private static final long serialVersionUID = -1L;
-
-		RowHeaderRenderer(JTable table) {
-			JTableHeader header = table.getTableHeader();
-			setOpaque(false);
-			setBorder(UIManager.getBorder("TableHeader.cellBorder"));
-			setForeground(header.getForeground());
-			setBackground(header.getBackground());
-			setFont(SMALL_FONT.deriveFont(9.0f));
-			setHorizontalAlignment(SwingConstants.LEFT);				
-		}
-
-		public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-			setText((value == null) ? "" : value.toString());
-			return this;
-		}
-	}
-
 	private FeaturePlotSelectionPanel featureSelectionPanel;
 	private JTable table;
 	private JScrollPane scrollTable;
 	private boolean doHighlightSelection = true;
-	private List<String> features;
-	private Map<String, String> featureNames;
-	private final TrackMateModel model;
-	private final JGraphXAdapter graph;
+	private final Model model;
+	private final SelectionModel selectionModel;
 	/** A copy of the last spot collection highlighted in this infopane, sorted by frame order. */
 	private Collection<Spot> spotSelection;
-	private String[] headers;
 	private final OnRequestUpdater updater;
+	/** The table headers, taken from spot feature names. */
+	private final String[] headers;
+
+
+
+
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public InfoPane(final TrackMateModel model, final JGraphXAdapter graph) {
+	/**
+	 * Creates a new Info pane that displays information on the current spot selection in 
+	 * a table. 
+	 * 
+	 * @param model the {@link Model} from which the spot collection is taken.
+	 * @param settings  the {@link Settings} object we use to retrieve spot feature names.
+	 */
+	public InfoPane(Model model, SelectionModel selectionModel) {
 		this.model = model;
-		this.graph = graph;
-		this.features = model.getFeatureModel().getSpotFeatures();
-		this.featureNames = model.getFeatureModel().getSpotFeatureShortNames();
-		this.headers = TMUtils.getArrayFromMaping(features, featureNames).toArray(new String[] {});
+		this.selectionModel = selectionModel;
+		List<String> features = new ArrayList<String>(model.getFeatureModel().getSpotFeatures());
+		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureShortNames();
+		headers = TMUtils.getArrayFromMaping(features, featureNames).toArray(new String[] {});
+
 		this.updater = new OnRequestUpdater(new Refreshable() {
 			@Override
 			public void refresh() {
@@ -113,14 +102,14 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 		addAncestorListener(new AncestorListener() {			
 			@Override
 			public void ancestorRemoved(AncestorEvent event) {
-				model.removeTrackMateSelectionChangeListener(InfoPane.this);
+				InfoPane.this.selectionModel.removeSelectionChangeListener(InfoPane.this);
 			}
 			@Override
 			public void ancestorMoved(AncestorEvent event) {}
 			@Override
 			public void ancestorAdded(AncestorEvent event) {}
 		});
-		model.addTrackMateSelectionChangeListener(this);
+		selectionModel.addSelectionChangeListener(this);
 		init();
 	}
 
@@ -133,7 +122,7 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 		// Echo changed in a different thread for performance 
 		new Thread("TrackScheme info pane thread") {
 			public void run() {
-				highlightSpots(model.getSelectionModel().getSpotSelection());
+				highlightSpots(selectionModel.getSpotSelection());
 			}
 		}.start();
 	}
@@ -166,12 +155,15 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 			public boolean isCellEditable(int row, int column) { return false; }
 		};
 
+		List<String> features = new ArrayList<String>(model.getFeatureModel().getSpotFeatures());
 		for (Spot spot : sortedSpots) {
-			if (null == spot)
+			if (null == spot) {
 				continue;
+			}
 			Object[] columnData = new Object[features.size()];
-			for (int i = 0; i < columnData.length; i++) 
+			for (int i = 0; i < columnData.length; i++) {
 				columnData[i] = String.format("%.1f", spot.getFeature(features.get(i)));
+			}
 			dm.addColumn(spot.toString(), columnData);
 		}
 		table.setModel(dm);
@@ -225,7 +217,8 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 
 	private void exportTableToImageJ() {
 		ResultsTable table = new ResultsTable();
-
+		List<String> features = new ArrayList<String>(model.getFeatureModel().getSpotFeatures());
+		
 		int ncols = spotSelection.size();
 		int nrows = headers.length;
 		Spot[] spotArray = spotSelection.toArray(new Spot[] {} );
@@ -294,6 +287,8 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 		scrollTable.getViewport().setOpaque(false);
 		scrollTable.setVisible(false); // for now
 
+		List<String> features = new ArrayList<String>(model.getFeatureModel().getSpotFeatures());
+		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureShortNames();
 		featureSelectionPanel = new FeaturePlotSelectionPanel(Spot.POSITION_T, features, featureNames);
 
 		setLayout(new BorderLayout());
@@ -313,42 +308,43 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 
 	}
 
-	public void plotSelectionData(String xFeature, Set<String> yFeatures) {
-
-		if (yFeatures.isEmpty())
+	/**
+	 * Reads the content of the current spot selection and plot the selected features 
+	 * in this {@link InfoPane} for the target spots. 
+	 * @param xFeature  the feature to use as X axis.
+	 * @param yFeatures  the features to plot as Y axis.
+	 */
+	private void plotSelectionData(String xFeature, Set<String> yFeatures) {
+		Set<Spot> spots = selectionModel.getSpotSelection();
+		if (yFeatures.isEmpty() || spots.isEmpty()) {
 			return;
-
-		Object[] selectedCells = graph.getSelectionCells();
-		if (selectedCells == null || selectedCells.length == 0)
-			return;
-
-		HashSet<Spot> spots = new HashSet<Spot>();
-		for(Object obj : selectedCells) {
-			mxCell cell = (mxCell) obj;
-			if (cell.isVertex()) {
-				Spot spot = graph.getSpotFor(cell);
-
-				if (spot == null) {
-					// We might have a parent cell, that holds many vertices in it
-					// Retrieve them and add them if they are not already.
-					int n = cell.getChildCount();
-					for (int i = 0; i < n; i++) {
-						mxICell child = cell.getChildAt(i);
-						Spot childSpot = graph.getSpotFor(child);
-						if (null != childSpot)
-							spots.add(childSpot);
-					}
-
-				} else 
-					spots.add(spot);
-			}
 		}
-		if (spots.isEmpty())
-			return;
 
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, new ArrayList<Spot>(spots), model);
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, model);
 		grapher.render();
-
 	}
+	
+	/*
+	 * INNER CLASS
+	 */
+	
+	private class RowHeaderRenderer extends JLabel implements ListCellRenderer, Serializable {
 
+		private static final long serialVersionUID = -1L;
+
+		RowHeaderRenderer(JTable table) {
+			JTableHeader header = table.getTableHeader();
+			setOpaque(false);
+			setBorder(UIManager.getBorder("TableHeader.cellBorder"));
+			setForeground(header.getForeground());
+			setBackground(header.getBackground());
+			setFont(SMALL_FONT.deriveFont(9.0f));
+			setHorizontalAlignment(SwingConstants.LEFT);				
+		}
+
+		public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+			setText((value == null) ? "" : value.toString());
+			return this;
+		}
+	}
 }

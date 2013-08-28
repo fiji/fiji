@@ -19,9 +19,6 @@
 # IntelliJ #
 *.iml
 
-# ImageJ 1.x #
-/IJ_Prefs.txt
-
 # Updater #
 /db.xml.gz
 
@@ -33,9 +30,7 @@
 
 # MacOSX #
 .DS_Store
-
-# Windows #
-/bin/RCEDIT.exe
+/Contents/Resources/ImageJ.icns
 
 # Wiki monitor #
 /.recent-changes.*
@@ -46,7 +41,6 @@
 hs_err*.log
 /MMConfig_demo.cfg
 /MMStartup.bsh
-/mmgr_dal_*
 
 # Jython #
 *$py.class
@@ -58,10 +52,6 @@ hs_err*.log
 /fiji-*.zip
 /fiji-macosx.dmg
 
-# Tests
-/tests/plugins
-/tests/sample-data/
-
 # Launchers #
 /Contents/MacOS/ImageJ-macosx
 /Contents/MacOS/ImageJ-tiger
@@ -70,8 +60,6 @@ hs_err*.log
 /ImageJ
 /ImageJ-linux32
 /ImageJ-linux64
-/ImageJ-panther
-/ImageJ-tiger
 /ImageJ-win32.exe
 /ImageJ-win64.exe
 /ImageJ.cfg
@@ -79,8 +67,6 @@ hs_err*.log
 /fiji
 /fiji-linux
 /fiji-linux64
-/fiji-panther
-/fiji-tiger
 /fiji-win32.exe
 /fiji-win64.exe
 /fiji.exe
@@ -221,7 +207,6 @@ hs_err*.log
 /plugins/Image_5D-[0-9]*.jar
 /plugins/TrakEM2_-[0-9]*.jar
 /plugins/ij-ImageIO_-[0-9]*.jar
-/plugins/loci_tools-[0-9]*.jar
 /plugins/mpicbg_-[0-9]*.jar
 
 # Dependencies copied by MiniMaven #
@@ -229,25 +214,18 @@ hs_err*.log
 /jars/bcmail-jdk14-[0-9]*.jar
 /jars/bcprov-jdk14-[0-9]*.jar
 /jars/bsh-[0-9]*.jar
-/jars/clibwrapper_jiio-[0-9]*.jar
 /jars/clojure-[0-9]*.jar
 /jars/commons-math-[0-9]*.jar
-/jars/hamcrest-core-[0-9]*.jar
 /jars/itext-[0-9]*.jar
 /jars/itextpdf-[0-9]*.jar
-/jars/j3d-core-[0-9]*.jar
-/jars/j3d-core-utils-[0-9]*.jar
 /jars/jai_codec-[0-9]*.jar
 /jars/jama-[0-9]*.jar
 /jars/java-cup-[0-9]*.jar
 /jars/javassist-[0-9]*.jar
-/jars/jcommander-[0-9]*.jar
 /jars/jcommon-[0-9]*.jar
 /jars/jdom-[0-9]*.jar
-/jars/jdom-contrib-[0-9]*.jar
 /jars/jfreechart-[0-9]*.jar
 /jars/jgrapht-[0-9]*.jar
-/jars/jgrapht-jdk1.6-[0-9]*.jar
 /jars/jgraphx-[0-9]*.jar
 /jars/jna-[0-9]*.jar
 /jars/jpedalSTD-[0-9]*.jar
@@ -259,10 +237,7 @@ hs_err*.log
 /jars/mines-jtk-[0-9]*.jar
 /jars/pentaho-package-manager-[0-9]*.jar
 /jars/postgresql-[0-9]*.jar
-/jars/snakeyaml-[0-9]*.jar
-/jars/testng-[0-9]*.jar
 /jars/tools-[0-9]*.jar
-/jars/vecmath-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
 /plugins/loci_plugins-[0-9]*.jar
 
@@ -270,57 +245,10 @@ hs_err*.log
 /jars/ij-minimaven-[0-9]*.jar
 /modules/scijava-common/
 
-# For use by bin/gitignore-in-submodules #
-/modules/ij-plugins/ij-ImageIO_.jar
-/modules/imagej2/jars/ij-awt-common.jar
-/modules/imagej2/jars/ij-core-plugins.jar
-/modules/imagej2/jars/ij-core-tools.jar
-/modules/imagej2/jars/ij-core.jar
-/modules/imagej2/jars/ij-data.jar
-/modules/imagej2/jars/ij-display.jar
-/modules/imagej2/jars/ij-event.jar
-/modules/imagej2/jars/ij-imagej.jar
-/modules/imagej2/jars/ij-legacy.jar
-/modules/imagej2/jars/ij-module.jar
-/modules/imagej2/jars/ij-object.jar
-/modules/imagej2/jars/ij-platform-macosx.jar
-/modules/imagej2/jars/ij-platform.jar
-/modules/imagej2/jars/ij-plugin-swing.jar
-/modules/imagej2/jars/ij-plugin.jar
-/modules/imagej2/jars/ij-tool.jar
-/modules/imagej2/jars/ij-ui-swing.jar
-/modules/imagej2/jars/ij-ui.jar
-/modules/imglib/imglib-algorithms.jar
-/modules/imglib/imglib-ij.jar
-/modules/imglib/imglib-io.jar
-/modules/imglib/imglib-ops.jar
-/modules/imglib/imglib-scripting.jar
-/modules/imglib/imglib.jar
-/modules/imglib/imglib2-algorithms-gpl.jar
-/modules/imglib/imglib2-algorithms.jar
-/modules/imglib/imglib2-ij.jar
-/modules/imglib/imglib2-io.jar
-/modules/imglib/imglib2-ops.jar
-/modules/imglib/imglib2-scripting.jar
-/modules/imglib/imglib2.jar
-/modules/javassist/build/
-/modules/javassist/html/
-/modules/javassist/javassist-src.jar
-/modules/javassist/javassist.jar
-/modules/javassist/target/
-/modules/weka/weka.jar
-/modules/weka/weka/build/
-/modules/weka/weka/dist/
-
 # SciJava
 /jars/scijava-common-[0-9]*.jar
 
 # ImgLib #
-/jars/imglib-[0-9]*.jar
-/jars/imglib-algorithms-[0-9]*.jar
-/jars/imglib-ij-[0-9]*.jar
-/jars/imglib-io-[0-9]*.jar
-/jars/imglib-scripting-[0-9]*.jar
 /jars/imglib2-[0-9]*.jar
 /jars/imglib2-algorithms-[0-9]*.jar
 /jars/imglib2-algorithms-gpl-[0-9]*.jar
@@ -336,80 +264,67 @@ hs_err*.log
 
 # Bio-Formats #
 /jars/bio-formats-[0-9]*.jar
-/jars/commons-collections-[0-9]*.jar
-/jars/commons-lang-[0-9]*.jar
+/jars/bio-formats/scifio-[0-9]*.jar
 /jars/commons-logging-[0-9]*.jar
 /jars/forms-[0-9]*.jar
 /jars/jai-codec-[0-9]*.jar
 /jars/jai-core-[0-9]*.jar
 /jars/jai_imageio-[0-9]*.jar
-/jars/kryo-[0-9]*.jar
 /jars/loci-common-[0-9]*.jar
-/jars/loci-legacy-[0-9]*.jar
 /jars/log4j-[0-9]*.jar
 /jars/lwf-stubs-[0-9]*.jar
 /jars/mdbtools-java-[0-9]*.jar
 /jars/metakit-[0-9]*.jar
-/jars/native-lib-loader-[0-9]*.jar
 /jars/netcdf-[0-9]*.jar
 /jars/netcdf-java-[0-9]*.jar
 /jars/ome-xml-[0-9]*.jar
-/jars/perf4j-[0-9]*.jar
 /jars/poi-loci-[0-9]*.jar
-/jars/scifio-[0-9]*.jar
-/jars/scifio-devel-[0-9]*.jar
 /jars/serializer-[0-9]*.jar
 /jars/slf4j-api-[0-9]*.jar
 /jars/slf4j-log4j12-[0-9]*.jar
-/jars/specification-[0-9]*.jar
-/jars/turbojpeg-[0-9]*.jar
 /jars/xalan-[0-9]*.jar
 /jars/xml-apis-[0-9]*.jar
 
+# SCIFIO #
+/jars/scifio-[0-9]*.jar
+/jars/mapdb-0.9.3.jar
+
 # ImageJ2 #
+/jars/commons-lang3-[0-9]*.jar
 /jars/eventbus-[0-9]*.jar
 /jars/ij-app-[0-9]*.jar
 /jars/ij-commands-[0-9]*.jar
 /jars/ij-core-[0-9]*.jar
 /jars/ij-data-[0-9]*.jar
-/jars/ij-ext-swing-[0-9]*.jar
-/jars/ij-ext-[0-9]*.jar
 /jars/ij-io-[0-9]*.jar
 /jars/ij-legacy-[0-9]*.jar
 /jars/ij-options-[0-9]*.jar
-/jars/ij-platform-macosx-[0-9]*.jar
-/jars/ij-platform-[0-9]*.jar
-/jars/ij-plugins-app-[0-9]*.jar
-/jars/ij-plugins-data-[0-9]*.jar
-/jars/ij-plugins-debug-[0-9]*.jar
-/jars/ij-plugins-display-[0-9]*.jar
-/jars/ij-plugins-misc-[0-9]*.jar
+/jars/ij-platforms-[0-9]*.jar
+/jars/ij-scripting-beanshell-[0-9]*.jar
+/jars/ij-scripting-java-[0-9]*.jar
+/jars/ij-text-[0-9]*.jar
 /jars/ij-tools-[0-9]*.jar
+/jars/ij-ui-[0-9]*.jar
 /jars/ij-ui-common-awt-[0-9]*.jar
-/jars/ij-ui-swing-base-[0-9]*.jar
-/jars/ij-ui-swing-plugins-[0-9]*.jar
-/jars/ij-ui-swing-sdi-[0-9]*.jar
+/jars/ij-ui-swing-[0-9]*.jar
+/jars/ij-ui-swing-commands-[0-9]*.jar
+/jars/ij-ui-swing-script-editor-[0-9]*.jar
 /jars/ij-ui-swing-tools-[0-9]*.jar
 /jars/ij-ui-swing-updater-[0-9]*.jar
-/jars/ij-ui-[0-9]*.jar
 /jars/ij-updater-core-[0-9]*.jar
 /jars/ij-updater-ssh-[0-9]*.jar
+/jars/ij-updater-webdav-[0-9]*.jar
 /jars/ij-util-awt-[0-9]*.jar
+/jars/ij-util-swing-[0-9]*.jar
 /jars/jhotdraw-[0-9]*.jar
+/jars/markdownj-[0-9]*.jar
 /jars/miglayout-[0-9]*.jar
 /jars/object-inspector-[0-9]*.jar
 /jars/sezpoz-[0-9]*.jar
-/jars/velocity-[0-9]*.jar
+/plugins/readme.txt
 
-# Retrotranslator #
-/jars/backport-util-concurrent.jar
-/jars/retrotranslator-runtime.jar
+# Java3D #
+/jars/j3d-core-1.5.2.jar
 
 # Miscellaneous #
 /jars/Updater_Fix-[0-9]*.jar
-
-# Unknown
-/jars/asm-[0-9]*.jar
-/jars/minlog-[0-9]*.jar
-/jars/objenesis-[0-9]*.jar
-/jars/reflectasm-[0-9]*.jar

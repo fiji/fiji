@@ -1086,10 +1086,10 @@ public class CommonFunctions
 
 	public static final double[] getPlanePosition( final IFormatReader r, final MetadataRetrieve retrieve, int series, int t )
 	{
-		return getPlanePosition(r, retrieve, series, t, false, false);
+		return getPlanePosition(r, retrieve, series, t, false, false, false);
 	}
 
-	public static final double[] getPlanePosition( final IFormatReader r, final MetadataRetrieve retrieve, int series, int t, boolean invertX, boolean invertY )
+	public static final double[] getPlanePosition( final IFormatReader r, final MetadataRetrieve retrieve, int series, int t, boolean invertX, boolean invertY, boolean ignoreZStage)
 	{
 		// generate a mapping from native indices to Plane element indices
 		final HashMap< Integer, Integer > planeMap = new HashMap< Integer, Integer >();
@@ -1128,7 +1128,7 @@ public class CommonFunctions
 		// stage coordinates (for the given series and plane)
 		final double locationX = getPosition( hasPlane ? retrieve.getPlanePositionX( series, planeIndex ) : null, stageLabelX, invertX );
 		final double locationY = getPosition( hasPlane ? retrieve.getPlanePositionY( series, planeIndex ) : null, stageLabelY, invertY );
-		final double locationZ = getPosition( hasPlane ? retrieve.getPlanePositionZ( series, planeIndex ) : null, stageLabelZ, false );
+		final double locationZ = ignoreZStage ? 0 : getPosition( hasPlane ? retrieve.getPlanePositionZ( series, planeIndex ) : null, stageLabelZ, false );
 
 		if ( IJ.debugMode )
 		{

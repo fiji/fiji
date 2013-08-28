@@ -1,33 +1,31 @@
 package fiji.plugin.trackmate.visualization;
 
 import java.awt.Color;
-import java.util.Set;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
+import fiji.plugin.trackmate.Model;
 
 public class PerEdgeFeatureColorGenerator implements ModelChangeListener, TrackColorGenerator {
 
 	private static final InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
-	private static final Color DEFAULT_COLOR = Color.WHITE;
-	private final TrackMateModel model;
+	private final Model model;
 	private String feature;
 	private double min;
 	private double max;
 	private DefaultWeightedEdge edgeMin;
 	private DefaultWeightedEdge edgeMax;
 
-	public PerEdgeFeatureColorGenerator(final TrackMateModel model, String feature) {
+	public PerEdgeFeatureColorGenerator(final Model model, String feature) {
 		this.model = model;
-		model.addTrackMateModelChangeListener(this);
+		model.addModelChangeListener(this);
 		setFeature(feature);
 	}
 
+	@Override
 	public void setFeature(String feature) {
 		if (feature.equals(this.feature)) {
 			return;
@@ -37,15 +35,10 @@ public class PerEdgeFeatureColorGenerator implements ModelChangeListener, TrackC
 	}
 	
 	@Override
-	public Color color(Spot spot) {
-		Set<DefaultWeightedEdge> edges = model.getTrackModel().edgesOf(spot);
-		if (edges.isEmpty()) {
-			return DEFAULT_COLOR;
-		} else {
-			return color(edges.iterator().next());
-		}
+	public String getFeature() {
+		return feature;
 	}
-
+	
 	@Override
 	public Color color(DefaultWeightedEdge edge) {
 		double val = model.getFeatureModel().getEdgeFeature(edge, feature).doubleValue();
@@ -96,10 +89,9 @@ public class PerEdgeFeatureColorGenerator implements ModelChangeListener, TrackC
 		min = Double.POSITIVE_INFINITY;
 		max = Double.NEGATIVE_INFINITY;
 		// Only iterate over filtered edges
-		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
-			for (DefaultWeightedEdge edge : model.getTrackModel().getTrackEdges(trackID)) {
+		for (Integer trackID : model.getTrackModel().trackIDs(true)) {
+			for (DefaultWeightedEdge edge : model.getTrackModel().trackEdges(trackID)) {
 				Double feat = model.getFeatureModel().getEdgeFeature(edge, feature);
-//				if (null == feat) continue;
 				double val = feat.doubleValue();
 				if (val < min) {
 					min = val;
@@ -115,7 +107,7 @@ public class PerEdgeFeatureColorGenerator implements ModelChangeListener, TrackC
 	
 	@Override
 	public void terminate() {
-		model.removeTrackMateModelChangeListener(this);
+		model.removeModelChangeListener(this);
 	}
 
 }

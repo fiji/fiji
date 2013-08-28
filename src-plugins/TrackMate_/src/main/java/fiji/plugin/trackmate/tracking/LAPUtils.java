@@ -137,7 +137,7 @@ public class LAPUtils {
 	}
 
 	/**
-	 * Compute the cost to link two spots, in the default way for the TrackMate plugin.
+	 * Compute the cost to link two spots, in the default way for the TrackMate trackmate.
 	 * <p>
 	 * This cost is calculated as follow:
 	 * <ul>

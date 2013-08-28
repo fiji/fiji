@@ -22,16 +22,12 @@ public class ManualDetectorFactory <T extends RealType<T>  & NativeType<T>> impl
 			"</html>";
 	protected String errorMessage;
 	protected Map<String, Object> settings;
+	
 
 	@Override
 	public SpotDetector<T> getDetector(int frame) {
 		// Return nothing
 		return null;
-	}
-
-	@Override
-	public void setTarget(ImgPlus<T> img, Map<String, Object> settings) {
-		this.settings = settings;
 	}
 
 	@Override
@@ -72,5 +68,10 @@ public class ManualDetectorFactory <T extends RealType<T>  & NativeType<T>> impl
 		mandatoryKeys.add(KEY_RADIUS);
 		ok = ok & checkMapKeys(settings, mandatoryKeys, null, errorHolder);
 		return ok;	
+	}
+
+	@Override
+	public void setTarget(ImgPlus<T> img, Map<String, Object> settings) {
+		this.settings = settings;
 	}
 }

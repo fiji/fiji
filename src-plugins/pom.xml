@@ -67,8 +67,6 @@
 		<module>Javascript_</module>
 		<module>Jython_Interpreter</module>
 		<module>Kuwahara_Filter</module>
-		<module>LSM_Reader</module>
-		<module>LSM_Toolbox</module>
 		<module>Lasso_and_Blow_Tool</module>
 		<module>Linear_Kuwahara</module>
 		<module>LocalThickness_</module>

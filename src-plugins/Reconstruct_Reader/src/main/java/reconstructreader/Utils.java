@@ -289,6 +289,64 @@ public final class Utils {
         return rCount;
     }
 
+
+    /**
+     * Finds the first Transform Element with an Image child node.
+     * @param doc the section XML Document
+     * @return the first Transform Element with an Image child node.
+     */
+    public static Element getFirstImageTransformElement(final Document doc)
+    {
+        final NodeList transforms = doc.getElementsByTagName("Transform");
+        for (int i = 0; i < transforms.getLength(); ++i)
+        {
+            final Element transform = (Element)transforms.item(i);
+            final NodeList children = transform.getChildNodes();
+            for (int j = 0; j < children.getLength(); ++j)
+            {
+                if (children.item(j).getNodeName().equals("Image"))
+                {
+
+                    return transform;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds all Transform Elements with Image children.
+     * @param doc the section XML Document
+     * @return an ArrayList containing all Transforms with Image children
+     */
+    public static ArrayList<Element> getImageTransformElements(final Document doc)
+    {
+        final ArrayList<Element> transformList = new ArrayList<Element>(3);
+        final NodeList transforms = doc.getElementsByTagName("Transform");
+
+        // Iterate through all transform elements
+        for (int i = 0; i < transforms.getLength(); ++i)
+        {
+            final Element transform = (Element)transforms.item(i);
+            final NodeList children = transform.getChildNodes();
+            boolean found = false;
+
+            // Iterate through all children of the transforms
+            for (int j = 0; j < children.getLength() && !found; ++j)
+            {
+                // If a child is named "Image," add the transform to the list and break out of the
+                // for loop
+                if (children.item(j).getNodeName().equals("Image"))
+                {
+                    transformList.add(transform);
+                    found = true;
+                }
+            }
+        }
+
+        return transformList;
+    }
+
     public static double[] getReconstructImageWH(final Node image)
     {
         return getReconstructImageWH(image, null);

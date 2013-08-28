@@ -8,7 +8,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 
 /**
- * This class is used to log messages occurring during plugin execution. 
+ * This class is used to log messages occurring during trackmate execution. 
  */
 public abstract class Logger extends PrintWriter {
 	

@@ -87,11 +87,11 @@ public class SortedDepthFirstIterator<V, E> extends AbstractGraphIterator<V, E> 
      * Stores the vertices that have been seen during iteration and (optionally)
      * some additional traversal info regarding each vertex.
      */
-    private Map<V, VisitColor> seen = new HashMap<V, VisitColor>();
+    protected Map<V, VisitColor> seen = new HashMap<V, VisitColor>();
     private V startVertex;
-    private Specifics<V, E> specifics;
-    private final Graph<V, E> graph;
-    private final Comparator<V> comparator;
+    protected Specifics<V, E> specifics;
+    protected final Graph<V, E> graph;
+    protected final Comparator<V> comparator;
     /** The connected component state   */
     private int state = CCS_BEFORE_COMPONENT;
 
@@ -233,7 +233,7 @@ public class SortedDepthFirstIterator<V, E> extends AbstractGraphIterator<V, E> 
     /**
      * This is where we add the multiple children in proper sorted order.
      */
-    private void addUnseenChildrenOf(V vertex) {
+    protected void addUnseenChildrenOf(V vertex) {
     	
     	// Retrieve target vertices, and sort them in a TreeSet
     	TreeSet<V> sortedChildren = new TreeSet<V>(comparator);
@@ -264,7 +264,7 @@ public class SortedDepthFirstIterator<V, E> extends AbstractGraphIterator<V, E> 
         }
     }
 
-    private EdgeTraversalEvent<V, E> createEdgeTraversalEvent(E edge) {
+    protected EdgeTraversalEvent<V, E> createEdgeTraversalEvent(E edge) {
         if (isReuseEvents()) {
             reusableEdgeEvent.setEdge(edge);
 
@@ -323,7 +323,7 @@ public class SortedDepthFirstIterator<V, E> extends AbstractGraphIterator<V, E> 
     /**
      * @see CrossComponentIterator#encounterVertex(Object, Object)
      */
-    private void encounterVertex(V vertex, E edge) {
+    protected void encounterVertex(V vertex, E edge) {
     	seen.put(vertex, VisitColor.WHITE);
         stack.addLast(vertex);
     }
@@ -331,7 +331,7 @@ public class SortedDepthFirstIterator<V, E> extends AbstractGraphIterator<V, E> 
     /**
      * @see CrossComponentIterator#encounterVertexAgain(Object, Object)
      */
-    private void encounterVertexAgain(V vertex, E edge) {
+    protected void encounterVertexAgain(V vertex, E edge) {
         VisitColor color = seen.get(vertex);
         if (color != VisitColor.WHITE) {
             // We've already visited this vertex; no need to mess with the
@@ -388,7 +388,7 @@ public class SortedDepthFirstIterator<V, E> extends AbstractGraphIterator<V, E> 
      * Provides unified interface for operations that are different in directed
      * graphs and in undirected graphs.
      */
-    private abstract static class Specifics<VV, EE> {
+    abstract static class Specifics<VV, EE> {
         /**
          * Returns the edges outgoing from the specified vertex in case of
          * directed graph, and the edge touching the specified vertex in case of

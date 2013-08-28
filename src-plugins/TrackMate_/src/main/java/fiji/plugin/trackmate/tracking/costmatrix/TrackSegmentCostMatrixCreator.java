@@ -176,6 +176,8 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	@Override
 	public boolean process() {
 		
+		long start = System.currentTimeMillis();
+		
 		// 1 - Get parameter values
 		final boolean allowSplitting = (Boolean) settings.get(KEY_ALLOW_TRACK_SPLITTING);
 		final boolean allowMerging = (Boolean) settings.get(KEY_ALLOW_TRACK_MERGING);
@@ -198,6 +200,10 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 			// Top left quadrant
 			Matrix topLeft = createTopLeftQuadrant();
+			if (null == topLeft) {
+				return false;
+			}
+			
 			logger.setStatus("Completing cost matrix...");
 			logger.setProgress(0.7f);
 			double cutoff = getCutoff(topLeft);
@@ -214,6 +220,9 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 			costs.setMatrix(topLeft.getRowDimension(), numRows - 1, 0, topLeft.getColumnDimension() - 1, bottomLeft);				// Initiating and merging alternative
 			costs.setMatrix(0, topLeft.getRowDimension() - 1, topLeft.getColumnDimension(), numCols - 1, topRight);					// Terminating and splitting alternative
 			costs.setMatrix(topLeft.getRowDimension(), numRows - 1, topLeft.getColumnDimension(), numCols - 1, bottomRight);		// Lower right (transpose of gap closing, mathematically required for LAP)		
+
+			long end = System.currentTimeMillis();
+			processingTime = end - start;
 			return true;
 
 		} catch (OutOfMemoryError ome) {
@@ -221,6 +230,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 			costs = null;
 			return false;
 		}
+		
 
 	}
 
@@ -260,6 +270,9 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		logger.setStatus("Computing gap-closing costs...");
 		logger.setProgress(0.55f);
 		Matrix gapClosingScores = getGapClosingCostSubMatrix();
+		if (null == gapClosingScores) {
+			return null;
+		}
 
 		// Get parameter values
 		final boolean allowSplitting = (Boolean) settings.get(KEY_ALLOW_TRACK_SPLITTING);
@@ -278,11 +291,17 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 			logger.setStatus("Computing merging costs...");
 			logger.setProgress(0.6f);
-			mergingScores = getMergingScores();
+			mergingScores = getMergingCostSubMatrix();
+			if (null == mergingScores) {
+				return null;
+			}
 
 			logger.setStatus("Computing splitting costs...");
 			logger.setProgress(0.65f);
-			splittingScores = getSplittingScores();
+			splittingScores = getSplittingCostSubMatrix();
+			if (null == splittingScores) {
+				return null;
+			}
 
 			middle = new Matrix(splittingMiddlePoints.size(), mergingMiddlePoints.size(), blockingValue);
 
@@ -317,23 +336,62 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * Uses a gap closing cost function to fill in the gap closing costs sub-matrix.
 	 */
 	private Matrix getGapClosingCostSubMatrix() {
-		GapClosingCostFunction gapClosing = new GapClosingCostFunction(settings);
-		return gapClosing.getCostFunction(trackSegments);
+		GapClosingCostFunction gapClosing = new GapClosingCostFunction(settings, trackSegments);
+		gapClosing.setNumThreads(numThreads);
+		if (!gapClosing.checkInput() || !gapClosing.process()) {
+			errorMessage = "Error in gap-closing cost sub matrix creation: " + gapClosing.getErrorMessage();
+			return null;
+		} else {
+			return gapClosing.getResult();
+		}
 	}
 
 
 	/**
 	 * Uses a merging cost function to fill in the merging costs sub-matrix.
 	 */
-	private Matrix getMergingScores() {
-		MergingCostFunction merging = new MergingCostFunction(settings);
-		Matrix mergingScores = merging.getCostFunction(trackSegments, middlePoints);
+	private Matrix getMergingCostSubMatrix() {
+		MergingCostFunction merging = new MergingCostFunction(settings, trackSegments, middlePoints);
+		merging.setNumThreads(numThreads);
+		Matrix mergingScores ;
+		if (!merging.checkInput() || !merging.process()) {
+			errorMessage = "Error in merging cost sub-matrix creation: " + merging.getErrorMessage();
+			return null;
+		} else {
+			mergingScores = merging.getResult();
+		}
+		
 		if (PRUNING_OPTIMIZATION) {
 			mergingMiddlePoints = new ArrayList<Spot>();
 			return pruneColumns(mergingScores, mergingMiddlePoints);
 		} else {
 			mergingMiddlePoints = middlePoints;
 			return mergingScores;
+		}
+	}
+	
+
+	/**
+	 * Uses a splitting cost function to fill in the splitting costs submatrix.
+	 */
+	private Matrix getSplittingCostSubMatrix() {
+		SplittingCostFunction splitting = new SplittingCostFunction(settings, trackSegments, middlePoints); 
+		splitting.setNumThreads(numThreads);
+		
+		Matrix splittingScores;
+		if (!splitting.checkInput() || !splitting.process()) {
+			errorMessage = "Error in splitting cost sub-matrix creation: " + splitting.getErrorMessage();
+			return null;
+		} else {
+			splittingScores = splitting.getResult();
+		}
+		
+		if (PRUNING_OPTIMIZATION) {
+			splittingMiddlePoints = new ArrayList<Spot>();
+			return pruneRows(splittingScores, splittingMiddlePoints);
+		} else {
+			splittingMiddlePoints = middlePoints;
+			return splittingScores;
 		}
 	}
 
@@ -412,22 +470,6 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 			return new Matrix(0,0);
 		}
 		return new Matrix(pruned);
-	}
-
-
-	/*
-	 * Uses a splitting cost function to fill in the splitting costs submatrix.
-	 */
-	private Matrix getSplittingScores() {
-		SplittingCostFunction splitting = new SplittingCostFunction(settings); 
-		Matrix splittingScores = splitting.getCostFunction(trackSegments, middlePoints);
-		if (PRUNING_OPTIMIZATION) {
-			splittingMiddlePoints = new ArrayList<Spot>();
-			return pruneRows(splittingScores, splittingMiddlePoints);
-		} else {
-			splittingMiddlePoints = middlePoints;
-			return splittingScores;
-		}
 	}
 
 

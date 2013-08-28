@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.algorithm.MultiThreadedBenchmarkAlgorithm;
+import net.imglib2.algorithm.OutputAlgorithm;
+
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
@@ -21,7 +24,7 @@ import fiji.plugin.trackmate.tracking.LAPUtils;
  * <p>Gap closing cost function used with {@link LAPTracker}.
  * 
  * <p>The <b>cost function</b> is determined by the default equation in the
- * TrackMate plugin, see below.
+ * TrackMate trackmate, see below.
  * <p>  
  *  It slightly differs from the Jaqaman article, see equation (4) in the paper.
  * <p>
@@ -35,7 +38,7 @@ import fiji.plugin.trackmate.tracking.LAPUtils;
  * @author Nicholas Perry
  * @author Jean-Yves Tinevez
  */
-public class GapClosingCostFunction {
+public class GapClosingCostFunction extends MultiThreadedBenchmarkAlgorithm implements OutputAlgorithm<Matrix> {
 
 	/** If false, gap closing will be prohibited. */
 	protected final boolean allowed;
@@ -47,80 +50,93 @@ public class GapClosingCostFunction {
 	protected final double blockingValue;
 	/** Feature penalties. */
 	protected final Map<String, Double> featurePenalties;
-	/** A flag stating if we should use multi--threading for some calculations. */ // FIXME THIS IS LAME
-	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
+	protected final List<SortedSet<Spot>> trackSegments;
+	protected Matrix m;
 
 
 	@SuppressWarnings("unchecked")
-	public GapClosingCostFunction(final Map<String, Object> settings) {
+	public GapClosingCostFunction(final Map<String, Object> settings, final List<SortedSet<Spot>> trackSegments) {
 		this.frameCutoff 		= (Integer) settings.get(KEY_GAP_CLOSING_MAX_FRAME_GAP);
 		this.maxDist 			= (Double) settings.get(KEY_GAP_CLOSING_MAX_DISTANCE);
 		this.blockingValue		= (Double) settings.get(KEY_BLOCKING_VALUE);
 		this.featurePenalties	= (Map<String, Double>) settings.get(KEY_GAP_CLOSING_FEATURE_PENALTIES);
 		this.allowed 			= (Boolean) settings.get(KEY_ALLOW_GAP_CLOSING);
+		this.trackSegments 	= trackSegments;
 	}
 
-	public Matrix getCostFunction(final List<SortedSet<Spot>> trackSegments) {
+	@Override
+	public boolean process() {
+
+		long start = System.currentTimeMillis();
 		final int n = trackSegments.size();
-		final Matrix m = new Matrix(n, n);
 
-		// If we are not allow to make gap-closing, simply fill the matrix with blocking values.
+		// If we do not allow to make gap-closing, simply fill the matrix with blocking values.
 		if (!allowed) {
-			return new Matrix(n, n, blockingValue);
-		}
-
-		// Prepare threads
-		final Thread[] threads;
-		if (useMultithreading) {
-			threads = SimpleMultiThreading.newThreads();
+			m = new Matrix(n, n, blockingValue);
 		} else {
-			threads = SimpleMultiThreading.newThreads(1);
-		}
 
-		// Prepare the thread array
-		final AtomicInteger ai = new AtomicInteger(0);
-		for (int ithread = 0; ithread < threads.length; ithread++) {
+			m = new Matrix(n, n);
 
-			threads[ithread] = new Thread("LAPTracker gap closing cost thread "+(1+ithread)+"/"+threads.length) {  
+			// Prepare threads
+			final Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
 
-				public void run() {
+			// Prepare the thread array
+			final AtomicInteger ai = new AtomicInteger(0);
+			for (int ithread = 0; ithread < threads.length; ithread++) {
 
-					for (int i = ai.getAndIncrement(); i < n; i = ai.getAndIncrement()) {
+				threads[ithread] = new Thread("LAPTracker gap closing cost thread "+(1+ithread)+"/"+threads.length) {  
 
-						SortedSet<Spot> seg1 = trackSegments.get(i);
-						Spot end = seg1.last();				// get last Spot of seg1
-						int endFrame = end.getFeature(Spot.FRAME).intValue(); // we want at least tstart > tend
+					public void run() {
 
-						// Set the gap closing scores for each segment start and end pair
-						for (int j = 0; j < n; j++) {
+						for (int i = ai.getAndIncrement(); i < n; i = ai.getAndIncrement()) {
 
-							// If i and j are the same track segment, block it
-							if (i == j) {
-								m.set(i, j, blockingValue);
-								continue;
+							SortedSet<Spot> seg1 = trackSegments.get(i);
+							Spot end = seg1.last();				// get last Spot of seg1
+							int endFrame = end.getFeature(Spot.FRAME).intValue(); // we want at least tstart > tend
+
+							// Set the gap closing scores for each segment start and end pair
+							for (int j = 0; j < n; j++) {
+
+								// If i and j are the same track segment, block it
+								if (i == j) {
+									m.set(i, j, blockingValue);
+									continue;
+								}
+
+								SortedSet<Spot> seg2 = trackSegments.get(j);
+								Spot start = seg2.first();			// get first Spot of seg2
+								int startFrame = start.getFeature(Spot.FRAME).intValue();
+
+								// Frame cutoff. A value of 1 means a gap of 1 frame. If the end spot 
+								// is in frame 10, the start spot in frame 12, and if the max gap is 1
+								// then we should sought to bridge this gap (12 to 10 is a gap of 1 frame).
+								if (startFrame - endFrame > (frameCutoff+1) || endFrame >= startFrame) {
+									m.set(i, j, blockingValue);
+									continue;
+								}
+
+								double cost = LAPUtils.computeLinkingCostFor(end, start, maxDist, blockingValue, featurePenalties);
+								m.set(i, j, cost);
 							}
-
-							SortedSet<Spot> seg2 = trackSegments.get(j);
-							Spot start = seg2.first();			// get first Spot of seg2
-							int startFrame = start.getFeature(Spot.FRAME).intValue();
-
-							// Frame cutoff. A value of 1 means a gap of 1 frame. If the end spot 
-							// is in frame 10, the start spot in frame 12, and if the max gap is 1
-							// then we should sought to bridge this gap (12 to 10 is a gap of 1 frame).
-							if (startFrame - endFrame > (frameCutoff+1) || endFrame >= startFrame) {
-								m.set(i, j, blockingValue);
-								continue;
-							}
-
-							double cost = LAPUtils.computeLinkingCostFor(end, start, maxDist, blockingValue, featurePenalties);
-							m.set(i, j, cost);
 						}
 					}
-				}
-			};
+				};
+			}
+
+			SimpleMultiThreading.startAndJoin(threads);
 		}
-		
-		SimpleMultiThreading.startAndJoin(threads);
+		long end = System.currentTimeMillis();
+		processingTime = end - start;
+		return true;
+	}
+
+	@Override
+	public boolean checkInput() {
+		return true;
+	}
+
+	@Override
+	public Matrix getResult() {
 		return m;
 	}
 }

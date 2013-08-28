@@ -18,6 +18,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.gui.panels.ActionListenablePanel;
 
 /**
  * A panel using s {@link JTextPane} to log events.

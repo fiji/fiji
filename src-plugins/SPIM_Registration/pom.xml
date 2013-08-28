@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>jama</groupId>
 			<artifactId>jama</artifactId>
-			<version>1.0.2</version>
+			<version>${jama.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -60,24 +60,24 @@
 		<dependency>
 			<groupId>nz.ac.waikato.cms.weka</groupId>
 			<artifactId>weka-dev</artifactId>
-			<version>3.7.6</version>
+			<version>${weka.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core</artifactId>
-			<version>1.5.2</version>
+			<version>${java3d.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core-utils</artifactId>
-			<version>1.5.2</version>
+			<version>${java3d.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>vecmath</artifactId>
-			<version>1.5.2</version>
+			<version>${java3d.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -103,7 +103,7 @@
 		<dependency>
 			<groupId>net.java.dev.jna</groupId>
 			<artifactId>jna</artifactId>
-			<version>3.2.7</version>
+			<version>${jna.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>

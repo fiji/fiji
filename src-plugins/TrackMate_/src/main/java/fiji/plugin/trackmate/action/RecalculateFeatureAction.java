@@ -3,30 +3,33 @@ package fiji.plugin.trackmate.action;
 import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.gui.DisplayerPanel;
+import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
+import fiji.plugin.trackmate.gui.TrackMateWizard;
 
 public class RecalculateFeatureAction extends AbstractTMAction {
 
-	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/calculator.png"));
+
+	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/calculator.png"));
 	public static final String NAME = "Recompute all spot features";
 	public static final String INFO_TEXT = "<html>" +
 			"Calling this action causes the model to recompute all the feautures <br>" +
 			"for all the un-filtered spots." +
 			"</html>";
 	
-	public RecalculateFeatureAction() {
+	public RecalculateFeatureAction(TrackMate trackmate, TrackMateGUIController controller) {
+		super(trackmate, controller);
 		this.icon = ICON;
 	}
 	
 	@Override
-	public void execute(TrackMate_ plugin) {
+	public void execute() {
 		logger.log("Recalculating all features.\n");
-		TrackMateModel model = plugin.getModel();
+		Model model = trackmate.getModel();
 		Logger oldLogger = model.getLogger();
 		model.setLogger(logger);
-		model.getFeatureModel().computeSpotFeatures(model.getSpots(), true);
+		trackmate.computeSpotFeatures(true);
 		model.setLogger(oldLogger);
 		logger.log("Done.\n");
 	}

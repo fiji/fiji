@@ -16,15 +16,11 @@
 	<name>plugins/Trainable_Segmentation.jar</name>
 	<description></description>
 
-	<properties>
-		<imagej1.version>[1.46a,)</imagej1.version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>jama</groupId>
 			<artifactId>jama</artifactId>
-			<version>1.0.2</version>
+			<version>${jama.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -34,7 +30,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math</artifactId>
-			<version>3.0-SNAPSHOT</version>
+			<version>${commons-math.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -74,24 +70,24 @@
 		<dependency>
 			<groupId>nz.ac.waikato.cms.weka</groupId>
 			<artifactId>weka-dev</artifactId>
-			<version>3.7.6</version>
+			<version>${weka.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core</artifactId>
-			<version>1.5.2</version>
+			<version>${java3d.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core-utils</artifactId>
-			<version>1.5.2</version>
+			<version>${java3d.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>vecmath</artifactId>
-			<version>1.5.2</version>
+			<version>${java3d.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
