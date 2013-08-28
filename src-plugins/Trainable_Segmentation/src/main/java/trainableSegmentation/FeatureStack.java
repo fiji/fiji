@@ -2416,6 +2416,9 @@ public class FeatureStack
 		if (Thread.currentThread().isInterrupted()) 
 			return null;
 		
+		if( oldColorFormat ) 
+			IJ.log( "Using old color format...");
+		
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		for (int i=1; i<=wholeStack.getSize(); i++){
 			String attString = wholeStack.getSliceLabel(i);
@@ -3436,7 +3439,7 @@ public class FeatureStack
 	{		
 		int n = 0;
 		
-		if( colorFeatures == false)
+		if( colorFeatures == false || oldColorFormat == true )
 		{
 			for (int z=1; z<=getSize(); z++, n++)		
 				ins.setValue( z-1, getProcessor( z ).getf( x, y ) );
