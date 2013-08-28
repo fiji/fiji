@@ -133,6 +133,13 @@ public class Pbd16InputStream extends PbdInputStream
 			{
 				while ( (leftToFill > 0) && out.hasRemaining() ) 
 				{
+					// Bug fix Aug 2013 CMB
+					// If the output buffer cannot hold 8 more values, we cannot yet unpack this set of differences.
+					int spaceNeeded = Math.min(leftToFill, 8);
+					if (out.remaining() < spaceNeeded) {
+						return 2*out.position(); // Parse these differences in the next gulp of bytes
+					}
+					//
 	                // 332
 	                d0=d1=d2=d3=0;
 	                int sourceChar2 = in.read();
