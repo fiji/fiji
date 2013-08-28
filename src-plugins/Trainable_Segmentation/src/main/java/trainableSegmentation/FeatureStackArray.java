@@ -459,6 +459,11 @@ public class FeatureStackArray
 			featureStackArray[ referenceStackIndex ].setOldColorFormat( oldColorFormat );
 	}
 	
+	public boolean isOldColorFormat()
+	{
+		return this.oldColorFormat;
+	}
+	
 }
 
 	
