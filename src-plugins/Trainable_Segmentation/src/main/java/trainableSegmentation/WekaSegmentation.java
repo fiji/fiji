@@ -4955,6 +4955,9 @@ public class WekaSegmentation {
 		if (numThreads == 0)
 			numThreads = Prefs.getThreads();
 
+		if( featureStackArray.isOldColorFormat() )
+			IJ.log("Using old color format...");
+		
 		ArrayList<String> classNames = null;
 		
 		if(null != loadedClassNames)
