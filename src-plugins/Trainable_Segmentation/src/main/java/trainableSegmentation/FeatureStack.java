@@ -203,6 +203,9 @@ public class FeatureStack
 	/** flag to specify the use of color features */
 	final boolean colorFeatures;
 	
+	/** flag to specify the use of the old color format (using directly the RGB values as float) */
+	private boolean oldColorFormat = false; 
+	
 	/** executor service to produce concurrent threads */
 	ExecutorService exe = Executors.newFixedThreadPool( Prefs.getThreads() );
 	
@@ -3386,7 +3389,7 @@ public class FeatureStack
 		final double[] values = new double[ getSize() + 1 + extra ];
 		int n = 0;
 		
-		if( colorFeatures == false)
+		if( colorFeatures == false || oldColorFormat == true)
 		{
 			for (int z=1; z<=getSize(); z++, n++)		
 				values[ z-1 ] = getProcessor( z ).getf( x, y );
@@ -3495,6 +3498,16 @@ public class FeatureStack
 	public ImageStack getStack()
 	{
 		return wholeStack;
+	}
+	
+	public void setOldColorFormat( boolean b )
+	{
+		this.oldColorFormat = b;
+	}
+	
+	public boolean isOldColorFormat()
+	{
+		return this.oldColorFormat;
 	}
 	
 }
