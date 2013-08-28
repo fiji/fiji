@@ -61,6 +61,9 @@ public class FeatureStackArray
 	/** common enabled features */
 	private boolean[] enabledFeatures = null;
 	
+	/** flag to specify the use of the old color format (using directly the RGB values as float) */
+	private boolean oldColorFormat = false;  
+	
 	/**
 	 * Initialize a feature stack list of a specific size
 	 * 
@@ -447,6 +450,13 @@ public class FeatureStackArray
 		if(referenceStackIndex != -1)
 			return featureStackArray[referenceStackIndex].getHeight();
 		return -1;
+	}
+	
+	public void setOldColorFormat( boolean oldColorFormat ) 
+	{
+		this.oldColorFormat = oldColorFormat;
+		if( referenceStackIndex != -1 )
+			featureStackArray[ referenceStackIndex ].setOldColorFormat( oldColorFormat );
 	}
 	
 }
