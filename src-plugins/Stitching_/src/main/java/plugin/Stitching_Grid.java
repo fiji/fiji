@@ -718,6 +718,9 @@ public class Stitching_Grid implements PlugIn
 			options.setSplitTimepoints( timeHack );
 			options.setSplitFocalPlanes( false );
 			options.setAutoscale( false );
+			options.setStackFormat(ImporterOptions.VIEW_HYPERSTACK);
+			options.setStackOrder(ImporterOptions.ORDER_XYCZT);
+			options.setCrop(false);
 			
 			options.setOpenAllSeries( true );		
 			
