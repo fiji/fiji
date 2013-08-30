@@ -45,6 +45,7 @@ import mpicbg.stitching.TextFileAccess;
 import mpicbg.stitching.fusion.Fusion;
 import ome.xml.model.primitives.PositiveFloat;
 import stitching.CommonFunctions;
+import tools.RoiPicker;
 
 /**
  * 
@@ -710,6 +711,7 @@ public class Stitching_Grid implements PlugIn
 
 		// Display our rois
 		rm.runCommand("Show All");
+		IJ.runPlugIn(RoiPicker.class.getName(), "");
 	}
 
 	protected IFormatReader initializeReader(final String file)
