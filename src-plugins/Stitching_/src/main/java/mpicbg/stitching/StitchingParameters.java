@@ -19,6 +19,7 @@ public class StitchingParameters
 	public int fusionMethod;
 	public String fusedName;
 	public int checkPeaks;
+	public boolean addTilesAsRois;
 	public boolean computeOverlap, subpixelAccuracy;
 	public boolean invertX, invertY;
 	public boolean ignoreZStage;
