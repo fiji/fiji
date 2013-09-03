@@ -38,6 +38,7 @@ import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.stitching.CollectionStitchingImgLib;
+import mpicbg.stitching.Downsampler;
 import mpicbg.stitching.ImageCollectionElement;
 import mpicbg.stitching.ImagePlusTimePoint;
 import mpicbg.stitching.StitchingParameters;
@@ -77,6 +78,7 @@ public class Stitching_Grid implements PlugIn
 	public static boolean defaultInvertY = false;
 	public static boolean defaultIgnoreZStage = false;
 	public static boolean defaultSubpixelAccuracy = true;
+	public static boolean defaultDownSample = false;
 	public static boolean writeOnlyTileConfStatic = false;
 	
 	public static boolean defaultIgnoreCalibration = false;
@@ -188,6 +190,7 @@ public class Stitching_Grid implements PlugIn
 		gd.addCheckbox( "Invert_Y coordinates", defaultInvertY );
 		gd.addCheckbox( "Ignore_Z_stage position", defaultIgnoreZStage);
 		gd.addCheckbox( "Subpixel_accuracy", defaultSubpixelAccuracy );
+		gd.addCheckbox( "Downsample_tiles", defaultDownSample);
 		gd.addCheckbox( "Use_virtual_input_images (Slow! Even slower when combined with subpixel accuracy during fusion!)", defaultVirtualInput );
 		gd.addChoice( "Computation_parameters", CommonFunctions.cpuMemSelect, CommonFunctions.cpuMemSelect[ defaultMemorySpeedChoice ] );
 		gd.addChoice( "Image_output", resultChoices, resultChoices[ defaultResult ] );
@@ -311,6 +314,7 @@ public class Stitching_Grid implements PlugIn
 		final boolean ignoreZStage = params.ignoreZStage = defaultIgnoreZStage = gd.getNextBoolean();
 
 		params.subpixelAccuracy = defaultSubpixelAccuracy = gd.getNextBoolean();
+		final boolean downSample = params.downSample = defaultDownSample = gd.getNextBoolean();
 		params.virtual = defaultVirtualInput = gd.getNextBoolean();
 		params.cpuMemChoice = defaultMemorySpeedChoice = gd.getNextChoiceIndex();
 		params.outputVariant = defaultResult = gd.getNextChoiceIndex();
@@ -373,7 +377,7 @@ public class Stitching_Grid implements PlugIn
 		else if ( gridType == 5 || gridType == 7)
 			elements = getAllFilesInDirectory( directory, confirmFiles );
 		else if ( gridType == 6 && gridOrder == 1 )
-			elements = getLayoutFromMultiSeriesFile( seriesFile, increaseOverlap, ignoreCalibration, invertX, invertY, ignoreZStage );
+			elements = getLayoutFromMultiSeriesFile( seriesFile, increaseOverlap, ignoreCalibration, invertX, invertY, ignoreZStage, downSample );
 		else if ( gridType == 6 )
 			elements = getLayoutFromFile( directory, outputFile );
 		else
@@ -724,7 +728,7 @@ public class Stitching_Grid implements PlugIn
 		return in;
 	}
 
-	protected ArrayList< ImageCollectionElement > getLayoutFromMultiSeriesFile( final String multiSeriesFile, final double increaseOverlap, final boolean ignoreCalibration, final boolean invertX, final boolean invertY, final boolean ignoreZStage )
+	protected ArrayList< ImageCollectionElement > getLayoutFromMultiSeriesFile( final String multiSeriesFile, final double increaseOverlap, final boolean ignoreCalibration, final boolean invertX, final boolean invertY, final boolean ignoreZStage, final boolean downSample )
 	{
 		if ( multiSeriesFile == null || multiSeriesFile.length() == 0 )
 		{
@@ -877,6 +881,10 @@ public class Stitching_Grid implements PlugIn
 			options.setOpenAllSeries( true );		
 			
 			final ImagePlus[] imps = BF.openImagePlus( options );
+
+			if  ( downSample ) {
+				new Downsampler(imps[0].getWidth(), imps[0].getHeight()).run(imps, elements);;
+			}
 			
 			if ( imps.length != elements.size() )
 			{

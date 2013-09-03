@@ -20,7 +20,7 @@ public class StitchingParameters
 	public String fusedName;
 	public int checkPeaks;
 	public boolean addTilesAsRois;
-	public boolean computeOverlap, subpixelAccuracy;
+	public boolean computeOverlap, subpixelAccuracy ,downSample;
 	public boolean invertX, invertY;
 	public boolean ignoreZStage;
 	public double xOffset;
@@ -45,4 +45,5 @@ public class StitchingParameters
 	//added by John Lapage: allows storage of a sequential comparison range
 	public boolean sequential = false;
 	public int seqRange = 1;
+
 }
