@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>javac</artifactId>
+	<version>1.6.0_24-ubuntu-fiji1</version>
 
 	<name>jars/javac.jar</name>
 	<description></description>
