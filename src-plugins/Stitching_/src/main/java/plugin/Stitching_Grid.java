@@ -174,7 +174,7 @@ public class Stitching_Grid implements PlugIn
 		// added by John Lapage: creates text box in which the user can set which range to compare within. Would be nicer as an Integer.
 		if (gridType == 7) 
 			gd.addNumericField( "Frame range to compare", defaultSeqRange, 0 );
-		gd.addCheckbox("Add_tiles_as_ROIs (Fuse and Display only)", defaultAddTilesAsRois);
+		gd.addCheckbox("Add_tiles_as_ROIs", defaultAddTilesAsRois);
 		if ( gridType < 5 )
 			gd.addCheckbox( "Compute_overlap (otherwise use approximate grid coordinates)", defaultComputeOverlap );
 		else if ( gridType == 6 && gridOrder == 0 )
