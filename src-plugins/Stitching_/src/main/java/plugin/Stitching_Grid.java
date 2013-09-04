@@ -577,12 +577,24 @@ public class Stitching_Grid implements PlugIn
 			{
 				imp.setTitle( "Fused" );
 				imp.show();
-				if (addTilesAsRois && defaultResult == 0) {
-					float[] offset = new float[dimensionality];
-					Fusion.estimateBounds(offset, new int[dimensionality], images,
-						models, dimensionality);
+			}
 
-					generateRois(offset, optimized, imp);
+			if (addTilesAsRois) {
+				float[] offset = new float[dimensionality];
+				Fusion.estimateBounds(offset, new int[dimensionality], images, models,
+					dimensionality);
+
+				generateRois(offset, optimized);
+				RoiManager rm = RoiManager.getInstance();
+
+				if (imp == null) {
+					// Save the rois
+						rm.runCommand("save", new File(params.outputDirectory, "tile_rois.zip").getAbsolutePath());
+				}
+				else {
+					// Display our rois
+					rm.runCommand("Show All");
+					IJ.runPlugIn(RoiPicker.class.getName(), "");
 				}
 			}
 		}
@@ -598,7 +610,7 @@ public class Stitching_Grid implements PlugIn
 	 * is a global offset to 0,0 for the upper leftmost tile.
 	 */
 	protected void generateRois(float[] offset,
-		ArrayList<ImagePlusTimePoint> optimizedImages, ImagePlus fusedImage)
+		ArrayList<ImagePlusTimePoint> optimizedImages)
 	{
 		float[][] coordinates =
 			new float[optimizedImages.size()][optimizedImages.get(0).getImagePlus()
@@ -643,18 +655,21 @@ public class Stitching_Grid implements PlugIn
 		// Skip any .xml, .cfg, etc... when looking up the image names
 		final int pixelOffset = reader.getSeriesUsedFiles(true).length;
 		// keeps counts of the # of rois added for each stack position
-		int[] tiles = new int[fusedImage.getStackSize()];
+		int sizeZ = reader.getSizeZ();
+		int sizeT = reader.getSizeT();
+		int sizeC = reader.getSizeC();
+		int[] tiles = new int[sizeC * sizeT * sizeZ];
 
 		// Generate the actual rois
 		for (int series = 0; series < reader.getSeriesCount(); series++) {
 			reader.setSeries(series);
 			ImagePlus unfused = optimizedImages.get(coordIndex).getImagePlus();
-			for (int t = 0; t < reader.getSizeT(); t++) {
-
+			int slice = 1;
+			for (int t = 0; t < sizeT; t++) {
 				// Each ImageCollectionelement is a Z stack for a particular T point.
 				// We also generate a roi for each channel
-				for (int z = 0; z < reader.getSizeZ(); z++) {
-					for (int c = 0; c < reader.getSizeC(); c++) {
+				for (int z = 0; z < sizeZ; z++) {
+					for (int c = 0; c < sizeC; c++) {
 						// apply global offset
 						int coordXOffset = (int) Math.floor(coordinates[series][0]);
 						int coordYOffset = (int) Math.floor(coordinates[series][1]);
@@ -664,7 +679,6 @@ public class Stitching_Grid implements PlugIn
 
 						// set roi name and position
 						roi.setPosition(c + 1, z + 1, t + 1);
-						int slice = fusedImage.getStackIndex(c + 1, z + 1, t + 1);
 						String roiName =
 							"sp=" + slice + "; label=" + ++tiles[slice - 1] + "; series=" +
 								series + "; C=" + (c + 1) + "; Z=" + (z + 1) + "; T=" + (t + 1);
@@ -674,13 +688,13 @@ public class Stitching_Grid implements PlugIn
 							roiName += "; file=" + new File(sourceName).getName();
 						}
 						roi.setName(roiName);
-						roi.setImage(fusedImage);
 
 						if (roisBySlice.get(slice) == null) roisBySlice.put(slice,
 							new ArrayList<Roi>());
 
 						// index the roi to be added later to the RoiManager
 						roisBySlice.get(slice).add(roi);
+						slice++;
 					}
 				}
 
@@ -706,14 +720,10 @@ public class Stitching_Grid implements PlugIn
 			// RoiManager.addRoi, only the first slice's rois are added (even if
 			// updating the fusedImage's position).
 			for (Roi roi : roisBySlice.get(slice))
-				rm.add(fusedImage, roi, 0);
+				rm.add((ImagePlus)null, roi, 0);
 		}
 
 		IJ.log("ROIs generated.");
-
-		// Display our rois
-		rm.runCommand("Show All");
-		IJ.runPlugIn(RoiPicker.class.getName(), "");
 	}
 
 	protected IFormatReader initializeReader(final String file)
