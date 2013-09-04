@@ -23,6 +23,9 @@ get_url () {
 	}
 
 	case $url in
+	github.com:*|git://github.com/*|http://github.com/*|https://github.com*)
+		echo "https://github.com/${url#*github.com?}"
+		;;
 	repo.or.cz:*)
 		echo "http://repo.or.cz/w/${url#*repo.or.cz:/srv/git/}?"
 		;;
