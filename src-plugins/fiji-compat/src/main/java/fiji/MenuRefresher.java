@@ -2,6 +2,7 @@ package fiji;
 
 import ij.IJ;
 import ij.Menus;
+import ij.Prefs;
 import ij.plugin.PlugIn;
 import imagej.legacy.SwitchToModernMode;
 
@@ -82,6 +83,12 @@ public class MenuRefresher implements PlugIn, Runnable {
 		commands.put("Compile and Run...", "fiji.Compile_and_Run");
 		// make sure "Edit>Options>Memory & Threads runs Fiji's plugin
 		commands.put("Memory & Threads...", "fiji.Memory");
+
+		// redirect Bio-Formats's "Update LOCI Plugins" to use the ImageJ updater
+		Prefs.set("bioformats.upgradeCheck", false);
+		if (commands.containsKey("Update LOCI Plugins")) {
+			commands.put("Update LOCI Plugins", "fiji.updater.Updater(\"update\")");
+		}
 	}
 
 }
