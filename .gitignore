@@ -256,6 +256,7 @@ hs_err*.log
 /jars/imglib2-examples-[0-9]*.jar
 /jars/imglib2-ij-[0-9]*.jar
 /jars/imglib2-io-[0-9]*.jar
+/jars/imglib2-meta-[0-9]*.jar
 /jars/imglib2-ops-[0-9]*.jar
 /jars/imglib2-realtransform-[0-9]*.jar
 /jars/imglib2-scripting-[0-9]*.jar
@@ -263,6 +264,7 @@ hs_err*.log
 /jars/legacy-imglib1-[0-9]*.jar
 
 # Bio-Formats #
+/jars/bio-formats
 /jars/bio-formats-[0-9]*.jar
 /jars/bio-formats/scifio-[0-9]*.jar
 /jars/commons-logging-[0-9]*.jar
@@ -324,7 +326,9 @@ hs_err*.log
 /plugins/readme.txt
 
 # Java3D #
-/jars/j3d-core-1.5.2.jar
+/jars/j3d-core-[0-9]*.jar
+/jars/j3d-core-utils-[0-9]*.jar
+/jars/vecmath-[0-9]*.jar
 
 # Miscellaneous #
 /jars/Updater_Fix-[0-9]*.jar
