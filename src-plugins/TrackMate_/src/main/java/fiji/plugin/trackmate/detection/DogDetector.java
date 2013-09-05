@@ -10,7 +10,7 @@ import net.imglib2.algorithm.legacy.scalespace.DifferenceOfGaussianPeak;
 import net.imglib2.algorithm.legacy.scalespace.SubpixelLocalization;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
-import net.imglib2.img.ImgPlus;
+import net.imglib2.meta.ImgPlus;
 import net.imglib2.outofbounds.OutOfBoundsFactory;
 import net.imglib2.outofbounds.OutOfBoundsMirrorExpWindowingFactory;
 import net.imglib2.type.NativeType;

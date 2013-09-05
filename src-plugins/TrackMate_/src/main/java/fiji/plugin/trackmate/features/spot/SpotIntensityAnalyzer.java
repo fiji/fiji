@@ -10,7 +10,7 @@ import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.T
 
 import java.util.Iterator;
 
-import net.imglib2.img.ImgPlus;
+import net.imglib2.meta.ImgPlus;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Util;
 import fiji.plugin.trackmate.Spot;

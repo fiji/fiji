@@ -2,7 +2,7 @@ package fiji.plugin.trackmate.features.spot;
 
 import java.util.Iterator;
 
-import net.imglib2.img.ImgPlus;
+import net.imglib2.meta.ImgPlus;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
 

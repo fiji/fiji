@@ -5,10 +5,10 @@ import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_SUBPIXEL_LOCAL
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
-import net.imglib2.img.ImgPlus;
+import net.imglib2.meta.ImgPlus;
+import net.imglib2.meta.view.HyperSliceImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.view.HyperSliceImgPlus;
 
 public class DogDetectorFactory<T extends RealType<T> & NativeType<T>> extends LogDetectorFactory<T> {
 

@@ -13,9 +13,9 @@ import java.util.TreeSet;
 import javax.swing.ImageIcon;
 
 import net.imglib2.img.Img;
-import net.imglib2.img.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.view.HyperSliceImgPlus;
+import net.imglib2.meta.ImgPlus;
+import net.imglib2.meta.view.HyperSliceImgPlus;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 

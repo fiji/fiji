@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.detection;
 import java.util.Map;
 
 import net.imglib2.img.Img;
-import net.imglib2.img.ImgPlus;
+import net.imglib2.meta.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
