@@ -33,14 +33,16 @@ then
 	wget -nv "$FIJI_URL"
 	tar xf "$FIJI_ARCHIVE"
 	rm "$FIJI_ARCHIVE"
-	cd "$FIJI_DIR"
-	./ImageJ-linux64 --update add-update-site "$BF_UPDATE_SITE" \
+	"$FIJI_DIR"/ImageJ-linux64 --update add-update-site "$BF_UPDATE_SITE" \
 		http://sites.imagej.net/Bio-Formats/ \
 		"webdav:Bio-Formats:$(cat "$BF_PASSWD_FILE")" .
-	cd ..
 fi
 
 cd "$FIJI_DIR"
+
+# -- First, make sure that Fiji is up-to-date --
+
+./ImageJ-linux64 --update update-force-pristine
 
 # -- Download latest Bio-Formats stable build and install into local Fiji --
 
