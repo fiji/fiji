@@ -379,11 +379,11 @@ public class TMUtils {
 	public static final double[] getSpatialCalibration(final ImgPlusMetadata img) {
 		final double[] calibration = Util.getArrayFromValue(1d, 3);
 		for (int d = 0; d < img.numDimensions(); d++) {
-			if (img.axis(d).equals(Axes.X)) {
+			if (img.axis(d).type() == Axes.X) {
 				calibration[0] = img.calibration(d);
-			} else if (img.axis(d).equals(Axes.Y)) {
+			} else if (img.axis(d).type() == Axes.Y) {
 				calibration[1] = img.calibration(d);
-			} else if (img.axis(d).equals(Axes.Z)) {
+			} else if (img.axis(d).type() == Axes.Z) {
 				calibration[2] = img.calibration(d);
 			}
 		}
