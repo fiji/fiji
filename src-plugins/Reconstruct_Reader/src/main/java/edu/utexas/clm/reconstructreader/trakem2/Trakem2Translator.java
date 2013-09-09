@@ -1,10 +1,10 @@
-package reconstructreader.trakem2;
+package edu.utexas.clm.reconstructreader.trakem2;
 
+import edu.utexas.clm.reconstructreader.Utils;
 import ini.trakem2.Project;
 import ini.trakem2.display.*;
 import ini.trakem2.tree.ProjectThing;
 import ini.trakem2.tree.Thing;
-import reconstructreader.Utils;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;

@@ -340,7 +340,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 
         // Larry Lindsey: Convert a Reconstruct .ser file into a TrakEM2 .xml file and open
 		if (name.endsWith(".ser"))
-			return tryPlugIn("reconstructreader.reconstruct.Reconstruct_Reader", path);
+			return tryPlugIn("edu.utexas.clm.reconstructreader.reconstruct.Reconstruct_Reader", path);
 
 		// Timo Rantalainen and Michael Doube: read Stratec pQCT files.
 		// File naming convention is IDDDDDDD.MHH, where D is decimal and H is hex

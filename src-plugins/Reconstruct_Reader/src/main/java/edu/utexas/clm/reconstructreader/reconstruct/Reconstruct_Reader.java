@@ -1,4 +1,4 @@
-package reconstructreader.reconstruct;
+package edu.utexas.clm.reconstructreader.reconstruct;
 
 import ij.IJ;
 import ij.gui.MessageDialog;

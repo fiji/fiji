@@ -1,5 +1,6 @@
-package reconstructreader.reconstruct;
+package edu.utexas.clm.reconstructreader.reconstruct;
 
+import edu.utexas.clm.reconstructreader.Utils;
 import org.w3c.dom.Element;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -8,7 +9,6 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-import reconstructreader.Utils;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
