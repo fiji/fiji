@@ -1007,7 +1007,13 @@ public class ReconstructTranslator {
             }
         }
 
-        if (maxScale != minScale)
+        if (Double.isInfinite(minScale))
+        {
+            messenger.sendMessage("Reconstruct project has no golden section." +
+                    " This may or may not be problematic");
+            return "";
+        }
+        else if (maxScale != minScale)
         {
             return "This Reconstruct project has been re-calibrated using the scale method.\n" +
                     "The detected scale was " + minScale + ", but multiple valid scales were" +
@@ -1179,9 +1185,8 @@ public class ReconstructTranslator {
                 {
                     transform = (Element)transforms.item(i);
 
-                    if (isNonLinear(transform) && imageElement(transform) == null)
+                    if (imageElement(transform) == null)
                     {
-                        messenger.sendMessage("Got nonlinear transform. Fixing to dim = 0.");
                         fixContourTransforms(transform);
                     }
                 }
@@ -1207,11 +1212,13 @@ public class ReconstructTranslator {
 
             for (int j = 3; j < 6 && !test; ++j)
             {
-                test |= xcoef[j] != 0;
-                test |= ycoef[j] != 0;
+                if (xcoef[j] != 0 || ycoef[j] != 0)
+                {
+                    return true;
+                }
             }
 
-            return test;
+            return false;
         }
         else
         {
