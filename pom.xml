@@ -76,7 +76,6 @@
 			<plugin>
 				<groupId>net.imagej</groupId>
 				<artifactId>imagej-maven-plugin</artifactId>
-				<version>0.2.0</version>
 				<configuration>
 					<deleteOtherVersions>true</deleteOtherVersions>
 				</configuration>
