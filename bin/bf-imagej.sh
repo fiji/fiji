@@ -15,6 +15,7 @@ FIJI_DIR=Fiji.app
 BF_URL=http://hudson.openmicroscopy.org.uk/job/BIOFORMATS-stable/lastSuccessfulBuild/artifact/artifacts
 BF_FILES="
 jars/bio-formats
+jars/bio-formats/jai_imageio
 jars/bio-formats/scifio
 jars/loci-common
 jars/mdbtools-java
