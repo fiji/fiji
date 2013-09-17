@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>1.64</version>
+		<version>1.78</version>
 		<relativePath />
 	</parent>
 
@@ -76,7 +76,6 @@
 			<plugin>
 				<groupId>net.imagej</groupId>
 				<artifactId>imagej-maven-plugin</artifactId>
-				<version>0.2.0</version>
 				<configuration>
 					<deleteOtherVersions>true</deleteOtherVersions>
 				</configuration>

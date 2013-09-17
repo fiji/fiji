@@ -12,23 +12,20 @@ test ! -z "$BROWSER" || {
 }
 
 get_url () {
-	url=$(git config remote.origin.url)
-	if test -z "$url"
-	then
-		branch=$(git rev-parse --symbolic-full-name HEAD) &&
-		remote=$(git config branch.${branch#refs/heads/}.remote) &&
-		if test -z "$remote"
-		then
-			remote=$(git config branch.master.remote)
-		fi &&
-		url=$(git config remote.$remote.url) &&
-		test ! -z "$url"
-	fi || {
-		echo "Remote 'origin' not found: $(pwd)" >&2
+	branch=$(git rev-parse --symbolic-full-name HEAD) &&
+	remote=$(git config branch.${branch#refs/heads/}.remote) ||
+	remote=$(git config branch.master.remote) ||
+	remote=origin
+	url=$(git config remote.$remote.url)
+	test -n "$url" || {
+		echo "No remote found!" >&2
 		exit 1
 	}
 
 	case $url in
+	github.com:*|git://github.com/*|http://github.com/*|https://github.com*)
+		echo "https://github.com/${url#*github.com?}"
+		;;
 	repo.or.cz:*)
 		echo "http://repo.or.cz/w/${url#*repo.or.cz:/srv/git/}?"
 		;;

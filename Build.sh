@@ -318,9 +318,9 @@ EOF
 
 # make sure that javac and ij-minimaven are up-to-date
 
-FIJI_VERSION="$(maven_helper property-from-pom "$CWD"/pom.xml fiji.version)"
+JAVAC_VERSION="$(maven_helper latest-version sc.fiji:javac)"
 IMAGEJ_VERSION="$(maven_helper property-from-pom "$CWD"/pom.xml imagej.version)"
-maven_update sc.fiji:javac:$FIJI_VERSION \
+maven_update sc.fiji:javac:$JAVAC_VERSION \
 	net.imagej:ij-minimaven:$IMAGEJ_VERSION
 
 # command-line options

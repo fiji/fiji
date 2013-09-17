@@ -1,4 +1,4 @@
-package reconstructreader.trakem2;
+package edu.utexas.clm.reconstructreader.trakem2;
 
 import ij.IJ;
 import ij.io.DirectoryChooser;

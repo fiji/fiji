@@ -9,7 +9,7 @@ import net.imglib2.algorithm.region.localneighborhood.AbstractNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.EllipseNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.EllipsoidNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.Neighborhood;
-import net.imglib2.img.ImgPlus;
+import net.imglib2.meta.ImgPlus;
 import net.imglib2.outofbounds.OutOfBoundsMirrorExpWindowingFactory;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;

@@ -1,4 +1,4 @@
-package reconstructreader.reconstruct;
+package edu.utexas.clm.reconstructreader.reconstruct;
 
 import org.w3c.dom.Element;
 

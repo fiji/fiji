@@ -85,7 +85,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.imglib2.img.ImgPlus;
+import net.imglib2.meta.ImgPlus;
 
 import org.jdom2.Attribute;
 import org.jdom2.DataConversionException;

@@ -3,19 +3,29 @@ package plugin;
 import static stitching.CommonFunctions.addHyperLinkListener;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.MultiLineLabel;
+import ij.gui.Roi;
 import ij.plugin.PlugIn;
+import ij.plugin.frame.RoiManager;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import loci.common.services.ServiceFactory;
 import loci.formats.ChannelSeparator;
+import loci.formats.FormatException;
 import loci.formats.IFormatReader;
+import loci.formats.ImageReader;
+import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import loci.formats.meta.MetadataRetrieve;
 import loci.formats.services.OMEXMLService;
@@ -28,6 +38,7 @@ import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.stitching.CollectionStitchingImgLib;
+import mpicbg.stitching.Downsampler;
 import mpicbg.stitching.ImageCollectionElement;
 import mpicbg.stitching.ImagePlusTimePoint;
 import mpicbg.stitching.StitchingParameters;
@@ -35,6 +46,7 @@ import mpicbg.stitching.TextFileAccess;
 import mpicbg.stitching.fusion.Fusion;
 import ome.xml.model.primitives.PositiveFloat;
 import stitching.CommonFunctions;
+import tools.RoiPicker;
 
 /**
  * 
@@ -60,11 +72,13 @@ public class Stitching_Grid implements PlugIn
 	
 	public static String defaultFileNames = "tile_{ii}.tif";
 	public static String defaultTileConfiguration = "TileConfiguration.txt";
+	public static boolean defaultAddTilesAsRois = false;
 	public static boolean defaultComputeOverlap = true;
 	public static boolean defaultInvertX = false;
 	public static boolean defaultInvertY = false;
 	public static boolean defaultIgnoreZStage = false;
 	public static boolean defaultSubpixelAccuracy = true;
+	public static boolean defaultDownSample = false;
 	public static boolean writeOnlyTileConfStatic = false;
 	
 	public static boolean defaultIgnoreCalibration = false;
@@ -160,7 +174,7 @@ public class Stitching_Grid implements PlugIn
 		// added by John Lapage: creates text box in which the user can set which range to compare within. Would be nicer as an Integer.
 		if (gridType == 7) 
 			gd.addNumericField( "Frame range to compare", defaultSeqRange, 0 );
-		
+		gd.addCheckbox("Add_tiles_as_ROIs", defaultAddTilesAsRois);
 		if ( gridType < 5 )
 			gd.addCheckbox( "Compute_overlap (otherwise use approximate grid coordinates)", defaultComputeOverlap );
 		else if ( gridType == 6 && gridOrder == 0 )
@@ -176,6 +190,7 @@ public class Stitching_Grid implements PlugIn
 		gd.addCheckbox( "Invert_Y coordinates", defaultInvertY );
 		gd.addCheckbox( "Ignore_Z_stage position", defaultIgnoreZStage);
 		gd.addCheckbox( "Subpixel_accuracy", defaultSubpixelAccuracy );
+		gd.addCheckbox( "Downsample_tiles", defaultDownSample);
 		gd.addCheckbox( "Use_virtual_input_images (Slow! Even slower when combined with subpixel accuracy during fusion!)", defaultVirtualInput );
 		gd.addChoice( "Computation_parameters", CommonFunctions.cpuMemSelect, CommonFunctions.cpuMemSelect[ defaultMemorySpeedChoice ] );
 		gd.addChoice( "Image_output", resultChoices, resultChoices[ defaultResult ] );
@@ -274,6 +289,7 @@ public class Stitching_Grid implements PlugIn
 		if ( gridType == 7) 
 			params.seqRange = (int)(defaultSeqRange = Math.round( gd.getNextNumber() ) );
 		
+		final boolean addTilesAsRois = params.addTilesAsRois = defaultAddTilesAsRois = gd.getNextBoolean();
 		// Modified by John Lapage (rearranged). Copies the setup for Unknown Positions. User specifies this with all other options.
 		if ( gridType == 5 || gridType == 7)
 			params.computeOverlap = true;
@@ -298,6 +314,7 @@ public class Stitching_Grid implements PlugIn
 		final boolean ignoreZStage = params.ignoreZStage = defaultIgnoreZStage = gd.getNextBoolean();
 
 		params.subpixelAccuracy = defaultSubpixelAccuracy = gd.getNextBoolean();
+		final boolean downSample = params.downSample = defaultDownSample = gd.getNextBoolean();
 		params.virtual = defaultVirtualInput = gd.getNextBoolean();
 		params.cpuMemChoice = defaultMemorySpeedChoice = gd.getNextChoiceIndex();
 		params.outputVariant = defaultResult = gd.getNextChoiceIndex();
@@ -360,7 +377,7 @@ public class Stitching_Grid implements PlugIn
 		else if ( gridType == 5 || gridType == 7)
 			elements = getAllFilesInDirectory( directory, confirmFiles );
 		else if ( gridType == 6 && gridOrder == 1 )
-			elements = getLayoutFromMultiSeriesFile( seriesFile, increaseOverlap, ignoreCalibration, invertX, invertY, ignoreZStage );
+			elements = getLayoutFromMultiSeriesFile( seriesFile, increaseOverlap, ignoreCalibration, invertX, invertY, ignoreZStage, downSample );
 		else if ( gridType == 6 )
 			elements = getLayoutFromFile( directory, outputFile );
 		else
@@ -565,14 +582,165 @@ public class Stitching_Grid implements PlugIn
 				imp.setTitle( "Fused" );
 				imp.show();
 			}
+
+			if (addTilesAsRois) {
+				float[] offset = new float[dimensionality];
+				Fusion.estimateBounds(offset, new int[dimensionality], images, models,
+					dimensionality);
+
+				generateRois(offset, optimized);
+				RoiManager rm = RoiManager.getInstance();
+
+				if (imp == null) {
+					// Save the rois
+						rm.runCommand("save", new File(params.outputDirectory, "tile_rois.zip").getAbsolutePath());
+				}
+				else {
+					// Display our rois
+					rm.runCommand("Show All");
+					IJ.runPlugIn(RoiPicker.class.getName(), "");
+				}
+			}
 		}
 		
     	// close all images
     	for ( final ImageCollectionElement element : elements )
     		element.close();
 	}
-	
-	protected ArrayList< ImageCollectionElement > getLayoutFromMultiSeriesFile( final String multiSeriesFile, final double increaseOverlap, final boolean ignoreCalibration, final boolean invertX, final boolean invertY, final boolean ignoreZStage )
+
+	/**
+	 * Generates a ROI for each tile in the list of optimized images. The
+	 * fusedImage is the resultant on which the ROIs will be drawn. The offset
+	 * is a global offset to 0,0 for the upper leftmost tile.
+	 */
+	protected void generateRois(float[] offset,
+		ArrayList<ImagePlusTimePoint> optimizedImages)
+	{
+		float[][] coordinates =
+			new float[optimizedImages.size()][optimizedImages.get(0).getImagePlus()
+				.getDimensions().length];
+
+		// Compute tile positions. Each tile's model is the translation from
+		// the offset position.
+		for (int i = 0; i < optimizedImages.size(); i++) {
+			for (int j = 0; j < offset.length; j++)
+				coordinates[i][j] -= offset[j];
+			optimizedImages.get(i).getModel().applyInPlace(coordinates[i]);
+		}
+		IJ.showStatus("Generating ROIs from image tiles...");
+
+		RoiManager rm = RoiManager.getInstance();
+		if (rm == null) rm = new RoiManager();
+
+		final String fileName =
+			optimizedImages.get(0).getElement().getFile().getAbsolutePath();
+
+		// Get a Bio-Formats reader to determine file IDs
+		IJ.log("Initializing Bio-Formats reader to determine file ids...");
+		IFormatReader reader = null;
+		try {
+			reader = initializeReader(fileName);
+		}
+		catch (FormatException e) {
+			IJ.log("Failed to discover file names. FormatException when parsing: " +
+				fileName);
+		}
+		catch (IOException e) {
+			IJ.log("Failed to discover file names. IOException when parsing: " +
+				fileName);
+		}
+
+		// we'll make a map of rois to their ImageStack slice #, allowing them
+		// to be added to the RoiManager in the correct order.
+		Map<Integer, List<Roi>> roisBySlice = new HashMap<Integer, List<Roi>>();
+
+		// tracks position in the elements/coordinates arrays
+		int coordIndex = 0;
+		// Skip any .xml, .cfg, etc... when looking up the image names
+		final int pixelOffset = reader.getSeriesUsedFiles(true).length;
+		// keeps counts of the # of rois added for each stack position
+		int sizeZ = reader.getSizeZ();
+		int sizeT = reader.getSizeT();
+		int sizeC = reader.getSizeC();
+		int[] tiles = new int[sizeC * sizeT * sizeZ];
+
+		// Generate the actual rois
+		for (int series = 0; series < reader.getSeriesCount(); series++) {
+			reader.setSeries(series);
+			ImagePlus unfused = optimizedImages.get(coordIndex).getImagePlus();
+			int slice = 1;
+			for (int t = 0; t < sizeT; t++) {
+				// Each ImageCollectionelement is a Z stack for a particular T point.
+				// We also generate a roi for each channel
+				for (int z = 0; z < sizeZ; z++) {
+					for (int c = 0; c < sizeC; c++) {
+						// apply global offset
+						int coordXOffset = (int) Math.floor(coordinates[series][0]);
+						int coordYOffset = (int) Math.floor(coordinates[series][1]);
+						Roi roi =
+							new Roi(coordXOffset, coordYOffset, unfused.getWidth(), unfused
+								.getHeight());
+
+						// set roi name and position
+						roi.setPosition(c + 1, z + 1, t + 1);
+						String roiName =
+							"sp=" + slice + "; label=" + ++tiles[slice - 1] + "; series=" +
+								series + "; C=" + (c + 1) + "; Z=" + (z + 1) + "; T=" + (t + 1);
+						if (reader != null) {
+							String sourceName =
+								reader.getSeriesUsedFiles()[reader.getIndex(z, c, t) + pixelOffset];
+							roiName += "; file=" + new File(sourceName).getName();
+						}
+						roi.setName(roiName);
+
+						if (roisBySlice.get(slice) == null) roisBySlice.put(slice,
+							new ArrayList<Roi>());
+
+						// index the roi to be added later to the RoiManager
+						roisBySlice.get(slice).add(roi);
+						slice++;
+					}
+				}
+
+			}
+			coordIndex++;
+		}
+
+		try {
+			if (reader != null) reader.close();
+		}
+		catch (IOException e) {
+			IJ.log("Failed to close Bio-Formats reader.");
+		}
+
+		IJ.log("Adding ROIs...");
+
+		List<Integer> keys = new ArrayList<Integer>(roisBySlice.keySet());
+		Collections.sort(keys);
+
+		for (Integer slice : keys) {
+			// HACK..
+			// rm.add annoyingly puts a 0 at the end of each label. But if using
+			// RoiManager.addRoi, only the first slice's rois are added (even if
+			// updating the fusedImage's position).
+			for (Roi roi : roisBySlice.get(slice))
+				rm.add((ImagePlus)null, roi, 0);
+		}
+
+		IJ.log("ROIs generated.");
+	}
+
+	protected IFormatReader initializeReader(final String file)
+		throws FormatException, IOException
+	{
+		final ImageReader in = new ImageReader();
+		final IMetadata omeMeta = MetadataTools.createOMEXMLMetadata();
+		in.setMetadataStore(omeMeta);
+		in.setId(file);
+		return in;
+	}
+
+	protected ArrayList< ImageCollectionElement > getLayoutFromMultiSeriesFile( final String multiSeriesFile, final double increaseOverlap, final boolean ignoreCalibration, final boolean invertX, final boolean invertY, final boolean ignoreZStage, final boolean downSample )
 	{
 		if ( multiSeriesFile == null || multiSeriesFile.length() == 0 )
 		{
@@ -718,10 +886,17 @@ public class Stitching_Grid implements PlugIn
 			options.setSplitTimepoints( timeHack );
 			options.setSplitFocalPlanes( false );
 			options.setAutoscale( false );
+			options.setStackFormat(ImporterOptions.VIEW_HYPERSTACK);
+			options.setStackOrder(ImporterOptions.ORDER_XYCZT);
+			options.setCrop(false);
 			
 			options.setOpenAllSeries( true );		
 			
 			final ImagePlus[] imps = BF.openImagePlus( options );
+
+			if  ( downSample ) {
+				new Downsampler(imps[0].getWidth(), imps[0].getHeight()).run(imps, elements);;
+			}
 			
 			if ( imps.length != elements.size() )
 			{

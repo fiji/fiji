@@ -57,6 +57,7 @@ public class Refresh_Jython_Scripts extends RefreshScripts {
 
 	/** Will consume and close the stream. */
 	public void runScript(InputStream istream) {
+		Thread.currentThread().setContextClassLoader(IJ.getClassLoader());
 		PythonInterpreter PI = null;
 		try {
 			ClassLoader classLoader = IJ.getClassLoader();
