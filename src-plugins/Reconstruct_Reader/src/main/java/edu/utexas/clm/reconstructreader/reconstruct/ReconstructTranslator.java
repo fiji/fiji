@@ -1198,31 +1198,38 @@ public class ReconstructTranslator {
     private boolean isNonLinear(final Element transform)
     {
 
-        final int dim = Integer.parseInt(transform.getAttribute("dim"));
-
-        if (dim > 3)
+        if (transform == null)
         {
-
-            final double[] xcoef = new double[6];
-            final double[] ycoef = new double[6];
-            boolean test = false;
-
-            Utils.nodeValueToVector(transform.getAttribute("xcoef"), xcoef);
-            Utils.nodeValueToVector(transform.getAttribute("ycoef"), ycoef);
-
-            for (int j = 3; j < 6 && !test; ++j)
-            {
-                if (xcoef[j] != 0 || ycoef[j] != 0)
-                {
-                    return true;
-                }
-            }
-
             return false;
         }
         else
         {
-            return false;
+            final int dim = Integer.parseInt(transform.getAttribute("dim"));
+
+            if (dim > 3)
+            {
+
+                final double[] xcoef = new double[6];
+                final double[] ycoef = new double[6];
+                boolean test = false;
+
+                Utils.nodeValueToVector(transform.getAttribute("xcoef"), xcoef);
+                Utils.nodeValueToVector(transform.getAttribute("ycoef"), ycoef);
+
+                for (int j = 3; j < 6 && !test; ++j)
+                {
+                    if (xcoef[j] != 0 || ycoef[j] != 0)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
     
