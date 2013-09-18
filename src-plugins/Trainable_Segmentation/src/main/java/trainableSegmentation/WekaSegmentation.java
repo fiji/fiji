@@ -47,6 +47,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Prefs;
 
+import ij.gui.Line;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
@@ -3637,6 +3638,43 @@ public class WekaSegmentation {
 							}
 
 						}
+					}
+					else if( r instanceof Line )
+					{
+						// Get all coordinates in the line
+
+						double dx = ((Line)r).x2d - ((Line)r).x1d;
+						double dy = ((Line)r).y2d - ((Line)r).y1d;
+						int n = (int) Math.round( Math.sqrt( dx*dx + dy*dy ) );
+						double xinc = dx/n;
+						double yinc = dy/n;
+						
+						double x = ((Line)r).x1d;
+				        double y = ((Line)r).y1d;
+				        
+				        for (int i=0; i<n; i++) 
+				        {
+				        	if(x >= 0 && x < featureStackArray.get(sliceNum-1).getWidth() 
+									&& y >= 0 && y <featureStackArray.get(sliceNum-1).getHeight())
+							{
+								double[] values = new double[featureStackArray.getNumOfFeatures()+1];
+								if( colorFeatures )
+									for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+										values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedPixel(x, y);
+								else
+									for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+										values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedValue(x, y);
+								values[featureStackArray.getNumOfFeatures()] = (double) l;
+								trainingData.add(new DenseInstance(1.0, values));
+								// increase number of instances for this class
+								nl ++;
+							}
+				        	
+				        	x += xinc;
+				        	y += yinc;
+				        }
+				        
+						
 					}
 					else // for the rest of rois we get ALL points inside the roi
 					{
