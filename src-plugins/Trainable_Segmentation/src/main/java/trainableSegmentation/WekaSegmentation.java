@@ -3572,133 +3572,22 @@ public class WekaSegmentation {
 					// For polygon rois we get the list of points
 					if( r instanceof PolygonRoi && r.getType() == Roi.FREELINE )
 					{
-						if(r.getStrokeWidth() == 1)
-						{
-							int[] x = r.getPolygon().xpoints;
-							int[] y = r.getPolygon().ypoints;
-							final int n = r.getPolygon().npoints;
-
-							for (int i=0; i<n; i++)
-							{
-								double[] values = new double[featureStackArray.getNumOfFeatures()+1];
-
-								for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-									values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x[i], y[i]);
-								
-								values[featureStackArray.getNumOfFeatures()] = (double) l;
-								trainingData.add(new DenseInstance(1.0, values));
-								// increase number of instances for this class
-								nl ++;
-							}
-						}
-						else // For thicker lines, include also neighbors
-						{
-							final int width = (int) Math.round(r.getStrokeWidth());
-							FloatPolygon p = r.getFloatPolygon();
-							int n = p.npoints;
-
-							double x1, y1;
-							double x2=p.xpoints[0]-(p.xpoints[1]-p.xpoints[0]);
-							double y2=p.ypoints[0]-(p.ypoints[1]-p.ypoints[0]);
-							for (int i=0; i<n; i++)
-							{
-								x1 = x2;
-								y1 = y2;
-								x2 = p.xpoints[i];
-								y2 = p.ypoints[i];
-
-								double dx = x2-x1;
-								double dy = y1-y2;
-								double length = (float)Math.sqrt(dx*dx+dy*dy);
-								dx /= length;
-								dy /= length;
-								double x = x2-dy*width/2.0;
-								double y = y2-dx*width/2.0;
-
-								int n2 = width;
-								do {
-									if(x >= 0 && x < featureStackArray.get(sliceNum-1).getWidth() 
-											&& y >= 0 && y <featureStackArray.get(sliceNum-1).getHeight())
-									{
-										double[] values = new double[featureStackArray.getNumOfFeatures()+1];
-										if(colorFeatures)
-											for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-												values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedPixel(x, y);
-										else
-											for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-												values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedValue(x, y);
-										values[featureStackArray.getNumOfFeatures()] = (double) l;
-										trainingData.add(new DenseInstance(1.0, values));
-										// increase number of instances for this class
-										nl ++;
-									}
-									x += dy;
-									y += dx;
-								} while (--n2>0);
-							}
-
-						}
+						if(r.getStrokeWidth() == 1)						
+							nl += addThinFreeLineSamples(trainingData, l,
+									sliceNum, r);
+						
+						else // For thicker lines, include also neighbors						
+							nl += addThickFreeLineInstances(trainingData,
+									colorFeatures, l, sliceNum, r);						
 					}
 					else if( r instanceof Line )
 					{
 						// Get all coordinates in the line
-
-						double dx = ((Line)r).x2d - ((Line)r).x1d;
-						double dy = ((Line)r).y2d - ((Line)r).y1d;
-						int n = (int) Math.round( Math.sqrt( dx*dx + dy*dy ) );
-						double xinc = dx/n;
-						double yinc = dy/n;
-						
-						double x = ((Line)r).x1d;
-				        double y = ((Line)r).y1d;
-				        
-				        for (int i=0; i<n; i++) 
-				        {
-				        	if(x >= 0 && x < featureStackArray.get(sliceNum-1).getWidth() 
-									&& y >= 0 && y <featureStackArray.get(sliceNum-1).getHeight())
-							{
-								double[] values = new double[featureStackArray.getNumOfFeatures()+1];
-								if( colorFeatures )
-									for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-										values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedPixel(x, y);
-								else
-									for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-										values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedValue(x, y);
-								values[featureStackArray.getNumOfFeatures()] = (double) l;
-								trainingData.add(new DenseInstance(1.0, values));
-								// increase number of instances for this class
-								nl ++;
-							}
-				        	
-				        	x += xinc;
-				        	y += yinc;
-				        }
-				        
-						
+						nl += addLineInstances(trainingData, colorFeatures, l,
+								sliceNum, r);				        						
 					}
-					else // for the rest of rois we get ALL points inside the roi
-					{
-						final ShapeRoi shapeRoi = new ShapeRoi(r);
-						final Rectangle rect = shapeRoi.getBounds();
-
-						final int lastX = rect.x + rect.width;
-						final int lastY = rect.y + rect.height;
-
-						for(int x = rect.x; x < lastX; x++)
-							for(int y = rect.y; y < lastY; y++)
-								if(shapeRoi.contains(x, y))
-								{
-									double[] values = new double[featureStackArray.getNumOfFeatures()+1];
-									for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-										values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x, y);
-									values[featureStackArray.getNumOfFeatures()] = (double) l;
-									trainingData.add(new DenseInstance(1.0, values));
-									// increase number of instances for this class
-									nl ++;
-								}
-					}
-
-
+					else // for the rest of rois we get ALL points inside the roi					
+						nl += addShapeRoiInstances(trainingData, l,	sliceNum, r);					
 				}
 
 			IJ.log("# of pixels selected as " + getClassLabels()[l] + ": " +nl);
@@ -3711,6 +3600,180 @@ public class WekaSegmentation {
 		trainingData.setClassIndex(featureStackArray.getNumOfFeatures());
 
 		return trainingData;
+	}
+
+	/**
+	 * Add training samples from a FreeRoi with thickness of 1 pixel
+	 * 
+	 * @param trainingData set of instances to add to
+	 * @param classIndex class index value
+	 * @param sliceNum number of 2d slice being processed
+	 * @param r thin free line roi
+	 * @return number of instances added
+	 */
+	private int addThinFreeLineSamples(final Instances trainingData, int classIndex,
+			int sliceNum, Roi r) 
+	{
+		int numInstances = 0;
+		int[] x = r.getPolygon().xpoints;
+		int[] y = r.getPolygon().ypoints;
+		final int n = r.getPolygon().npoints;
+
+		for (int i=0; i<n; i++)
+		{
+			double[] values = new double[featureStackArray.getNumOfFeatures()+1];
+
+			for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+				values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x[i], y[i]);
+			
+			values[featureStackArray.getNumOfFeatures()] = (double) classIndex;
+			trainingData.add(new DenseInstance(1.0, values));
+			// increase number of instances for this class
+			numInstances ++;
+		}
+		return numInstances;
+	}
+
+	/**
+	 * Add training samples from a ShapeRoi
+	 * 
+	 * @param trainingData set of instances to add to
+	 * @param classIndex class index value
+	 * @param sliceNum number of 2d slice being processed
+	 * @param r shape roi
+	 * @return number of instances added
+	 */
+	private int addShapeRoiInstances(final Instances trainingData, int classIndex,
+			int sliceNum, Roi r) 
+	{
+		int numInstances = 0;
+		final ShapeRoi shapeRoi = new ShapeRoi(r);
+		final Rectangle rect = shapeRoi.getBounds();
+
+		final int lastX = rect.x + rect.width;
+		final int lastY = rect.y + rect.height;
+
+		for(int x = rect.x; x < lastX; x++)
+			for(int y = rect.y; y < lastY; y++)
+				if(shapeRoi.contains(x, y))
+				{
+					double[] values = new double[featureStackArray.getNumOfFeatures()+1];
+					for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+						values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x, y);
+					values[featureStackArray.getNumOfFeatures()] = (double) classIndex;
+					trainingData.add(new DenseInstance(1.0, values));
+					// increase number of instances for this class
+					numInstances ++;
+				}
+		return numInstances;
+	}
+
+	/**
+	 * Add training samples from a Line roi
+	 * 
+	 * @param trainingData set of instances to add to
+	 * @param colorFeatures color instances flag
+	 * @param classIndex class index value
+	 * @param sliceNum number of 2d slice being processed
+	 * @param r Line roi
+	 * @return number of instances added
+	 */
+	private int addLineInstances(final Instances trainingData,
+			final boolean colorFeatures, int classIndex, int sliceNum, Roi r) 
+	{
+		int numInstances = 0;
+		double dx = ((Line)r).x2d - ((Line)r).x1d;
+		double dy = ((Line)r).y2d - ((Line)r).y1d;
+		int n = (int) Math.round( Math.sqrt( dx*dx + dy*dy ) );
+		double xinc = dx/n;
+		double yinc = dy/n;
+		
+		double x = ((Line)r).x1d;
+		double y = ((Line)r).y1d;
+		
+		for (int i=0; i<n; i++) 
+		{
+			if(x >= 0 && x < featureStackArray.get(sliceNum-1).getWidth() 
+					&& y >= 0 && y <featureStackArray.get(sliceNum-1).getHeight())
+			{
+				double[] values = new double[featureStackArray.getNumOfFeatures()+1];
+				if( colorFeatures )
+					for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+						values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedPixel(x, y);
+				else
+					for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+						values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedValue(x, y);
+				values[featureStackArray.getNumOfFeatures()] = (double) classIndex;
+				trainingData.add(new DenseInstance(1.0, values));
+				// increase number of instances for this class
+				numInstances ++;
+			}
+			
+			x += xinc;
+			y += yinc;
+		}
+		return numInstances;
+	}
+
+	/**
+	 * Add training samples from a FreeLine roi with thickness larger than 1 pixel
+	 * 
+	 * @param trainingData set of instances to add to
+	 * @param colorFeatures color instances flag
+	 * @param classIndex class index value
+	 * @param sliceNum number of 2d slice being processed
+	 * @param r FreeLine roi
+	 * @return number of instances added
+	 */
+	private int addThickFreeLineInstances(final Instances trainingData,
+			final boolean colorFeatures, int classIndex, int sliceNum, Roi r) 
+	{
+		final int width = (int) Math.round(r.getStrokeWidth());
+		FloatPolygon p = r.getFloatPolygon();
+		int n = p.npoints;
+
+		int numInstances = 0;
+		
+		double x1, y1;
+		double x2=p.xpoints[0]-(p.xpoints[1]-p.xpoints[0]);
+		double y2=p.ypoints[0]-(p.ypoints[1]-p.ypoints[0]);
+		for (int i=0; i<n; i++)
+		{
+			x1 = x2;
+			y1 = y2;
+			x2 = p.xpoints[i];
+			y2 = p.ypoints[i];
+
+			double dx = x2-x1;
+			double dy = y1-y2;
+			double length = (float)Math.sqrt(dx*dx+dy*dy);
+			dx /= length;
+			dy /= length;
+			double x = x2-dy*width/2.0;
+			double y = y2-dx*width/2.0;
+
+			int n2 = width;
+			do {
+				if(x >= 0 && x < featureStackArray.get(sliceNum-1).getWidth() 
+						&& y >= 0 && y <featureStackArray.get(sliceNum-1).getHeight())
+				{
+					double[] values = new double[featureStackArray.getNumOfFeatures()+1];
+					if(colorFeatures)
+						for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+							values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedPixel(x, y);
+					else
+						for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+							values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedValue(x, y);
+					values[featureStackArray.getNumOfFeatures()] = (double) classIndex;
+					trainingData.add(new DenseInstance(1.0, values));
+					// increase number of instances for this class
+					numInstances ++;
+				}
+				x += dy;
+				y += dx;
+			} while (--n2>0);
+		}
+		return numInstances;
 	}
 
 	/**
