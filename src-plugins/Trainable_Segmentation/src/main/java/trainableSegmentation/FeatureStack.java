@@ -385,10 +385,22 @@ public class FeatureStack
 	 * @param numBins number of bins to use in the histogram
 	 */
 	public void addEntropy(int radius, int numBins)
-	{
-		ImageProcessor ip = originalImage.getProcessor().duplicate();
-		Entropy_Filter filter = new Entropy_Filter();
-		wholeStack.addSlice(availableFeatures[ENTROPY] + "_" + radius + "_" + numBins, filter.getEntropy(ip, radius, numBins));
+	{		
+		Entropy_Filter filter = new Entropy_Filter();		
+		
+		ImagePlus[] channels = extractChannels(originalImage);
+
+		ImagePlus[] results = new ImagePlus[ channels.length ];
+		
+		
+		for(int ch=0; ch < channels.length; ch++)
+		{
+			final ImageProcessor ip = channels[ ch ].getProcessor().duplicate();								
+			results[ ch ] = new ImagePlus( availableFeatures[ENTROPY] + "_" + radius + "_" + numBins,
+											filter.getEntropy(ip, radius, numBins));
+		}
+		ImagePlus merged = mergeResultChannels(results);
+		wholeStack.addSlice(merged.getTitle(), merged.getProcessor());		
 	}
 	/**
 	 * Calculate entropy filter filter concurrently
@@ -405,12 +417,23 @@ public class FeatureStack
 		if (Thread.currentThread().isInterrupted()) 
 			return null;
 		
-		return new Callable<ImagePlus>(){
+		return new Callable<ImagePlus>()
+				{
 			public ImagePlus call(){
 		
-				ImageProcessor ip = originalImage.getProcessor().duplicate();
+				ImagePlus[] channels = extractChannels(originalImage);
+
+				ImagePlus[] results = new ImagePlus[ channels.length ];
+
 				Entropy_Filter filter = new Entropy_Filter();
-				return new ImagePlus (availableFeatures[ENTROPY] + "_" + radius + "_" + numBins, filter.getEntropy(ip, radius, numBins));
+				
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					final ImageProcessor ip = channels[ ch ].getProcessor().duplicate();										
+					results[ ch ] = new ImagePlus( availableFeatures[ENTROPY] + "_" + radius + "_" + numBins,
+							filter.getEntropy(ip, radius, numBins) );
+				}
+				return mergeResultChannels(results);				
 			}
 		};
 	}
@@ -451,7 +474,7 @@ public class FeatureStack
 
 
 				for(int i=0; i<8; i++)
-					result.addSlice(availableFeatures[ NEIGHBORS] + "_" + sigma +"_" +  i, new FloatProcessor( originalImage.getWidth(), originalImage.getHeight(), neighborhood[ i ]));						
+					result.addSlice(availableFeatures[ NEIGHBORS ] + "_" + sigma +"_" +  i, new FloatProcessor( originalImage.getWidth(), originalImage.getHeight(), neighborhood[ i ]));						
 			}
 			results[ ch ] = new ImagePlus("Neighbors", result);
 		}
@@ -2943,7 +2966,7 @@ public class FeatureStack
 			}
 			
 			// Entropy
-			if(enableFeatures[ENTROPY])
+			if(enableFeatures[ ENTROPY ])
 			{
 				for(int nBins = 32; nBins <= 256; nBins *=2)
 					addEntropy((int)i, nBins);
@@ -2951,7 +2974,7 @@ public class FeatureStack
 
 		}
 		// Membrane projections
-		if(enableFeatures[MEMBRANE])
+		if(enableFeatures[ MEMBRANE ])
 		{
 			if (Thread.currentThread().isInterrupted()) 
 				return false;
