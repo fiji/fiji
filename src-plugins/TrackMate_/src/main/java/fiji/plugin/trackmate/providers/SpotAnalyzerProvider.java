@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.providers;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.imglib2.img.ImgPlus;
+import net.imglib2.meta.ImgPlus;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzer;

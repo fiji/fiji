@@ -17,10 +17,10 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import net.imglib2.img.ImagePlusAdapter;
-import net.imglib2.img.ImgPlus;
 import net.imglib2.meta.Axes;
 import net.imglib2.meta.AxisType;
-import net.imglib2.meta.Metadata;
+import net.imglib2.meta.ImgPlus;
+import net.imglib2.meta.ImgPlusMetadata;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Util;
 import fiji.plugin.trackmate.Dimension;
@@ -347,46 +347,43 @@ public class TMUtils {
 	 * @return the index of the target axisd in the given metadata. Return -1 if 
 	 * the azis was not found.
 	 */
-	public static final int findAxisIndex(final Metadata img, final AxisType axis) {
-		AxisType[] axes = new AxisType[img.numDimensions()];
-		img.axes(axes);
-		int index = Arrays.asList(axes).indexOf(axis);
-		return index;
+	public static final int findAxisIndex(final ImgPlusMetadata img, final AxisType axis) {
+		return img.dimensionIndex(axis);
 	}
 
-	public static final int findXAxisIndex(final Metadata img) {
+	public static final int findXAxisIndex(final ImgPlusMetadata img) {
 		return findAxisIndex(img, Axes.X);
 	}
 
-	public static final int findYAxisIndex(final Metadata img) {
+	public static final int findYAxisIndex(final ImgPlusMetadata img) {
 		return findAxisIndex(img, Axes.Y);
 	}
 
-	public static final int findZAxisIndex(final Metadata img) {
+	public static final int findZAxisIndex(final ImgPlusMetadata img) {
 		return findAxisIndex(img, Axes.Z);
 	}
 
-	public static final int findTAxisIndex(final Metadata img) {
+	public static final int findTAxisIndex(final ImgPlusMetadata img) {
 		return findAxisIndex(img, Axes.TIME);
 	}
 
-	public static final int findCAxisIndex(final Metadata img) {
+	public static final int findCAxisIndex(final ImgPlusMetadata img) {
 		return findAxisIndex(img, Axes.CHANNEL);
 	}
 
 	/**
-	 * Return the xyz calibration stored in an {@link Metadata} in a 3-elements
-	 * double array. Calibration is ordered as X, Y, Z. If one axis is not found,
-	 * then the calibration for this axis takes the value of 1.
+	 * Return the xyz calibration stored in an {@link ImgPlusMetadata} in a
+	 * 3-elements double array. Calibration is ordered as X, Y, Z. If one axis is
+	 * not found, then the calibration for this axis takes the value of 1.
 	 */
-	public static final double[] getSpatialCalibration(final Metadata img) {
+	public static final double[] getSpatialCalibration(final ImgPlusMetadata img) {
 		final double[] calibration = Util.getArrayFromValue(1d, 3);
 		for (int d = 0; d < img.numDimensions(); d++) {
-			if (img.axis(d).equals(Axes.X)) {
+			if (img.axis(d).type() == Axes.X) {
 				calibration[0] = img.calibration(d);
-			} else if (img.axis(d).equals(Axes.Y)) {
+			} else if (img.axis(d).type() == Axes.Y) {
 				calibration[1] = img.calibration(d);
-			} else if (img.axis(d).equals(Axes.Z)) {
+			} else if (img.axis(d).type() == Axes.Z) {
 				calibration[2] = img.calibration(d);
 			}
 		}

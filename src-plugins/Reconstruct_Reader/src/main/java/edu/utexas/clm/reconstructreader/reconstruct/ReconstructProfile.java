@@ -1,7 +1,7 @@
-package reconstructreader.reconstruct;
+package edu.utexas.clm.reconstructreader.reconstruct;
 
+import edu.utexas.clm.reconstructreader.Utils;
 import org.w3c.dom.Element;
-import reconstructreader.Utils;
 
 public class ReconstructProfile {
     private final Element profile;

@@ -1,5 +1,6 @@
-package reconstructreader.reconstruct;
+package edu.utexas.clm.reconstructreader.reconstruct;
 
+import edu.utexas.clm.reconstructreader.Utils;
 import org.w3c.dom.Element;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -8,7 +9,6 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-import reconstructreader.Utils;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -1007,7 +1007,13 @@ public class ReconstructTranslator {
             }
         }
 
-        if (maxScale != minScale)
+        if (Double.isInfinite(minScale))
+        {
+            messenger.sendMessage("Reconstruct project has no golden section." +
+                    " This may or may not be problematic");
+            return "";
+        }
+        else if (maxScale != minScale)
         {
             return "This Reconstruct project has been re-calibrated using the scale method.\n" +
                     "The detected scale was " + minScale + ", but multiple valid scales were" +
@@ -1179,9 +1185,8 @@ public class ReconstructTranslator {
                 {
                     transform = (Element)transforms.item(i);
 
-                    if (isNonLinear(transform) && imageElement(transform) == null)
+                    if (imageElement(transform) == null)
                     {
-                        messenger.sendMessage("Got nonlinear transform. Fixing to dim = 0.");
                         fixContourTransforms(transform);
                     }
                 }
@@ -1193,29 +1198,38 @@ public class ReconstructTranslator {
     private boolean isNonLinear(final Element transform)
     {
 
-        final int dim = Integer.parseInt(transform.getAttribute("dim"));
-
-        if (dim > 3)
+        if (transform == null)
         {
-
-            final double[] xcoef = new double[6];
-            final double[] ycoef = new double[6];
-            boolean test = false;
-
-            Utils.nodeValueToVector(transform.getAttribute("xcoef"), xcoef);
-            Utils.nodeValueToVector(transform.getAttribute("ycoef"), ycoef);
-
-            for (int j = 3; j < 6 && !test; ++j)
-            {
-                test |= xcoef[j] != 0;
-                test |= ycoef[j] != 0;
-            }
-
-            return test;
+            return false;
         }
         else
         {
-            return false;
+            final int dim = Integer.parseInt(transform.getAttribute("dim"));
+
+            if (dim > 3)
+            {
+
+                final double[] xcoef = new double[6];
+                final double[] ycoef = new double[6];
+                boolean test = false;
+
+                Utils.nodeValueToVector(transform.getAttribute("xcoef"), xcoef);
+                Utils.nodeValueToVector(transform.getAttribute("ycoef"), ycoef);
+
+                for (int j = 3; j < 6 && !test; ++j)
+                {
+                    if (xcoef[j] != 0 || ycoef[j] != 0)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
     
