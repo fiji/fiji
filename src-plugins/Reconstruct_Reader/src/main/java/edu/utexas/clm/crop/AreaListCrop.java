@@ -11,6 +11,7 @@ import ini.trakem2.display.AreaList;
 import ini.trakem2.display.Layer;
 import ini.trakem2.display.LayerSet;
 import ini.trakem2.display.Patch;
+import mpicbg.models.IllDefinedDataPointsException;
 
 
 import java.awt.Rectangle;
@@ -132,15 +133,16 @@ public class AreaListCrop
                             {
                                 if (roi.contains(x, y))
                                 {
-                                    ip.set(x, y, flatCrop.get(x, y));
+                                    if (check(ip, x, y) && check(flatCrop, x, y))
+                                    {
+                                        ip.set(x, y, flatCrop.get(x, y));
+                                    }
                                 }
                             }
                         }
 
                     }
                 }
-
-                IJ.log("Copying pixel data");
 
                 stack.addSlice("", ip);
 
@@ -158,6 +160,11 @@ public class AreaListCrop
         }
     }
 
+
+    private boolean check(final ImageProcessor ip, final int x, final int y)
+    {
+        return x > 0 && y > 0 && x <= ip.getWidth() && y <= ip.getHeight();
+    }
 
 }
 
