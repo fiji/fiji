@@ -22,9 +22,8 @@ import edu.utexas.clm.archipelago.Cluster;
 import edu.utexas.clm.archipelago.FijiArchipelago;
 import edu.utexas.clm.archipelago.listen.ClusterStateListener;
 import ini.trakem2.plugin.TPlugIn;
-import mpicbg.trakem2.concurrent.DefaultExecutorProvider;
-import mpicbg.trakem2.concurrent.ExecutorProvider;
-import mpicbg.trakem2.concurrent.ThreadPool;
+import ini.trakem2.parallel.ExecutorProvider;
+import ini.trakem2.parallel.DefaultExecutorProvider;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,16 +51,16 @@ public class TrakEM2Archipelago implements TPlugIn
                         FijiArchipelago.log("TrakEM2 now using the " +
                                 "Default ExecutorService Provider");
 
-                        if (ThreadPool.getProvider() instanceof ClusterProvider)
+                        if (ExecutorProvider.getProvider() instanceof ClusterProvider)
                         {
-                            ThreadPool.setProvider(new DefaultExecutorProvider());
+                            ExecutorProvider.setProvider(new DefaultExecutorProvider());
                         }
                     }
             }
         }
     }
     
-    private class ClusterProvider implements ExecutorProvider
+    private class ClusterProvider extends ExecutorProvider
     {
         private final Cluster cluster;
         
@@ -103,7 +102,7 @@ public class TrakEM2Archipelago implements TPlugIn
         }
 
         cluster.addStateListener(new ProviderListener());
-        ThreadPool.setProvider(new ClusterProvider(cluster));
+        ExecutorProvider.setProvider(new ClusterProvider(cluster));
 
         FijiArchipelago.log("TrakEM2 now using the Cluster");
         
