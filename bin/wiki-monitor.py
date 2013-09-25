@@ -59,11 +59,6 @@ response = client.sendRequest(['title', 'Special:RecentChanges', 'hidebots', '0'
 if client.isLoggedIn():
 	client.logOut()
 
-'''
-f = open('a1', 'r')
-response = ''.join(f.readlines())
-f.close()
-'''
 
 result = ''
 for line in response.split('\n'):
