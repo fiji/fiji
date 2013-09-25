@@ -12,6 +12,7 @@
 
 from codecs import open
 from sys import argv, exit
+from re import search
 
 if len(argv) != 2:
 	print 'Usage:', argv[0], '<URL>'
@@ -59,6 +60,11 @@ response = client.sendRequest(['title', 'Special:RecentChanges', 'hidebots', '0'
 if client.isLoggedIn():
 	client.logOut()
 
+def parse_time(string):
+	m = search('\\d\\d:\\d\\d', string)
+	if m is None:
+		return '<notime>'
+	return m.group(0)
 
 result = ''
 for line in response.split('\n'):
@@ -91,7 +97,7 @@ for line in response.split('\n'):
 					start += 5
 				if line[start] == ' ':
 					start += 1
-				time = line[start:start + 5]
+				time = parse_time(line[start:])
 		else:
 			i = line.find('>Talk</a>')
 			if i > 0:
@@ -99,7 +105,7 @@ for line in response.split('\n'):
 				start = line.rfind('>', 0, end) + 1
 				author = line[start:end]
 				end = line.rfind('; ', 0, start)
-				time = line[end + 2:end + 7]
+				time = parse_time(line[end + 2:])
 				end = line.rfind('</a>', 0, end)
 				start = line.rfind('">', 0, end) + 2
 				title = line[start:end]
