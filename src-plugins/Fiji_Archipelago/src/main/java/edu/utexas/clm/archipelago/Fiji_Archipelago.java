@@ -124,5 +124,7 @@ public class Fiji_Archipelago implements PlugIn
         }
 
         filePrinter.close();
+
+        System.exit(0);
     }
 }

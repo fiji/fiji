@@ -32,8 +32,8 @@ public enum MessageType
     HALT,
     PROCESS,
     USER,
-    SETFILEROOT,
-    GETFILEROOT,
+//    SETFILEROOT,
+    GETFSTRANSLATION,
     SETEXECROOT,
     GETEXECROOT,
     CANCELJOB,
@@ -41,5 +41,8 @@ public enum MessageType
     NUMTHREADS,
     MBRAM,
     BEAT,
-    HOSTNAME
+    HOSTNAME,
+    SETFSTRANSLATION,
+    BOTTLER,
+    LOG
 }

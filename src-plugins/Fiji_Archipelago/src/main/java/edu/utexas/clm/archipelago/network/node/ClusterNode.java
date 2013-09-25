@@ -19,11 +19,14 @@
 package edu.utexas.clm.archipelago.network.node;
 
 import edu.utexas.clm.archipelago.*;
+import edu.utexas.clm.archipelago.data.Duplex;
 import edu.utexas.clm.archipelago.data.HeartBeat;
 import edu.utexas.clm.archipelago.listen.*;
 import edu.utexas.clm.archipelago.compute.ProcessManager;
 import edu.utexas.clm.archipelago.data.ClusterMessage;
 import edu.utexas.clm.archipelago.network.MessageXC;
+import edu.utexas.clm.archipelago.network.translation.Bottler;
+import edu.utexas.clm.archipelago.network.translation.PathSubstitutingFileTranslator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -100,10 +103,10 @@ public class ClusterNode implements TransceiverListener
         {
             xc.queueMessage(MessageType.GETEXECROOT);
         }
-        else
+        /*else
         {
             xc.queueMessage(MessageType.SETFILEROOT, getFilePath());
-        }
+        }*/
         xc.queueMessage(MessageType.BEAT);
     }
     
@@ -122,6 +125,7 @@ public class ClusterNode implements TransceiverListener
     
     public boolean setFilePath(String path)
     {
+
         if (nodeParam == null)
         {
             return false;
@@ -129,7 +133,12 @@ public class ClusterNode implements TransceiverListener
         else
         {
             nodeParam.setFileRoot(path);
-            return xc.queueMessage(MessageType.SETFILEROOT, path);
+            xc.setFileSystemTranslator(
+                    new PathSubstitutingFileTranslator(FijiArchipelago.getFileRoot(), path));
+//            return xc.queueMessage(MessageType.SETFILEROOT, path);
+//            return xc.queueMessage(MessageType.SETFSTRANSLATION,
+//                    new Duplex<String, String>(path, FijiArchipelago.getFileRoot()));
+            return true;
         }
     }
 
@@ -270,7 +279,6 @@ public class ClusterNode implements TransceiverListener
         {
             if (processHandlers.get(process.getID()) == null)
             {
-                //FijiArchipelago.debug(getHost() + " scheduling process");
                 processHandlers.put(process.getID(), listener);
                 runningProcesses.put(process.getID(), process);
                 process.setRunningOn(this);
@@ -319,6 +327,9 @@ public class ClusterNode implements TransceiverListener
                     {
                         nodeParam = manager.getParam(id);
                         nodeID = id;
+                        xc.queueMessage(MessageType.SETFSTRANSLATION,
+                                new Duplex<String, String>(nodeParam.getFileRoot(),
+                                        FijiArchipelago.getFileRoot()));
                     }
                     else
                     {
@@ -342,6 +353,18 @@ public class ClusterNode implements TransceiverListener
                         cpuSet.set(true);
                     }
 
+                    break;
+
+                case BEAT:
+                    HeartBeat beat = (HeartBeat)object;
+                    lastBeatTime = System.currentTimeMillis();
+                    ramMBAvail.set(beat.ramMBAvailable);
+                    ramMBTot.set(beat.ramMBTotal);
+                    ramMBMax.set(beat.ramMBMax);
+                    break;
+
+                case LOG:
+                    FijiArchipelago.log(object.toString());
                     break;
 
                 case PROCESS:
@@ -385,8 +408,8 @@ public class ClusterNode implements TransceiverListener
                     }
                     break;
 
-                case GETFILEROOT:
-                    // Results of a GETFILEROOT request sent to the client.
+                case GETFSTRANSLATION:
+                    // Results of a GETFSTRANSLATION request sent to the client.
                     setFilePath((String)object);
                     break;
                 
@@ -397,17 +420,9 @@ public class ClusterNode implements TransceiverListener
 
                 case ERROR:
                     Exception e = (Exception)object;
-                    xcEListener.handleRXThrowable(e, xc);
+                    xcEListener.handleRXThrowable(e, xc, cm);
                     break;
-                
-                case BEAT:
-                    HeartBeat beat = (HeartBeat)object;
-                    lastBeatTime = System.currentTimeMillis();
-                    ramMBAvail.set(beat.ramMBAvailable);
-                    ramMBTot.set(beat.ramMBTotal);
-                    ramMBMax.set(beat.ramMBMax);
-                    break;
-                
+
                 default:
                     FijiArchipelago.log("Got unexpected message type. The local version " +
                             "of Archipelago may not be up to date with the clients.");
@@ -546,6 +561,15 @@ public class ClusterNode implements TransceiverListener
     {
         stateListeners.add(listener);
         listener.stateChanged(this, state, ClusterNodeState.INACTIVE);
+    }
+
+    public void addBottler(final Bottler bottler)
+    {
+        xc.addBottler(bottler);
+        if (bottler.transfer())
+        {
+            xc.queueMessage(MessageType.BOTTLER, bottler);
+        }
     }
     
     public void removeListener(final NodeStateListener listener)

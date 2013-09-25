@@ -20,8 +20,10 @@ package edu.utexas.clm.archipelago;
 
 
 import edu.utexas.clm.archipelago.compute.*;
+import edu.utexas.clm.archipelago.data.ClusterMessage;
 import edu.utexas.clm.archipelago.exception.ShellExecutionException;
 import edu.utexas.clm.archipelago.listen.ClusterStateListener;
+import edu.utexas.clm.archipelago.listen.MessageType;
 import edu.utexas.clm.archipelago.listen.NodeStateListener;
 import edu.utexas.clm.archipelago.listen.ProcessListener;
 import edu.utexas.clm.archipelago.listen.NodeShellListener;
@@ -32,6 +34,8 @@ import edu.utexas.clm.archipelago.network.node.NodeManager;
 import edu.utexas.clm.archipelago.network.shell.NodeShell;
 import edu.utexas.clm.archipelago.network.shell.SSHNodeShell;
 import edu.utexas.clm.archipelago.network.shell.SocketNodeShell;
+import edu.utexas.clm.archipelago.network.translation.Bottler;
+import edu.utexas.clm.archipelago.network.translation.FileBottler;
 import edu.utexas.clm.archipelago.ui.ArchipelagoUI;
 import edu.utexas.clm.archipelago.util.ProcessManagerCoreComparator;
 import edu.utexas.clm.archipelago.util.XCErrorAdapter;
@@ -225,26 +229,8 @@ public class Cluster implements NodeStateListener, NodeShellListener
                      */
                     public boolean processFinished(ProcessManager<?> process)
                     {
-                        final long id = process.getID();
-                        final ArchipelagoFuture<?> future = futures.remove(id);
-
-                        if (future == null)
-                        {
-                            return false;
-                        }
-                        
-                        runningProcesses.remove(id);
-                        decrementJobCount();
-
-                        try
-                        {
-                            future.finish(process);
-                            return true;
-                        }
-                        catch (ClassCastException cce)
-                        {
-                            return false;
-                        }
+                        runningProcesses.remove(process.getID());
+                        return finishFuture(process);
                     }
                 };
                 
@@ -427,10 +413,11 @@ public class Cluster implements NodeStateListener, NodeShellListener
                 }
                 else
                 {
-                    if(future.finish(null))
-                    {
-                        decrementJobCount();
-                    }
+                    /*
+                     Was here: call future.finish(null), but this function is only called from
+                     future.cancel.
+                    */
+                    decrementJobCount();
                 }
 
                 if (runningOn != null)
@@ -583,7 +570,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
             futures.put(future.getID(), future);
             if (!scheduler.queueJob(tCallable, future.getID(), numCores, isFractional))
             {
-                future.finish(null);
+                future.finish(new Exception("Could not schedule"));
                 futures.remove(future.getID());
             }
             return future;
@@ -1064,6 +1051,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
     private final Vector<ClusterNode> nodes;
     private final Vector<Thread> waitThreads;
     private final Vector<ArchipelagoUI> registeredUIs;
+    private final List<Bottler> bottlers;
     private final ProcessScheduler scheduler;
     
     private final Hashtable<Long, ArchipelagoFuture<?>> futures;
@@ -1092,6 +1080,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
         nodes = new Vector<ClusterNode>();
         waitThreads = new Vector<Thread>();
         registeredUIs = new Vector<ArchipelagoUI>();
+        bottlers = Collections.synchronizedList(new Vector<Bottler>());
         
         jobCount = new AtomicInteger(0);
         runningNodes = new AtomicInteger(0);
@@ -1105,8 +1094,16 @@ public class Cluster implements NodeStateListener, NodeShellListener
 
         xcEListener = new XCErrorAdapter()
         {
-            public boolean handleCustom(final Throwable t, final MessageXC mxc)
+            public boolean handleCustom(final Throwable t, final MessageXC mxc,
+                                        final ClusterMessage message)
             {
+                if (message.type == MessageType.PROCESS)
+                {
+                    final ProcessManager<?> pm = (ProcessManager<?>)message.o;
+                    pm.setException(t);
+                    finishFuture(pm);
+                }
+
                 if (t instanceof StreamCorruptedException ||
                         t instanceof EOFException)
                 {
@@ -1117,8 +1114,15 @@ public class Cluster implements NodeStateListener, NodeShellListener
                 return true;
             }
             
-            public boolean handleCustomRX(final Throwable t, final MessageXC xc)
+            public boolean handleCustomRX(final Throwable t, final MessageXC xc,
+                                          final ClusterMessage message)
             {
+                final long lastID = xc.getLastProcessID();
+                if (message.type == MessageType.ERROR)
+                {
+                    errorFuture(lastID, (Throwable)message.o);
+                }
+
                 if (t instanceof ClassNotFoundException)
                 {
                     reportRX(t, "Check that your jars are all correctly synchronized. " + t, xc);
@@ -1141,7 +1145,8 @@ public class Cluster implements NodeStateListener, NodeShellListener
                 return true;
             }
 
-            public boolean handleCustomTX(final Throwable t, MessageXC xc)
+            public boolean handleCustomTX(final Throwable t, MessageXC xc,
+                                          final ClusterMessage message)
             {
                 if (t instanceof NotSerializableException)
                 {
@@ -1189,7 +1194,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
             FijiArchipelago.err("Could not get canonical host name for local machine. Using localhost instead");
         }
         
-
+        addBottler(new FileBottler());
     }
 
     public boolean equals(Object o)
@@ -1254,7 +1259,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
         return null;
     }
 
-    public void addNodeToStart(NodeManager.NodeParameters param)
+    public void addNodeToStart(final NodeManager.NodeParameters param)
     {
         if (param == null)
         {
@@ -1271,10 +1276,16 @@ public class Cluster implements NodeStateListener, NodeShellListener
         }
     }
     
-    private void addNode(ClusterNode node)
+    private void addNode(final ClusterNode node)
     {
         nodeLock.lock();
         waitNodes.remove(node.getParam());
+
+        for (final Bottler bottler : bottlers)
+        {
+            node.addBottler(bottler);
+        }
+
         nodes.add(node);
 /*
         if (waitNodes.contains(node.getParam()))
@@ -1293,7 +1304,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
         node.addListener(this);
     }
 
-    public void removeNode(long id)
+    public void removeNode(final long id)
     {
         nodeLock.lock();
         NodeManager.NodeParameters param = nodeManager.getParam(id);
@@ -1316,7 +1327,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
         nodeLock.unlock();
     }
     
-    public boolean hasNode(long id)
+    public boolean hasNode(final long id)
     {
         nodeLock.lock();
         if (getNode(id) != null)
@@ -1423,9 +1434,8 @@ public class Cluster implements NodeStateListener, NodeShellListener
                         if (!scheduler.queueJob(pm, true))
                         {
                             FijiArchipelago.err("Could not reschedule job " + pm.getID());
-                            futures.get(pm.getID()).setException(
+                            futures.get(pm.getID()).finish(
                                     new Exception("Could not reschedule job"));
-                            futures.get(pm.getID()).finish(null);
                         }
                     }
                 }
@@ -1593,6 +1603,46 @@ public class Cluster implements NodeStateListener, NodeShellListener
         }
     }
 
+
+    private void errorFuture(long id, Throwable e)
+    {
+        final ArchipelagoFuture<?> future = futures.remove(id);
+
+        if (future == null)
+        {
+            return;
+        }
+
+        future.finish(e);
+
+    }
+
+
+    private synchronized boolean finishFuture(final ProcessManager<?> pm)
+    {
+        final long id = pm.getID();
+        final ArchipelagoFuture<?> future = futures.remove(id);
+
+        if (future == null)
+        {
+            return false;
+        }
+
+        decrementJobCount();
+
+        try
+        {
+            future.finish(pm);
+            return true;
+        }
+        catch (ClassCastException cce)
+        {
+            return false;
+        }
+    }
+
+
+
     public ArrayList<ClusterNode> getNodes()
     {
         return new ArrayList<ClusterNode>(nodes);
@@ -1629,6 +1679,20 @@ public class Cluster implements NodeStateListener, NodeShellListener
         }
 
         return paramList;
+    }
+
+    public void addBottler(final Bottler bottler)
+    {
+        FijiArchipelago.log("Cluster: got bottler");
+        nodeLock.lock();
+        FijiArchipelago.log("Cluster: acquired a lock");
+        bottlers.add(bottler);
+        for (final ClusterNode node : nodes)
+        {
+            FijiArchipelago.log("Cluster: adding bottler to " + node.getHost());
+            node.addBottler(bottler);
+        }
+        nodeLock.unlock();
     }
 
     /**

@@ -63,9 +63,9 @@ public class ClusterMessage implements Serializable
                 return "process";
             case USER:
                 return "user";
-            case SETFILEROOT:
-                return "set file root";
-            case GETFILEROOT:
+//            case SETFILEROOT:
+//                return "set file root";
+            case GETFSTRANSLATION:
                 return "get file root";
             case SETEXECROOT:
                 return "set exec root";
@@ -79,6 +79,12 @@ public class ClusterMessage implements Serializable
                 return "num threads";
             case MBRAM:
                 return "MB ram";
+            case SETFSTRANSLATION:
+                return "set fs translation";
+            case LOG:
+                return "log";
+            case BOTTLER:
+                return "bottler";
             default:
                 return "unknown";
         }
