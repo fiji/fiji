@@ -138,6 +138,7 @@ public class FusionControl
 							fused.getDisplay().setMinMax();
 							
 							ImageJFunctions.copyToImagePlus( fused ).show();
+							fused.close();
 						}
 					}
 				}

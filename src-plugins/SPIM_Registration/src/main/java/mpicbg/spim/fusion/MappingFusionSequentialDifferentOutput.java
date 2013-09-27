@@ -93,7 +93,7 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 		// get all views of all channels
 		//
 		final ArrayList<ViewDataBeads> views = viewStructure.getViews();
-		final int numViews = views.size();
+		final int numViews = angleIndicies.length;
 
 		// unload images
 		for ( final ViewDataBeads view : views )
@@ -111,8 +111,13 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 			// open input images
 			//for ( int viewIndex = 0; viewIndex < angleIndicies.length; viewIndex++ )
 			for ( int viewIndex = viewIndexStart; viewIndex < viewIndexEnd; viewIndex++ )
+			{
+				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Loading view: " + views.get( angleIndicies[ viewIndex ] ).getName() );
+				
 				views.get( angleIndicies[ viewIndex ] ).getImage( false );
-	
+			}
+			
 			// compute output images in paralell
 			final AtomicInteger ai = new AtomicInteger(0);
 	        final Thread[] threads = SimpleMultiThreading.newThreads(conf.numberOfThreads);
@@ -141,10 +146,6 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 	
 									continue;
 								}
-	
-								// load the current image
-								if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-									IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Loading view: " + view.getName());
 	
 								final Image<FloatType> img = view.getImage( conf.imageFactoryFusion, false );
 								final Interpolator<FloatType> interpolator = img.createInterpolator( conf.interpolatorFactorOutput );
