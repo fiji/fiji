@@ -523,10 +523,12 @@ public class ExtractPSF
 	 * @param img
 	 * @return
 	 */
-	public static Image< FloatType > makeSameSize( final Image< FloatType > img, final int[] size )
+	public static Image< FloatType > makeSameSize( final Image< FloatType > img, final int[] sizeIn )
 	{
+		final int[] size = sizeIn.clone();
+
 		float min = Float.MAX_VALUE;
-		
+
 		for ( final FloatType f : img )
 			min = Math.min( min, f.get() );
 		
@@ -565,10 +567,8 @@ public class ExtractPSF
 		int[] size = images.get( 0 ).getDimensions();
 		
 		for ( final Image< ? > image : images )
-		{
 			for ( int d = 0; d < image.getNumDimensions(); ++d )
 				size[ d ] = Math.max( size[ d ], image.getDimension( d ) );
-		}
 		
 		return size;
 	}
