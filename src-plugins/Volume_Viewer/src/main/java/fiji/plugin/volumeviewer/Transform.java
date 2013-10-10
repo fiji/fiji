@@ -5,6 +5,8 @@
  * (C) Kai Uwe Barthel
  */
 
+package fiji.plugin.volumeviewer;
+
 class Transform {
 	private Control control;
 

@@ -5,6 +5,8 @@
  * (C) Kai Uwe Barthel
  */
 
+package fiji.plugin.volumeviewer;
+
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;

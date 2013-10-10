@@ -5,10 +5,12 @@
  * (C) Kai Uwe Barthel
  */
 
+package fiji.plugin.volumeviewer;
+
 import java.awt.Color;
 
 class Cube {
-	
+
 	private int widthV;
 	private int heightV;
 	private int depthV;

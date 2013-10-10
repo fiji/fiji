@@ -5,6 +5,8 @@
  * (C) Kai Uwe Barthel
  */
 
+package fiji.plugin.volumeviewer;
+
 import ij.LookUpTable;
 
 import java.awt.Color;

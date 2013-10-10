@@ -5,6 +5,8 @@
  * (C) Kai Uwe Barthel
  */
 
+package fiji.plugin.volumeviewer;
+
 public class Interpolation {
 
 	float[][] pw = new float[256][4]; 

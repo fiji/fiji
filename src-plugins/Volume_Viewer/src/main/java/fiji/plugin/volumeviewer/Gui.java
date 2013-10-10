@@ -5,6 +5,8 @@
  * (C) Kai Uwe Barthel
  */
 
+package fiji.plugin.volumeviewer;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
