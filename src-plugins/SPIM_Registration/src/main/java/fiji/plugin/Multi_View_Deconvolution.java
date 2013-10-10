@@ -299,6 +299,9 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd.addStringField( "Angles to process", Bead_Registration.angles );
 		
 		gd.addMessage("");
+		gd.addChoice( "ImgLib_container", imglibContainer, imglibContainer[ defaultContainer ] );
+
+		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
 		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
@@ -313,6 +316,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		Bead_Registration.fileNamePattern = gd.getNextString();
 		Bead_Registration.timepoints = gd.getNextString();
 		Bead_Registration.angles = gd.getNextString();
+		container = defaultContainer = gd.getNextChoiceIndex();
 
 		int numViews = -1;
 		
@@ -492,7 +496,6 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd2.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
 		gd2.addNumericField( "Tikhonov_parameter", defaultLambda, 4 );
-		gd2.addChoice( "ImgLib_container", imglibContainer, imglibContainer[ defaultContainer ] );
 		gd2.addChoice( "Compute", blocks, blocks[ defaultBlockSizeIndex ] );
 		gd2.addChoice( "Compute_on", computationOn, computationOn[ defaultComputationIndex ] );
 		gd2.addChoice( "PSF_estimation", extractPSFs, extractPSFs[ defaultExtractPSF ] );
@@ -615,7 +618,6 @@ public class Multi_View_Deconvolution implements PlugIn
 		numIterations = defaultNumIterations = (int)Math.round( gd2.getNextNumber() );
 		useTikhonovRegularization = defaultUseTikhonovRegularization = gd2.getNextBoolean();
 		lambda = defaultLambda = gd2.getNextNumber();
-		container = defaultContainer = gd2.getNextChoiceIndex();
 		blockSizeIndex = defaultBlockSizeIndex = gd2.getNextChoiceIndex();
 		computationType = defaultComputationIndex = gd2.getNextChoiceIndex();
 		defaultExtractPSF = gd2.getNextChoiceIndex();
