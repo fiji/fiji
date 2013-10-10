@@ -16,7 +16,9 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
+import mpicbg.imglib.container.planar.PlanarContainerFactory;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
@@ -118,6 +120,9 @@ public class Multi_View_Fusion implements PlugIn
 		else
 			tfChannels = null;
 
+		gd.addMessage( "" );
+		gd.addChoice( "ImgLib_container", Multi_View_Deconvolution.imglibContainer, Multi_View_Deconvolution.imglibContainer[ Multi_View_Deconvolution.defaultContainer ] );
+
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
@@ -215,7 +220,8 @@ public class Multi_View_Fusion implements PlugIn
 			Bead_Registration.fileNamePattern = gd.getNextString();
 		Bead_Registration.timepoints = gd.getNextString();
 		Bead_Registration.angles = gd.getNextString();
-
+		Multi_View_Deconvolution.defaultContainer = gd.getNextChoiceIndex();
+		
 		int numViews = 0;
 		
 		try
@@ -262,6 +268,11 @@ public class Multi_View_Fusion implements PlugIn
 		
 		// create the configuration object
 		final SPIMConfiguration conf = new SPIMConfiguration();
+
+		if ( Multi_View_Deconvolution.defaultContainer == 1 )
+			conf.imageFactory = new CellContainerFactory( 256 );
+		else
+			conf.imageFactory = new ArrayContainerFactory();
 
 		conf.timepointPattern = Bead_Registration.timepoints;
 		conf.anglePattern = Bead_Registration.angles;

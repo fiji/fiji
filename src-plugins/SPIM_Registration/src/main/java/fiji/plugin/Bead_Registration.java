@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.container.cell.CellContainerFactory;
+import mpicbg.imglib.container.planar.PlanarContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.io.LOCI;
@@ -47,8 +49,8 @@ public class Bead_Registration implements PlugIn
 	final String beadRegistration[] = new String[] { "Single-channel", "Multi-channel (same beads visible in different channels)" };
 	final String beadDetectionType[] = new String[] { "Difference-of-Gaussian", "Difference-of-Mean (Integral image based)" };
 	public static int defaultBeadRegistration = 0;
-	public static int defaultBeadDetectionType = 0;
-	
+	public static int defaultBeadDetectionType = 1;
+
 	@Override
 	public void run(String arg0) 
 	{
@@ -208,6 +210,10 @@ public class Bead_Registration implements PlugIn
 		gd.addCheckbox( "Timelapse_registration", timeLapseRegistration );
 		gd.addChoice( "Select_reference timepoint", timeLapseRegistrationTypes, timeLapseRegistrationTypes[ defaultTimeLapseRegistration ] );
 
+		gd.addMessage( "" );
+		gd.addChoice( "ImgLib_container", Multi_View_Deconvolution.imglibContainer, Multi_View_Deconvolution.imglibContainer[ Multi_View_Deconvolution.defaultContainer ] );
+
+		
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
@@ -313,8 +319,15 @@ public class Bead_Registration implements PlugIn
 		timeLapseRegistration = gd.getNextBoolean();
 		defaultTimeLapseRegistration = gd.getNextChoiceIndex();
 		
+		Multi_View_Deconvolution.defaultContainer = gd.getNextChoiceIndex();
+
 		SPIMConfiguration conf = new SPIMConfiguration();
-		
+
+		if ( Multi_View_Deconvolution.defaultContainer == 1 )
+			conf.imageFactory = new CellContainerFactory( 256 );
+		else
+			conf.imageFactory = new ArrayContainerFactory();
+
 		if ( conf.initialSigma == null || conf.initialSigma.length != 1 || conf.minPeakValue == null || conf.minPeakValue.length != 1 )
 		{
 			conf.initialSigma = new float[]{ 1.8f };
@@ -539,6 +552,9 @@ public class Bead_Registration implements PlugIn
 		gd.addCheckbox( "Timelapse_registration", timeLapseRegistration );
 		gd.addChoice( "Select_reference timepoint", timeLapseRegistrationTypes, timeLapseRegistrationTypes[ defaultTimeLapseRegistration ] );
 
+		gd.addMessage( "" );
+		gd.addChoice( "ImgLib_container", Multi_View_Deconvolution.imglibContainer, Multi_View_Deconvolution.imglibContainer[ Multi_View_Deconvolution.defaultContainer ] );
+
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
@@ -651,6 +667,7 @@ public class Bead_Registration implements PlugIn
 		timeLapseRegistration = gd.getNextBoolean();
 		defaultTimeLapseRegistration = gd.getNextChoiceIndex();
 
+		Multi_View_Deconvolution.defaultContainer = gd.getNextChoiceIndex();
 
 		// check if channels are more or less ok
 		int numChannels = 0;
@@ -674,6 +691,11 @@ public class Bead_Registration implements PlugIn
 
 		// create the configuration object
 		final SPIMConfiguration conf = new SPIMConfiguration();
+
+		if ( Multi_View_Deconvolution.defaultContainer == 1 )
+			conf.imageFactory = new CellContainerFactory( 256 );
+		else
+			conf.imageFactory = new ArrayContainerFactory();
 
 		if ( conf.initialSigma == null || conf.initialSigma.length != numChannels )
 		{

@@ -1,5 +1,8 @@
 package mpicbg.spim.registration;
 
+import fiji.plugin.Bead_Registration;
+import fiji.plugin.Multi_View_Deconvolution;
+import fiji.plugin.Multi_View_Fusion;
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -415,6 +418,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 
 				try
 				{
+					IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Opening '" + s + "' [" + imageFactory.getClass().getSimpleName() + "]" );
 					image = LOCI.openLOCIFloatType( s, imageFactory );
 				}
 				catch ( Exception e )
@@ -424,7 +428,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 				
 				if ( image == null )
 				{
-					IJ.log( "Cannot open file: " + s );
+					IOFunctions.println( "Cannot open file: " + s );
 					
 					File f = new File( s );
 					if ( f.exists() )
@@ -436,6 +440,12 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 						{
 							IJ.log( "Opening file: " + f.getAbsolutePath() + " with CellImg failed, too." );
 							return null;
+						}
+						else
+						{
+							// use the same factory next time
+							getViewStructure().getSPIMConfiguration().imageFactory = image.getContainerFactory();
+							Multi_View_Deconvolution.defaultContainer = 1;
 						}
 					}
 					else

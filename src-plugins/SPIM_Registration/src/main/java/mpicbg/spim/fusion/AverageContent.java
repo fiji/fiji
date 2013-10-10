@@ -56,7 +56,7 @@ public class AverageContent extends IsolatedPixelWeightener<AverageContent>
 			*/
 						
 			// compute I*sigma1, store in imgConv
-			final Image< LongType > integralImg = IntegralImage3d.computeArray( img );
+			final Image< LongType > integralImg = IntegralImage3d.compute( img );
 			final Image< FloatType > imgConv = img.createNewImage();			
 			DOM.meanMirror( integralImg, imgConv, rxy1*2 + 1, rxy1*2 + 1, rz1*2 + 1 );
 			
@@ -75,7 +75,7 @@ public class AverageContent extends IsolatedPixelWeightener<AverageContent>
 			}
 			
 			// compute ( ( I - I*sigma1 )^2 ) * sigma2, store in imgConv
-			IntegralImage3d.computeArray( integralImg, imgConv );
+			IntegralImage3d.computeIntegralImage( integralImg, imgConv );
 			
 			DOM.meanMirror( integralImg, imgConv, rxy2*2 + 1, rxy2*2 + 1, rz2*2 + 1 );
 			

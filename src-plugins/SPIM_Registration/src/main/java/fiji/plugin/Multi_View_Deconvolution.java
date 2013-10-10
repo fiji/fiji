@@ -263,7 +263,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
 	
 	public static String[] iterationTypeString = new String[]{ "Efficient Bayesian - Optimization II (very fast, imprecise)", "Efficient Bayesian - Optimization I (fast, precise)", "Efficient Bayesian (less fast, more precise)", "Independent (slow, very precise)" };
-	public static String[] imglibContainer = new String[]{ "Array container", "Planar container", "Cell container" };
+	public static String[] imglibContainer = new String[]{ "Array container (input files smaller ~2048x2048x450 px)", "Cell container (input files larger ~2048x2048x450 px" };
 	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Nvidia CUDA via JNA)" };
 	public static String[] extractPSFs = new String[]{ "Extract from beads", "Provide file with PSF" };
 	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
@@ -966,12 +966,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		if ( container == 1 )
 		{
-			conf.outputImageFactory = new PlanarContainerFactory();
-			conf.imageFactory = new PlanarContainerFactory();
-		}
-		else if ( container == 2 )
-		{
-			conf.outputImageFactory = new CellContainerFactory( 256 );
+			conf.outputImageFactory = new ArrayContainerFactory();
 			conf.imageFactory = new CellContainerFactory( 256 );
 		}
 		else

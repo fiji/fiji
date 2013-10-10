@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.algorithm.integral.IntegralImageLong;
+import mpicbg.imglib.container.array.Array;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
@@ -156,9 +157,12 @@ public class DOM
 	
 	            					result.getType().set( (float)s2/d2 - (float)s1/d1 );
 	            					
-	            					r11.fwd( 0 ); r12.fwd( 0 ); r13.fwd( 0 ); r14.fwd( 0 ); r15.fwd( 0 ); r16.fwd( 0 ); r17.fwd( 0 ); r18.fwd( 0 );
-	            					r21.fwd( 0 ); r22.fwd( 0 ); r23.fwd( 0 ); r24.fwd( 0 ); r25.fwd( 0 ); r26.fwd( 0 ); r27.fwd( 0 ); r28.fwd( 0 );
-	            					result.fwd( 0 );
+	            					if ( x != w - 1 )
+	            					{
+		            					r11.fwd( 0 ); r12.fwd( 0 ); r13.fwd( 0 ); r14.fwd( 0 ); r15.fwd( 0 ); r16.fwd( 0 ); r17.fwd( 0 ); r18.fwd( 0 );
+		            					r21.fwd( 0 ); r22.fwd( 0 ); r23.fwd( 0 ); r24.fwd( 0 ); r25.fwd( 0 ); r26.fwd( 0 ); r27.fwd( 0 ); r28.fwd( 0 );
+		            					result.fwd( 0 );
+	            					}
 	            				}
 	            			}
             			}
@@ -633,7 +637,7 @@ public class DOM
 		final int rz2 = Math.round( fusionSigma2 / zStretching );
 					
 		// compute I*sigma1, store in imgConv
-		final Image< LongType > integralImg = IntegralImage3d.computeArray( img );
+		final Image< LongType > integralImg = IntegralImage3d.compute( img );
 		final Image< FloatType > imgConv = img.createNewImage();			
 		DOM.meanMirror( integralImg, imgConv, rxy1*2 + 1, rxy1*2 + 1, rz1*2 + 1 );
 		
@@ -652,7 +656,7 @@ public class DOM
 		}
 		
 		// compute ( ( I - I*sigma1 )^2 ) * sigma2, store in imgConv
-		IntegralImage3d.computeArray( integralImg, imgConv );
+		IntegralImage3d.computeIntegralImage( integralImg, imgConv );
 		
 		DOM.meanMirror( integralImg, imgConv, rxy2*2 + 1, rxy2*2 + 1, rz2*2 + 1 );
 		

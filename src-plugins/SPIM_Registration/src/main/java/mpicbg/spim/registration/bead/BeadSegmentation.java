@@ -288,9 +288,6 @@ public class BeadSegmentation
 	{
 		long time1 = System.currentTimeMillis();
 		
-		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Opening Image");					
-
 		final Image< FloatType > img = view.getImage( false ); 
 
 		long time2 = System.currentTimeMillis();
@@ -311,7 +308,7 @@ public class BeadSegmentation
 		final Image< LongType > integralImg = intImg.getResult();
 		*/
 		
-		final Image< LongType > integralImg = IntegralImage3d.computeArray( img );
+		final Image< LongType > integralImg = IntegralImage3d.compute( img );
 		
 		final FloatType min = new FloatType();
 		final FloatType max = new FloatType();
