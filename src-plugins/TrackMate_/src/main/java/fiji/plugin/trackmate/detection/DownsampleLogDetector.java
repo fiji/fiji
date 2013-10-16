@@ -7,6 +7,7 @@ import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.meta.ImgPlus;
+import net.imglib2.meta.axis.DefaultLinearAxis;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
@@ -97,7 +98,9 @@ public class DownsampleLogDetector <T extends RealType<T>  & NativeType<T>> impl
 
 		Img<T> downsampled = img.factory().create(dimensions, img.firstElement().createVariable());
 		ImgPlus<T> dsimg = new ImgPlus<T>(downsampled, img);
-		dsimg.setCalibration(dwnCalibration);
+		for (int d = 0; d < dsimg.numDimensions(); d++) {
+			dsimg.setAxis(new DefaultLinearAxis(dsimg.axis(d).type(), dwnCalibration[d]), d);
+		}
 		
 		Cursor<T> dwnCursor = downsampled.localizingCursor();
 		RandomAccess<T> srcCursor = img.randomAccess();

@@ -380,11 +380,11 @@ public class TMUtils {
 		final double[] calibration = Util.getArrayFromValue(1d, 3);
 		for (int d = 0; d < img.numDimensions(); d++) {
 			if (img.axis(d).type() == Axes.X) {
-				calibration[0] = img.calibration(d);
+				calibration[0] = img.averageScale(d);
 			} else if (img.axis(d).type() == Axes.Y) {
-				calibration[1] = img.calibration(d);
+				calibration[1] = img.averageScale(d);
 			} else if (img.axis(d).type() == Axes.Z) {
-				calibration[2] = img.calibration(d);
+				calibration[2] = img.averageScale(d);
 			}
 		}
 		return calibration;

@@ -18,6 +18,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.meta.ImgPlus;
+import net.imglib2.meta.axis.DefaultLinearAxis;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import Jama.EigenvalueDecomposition;
@@ -315,7 +316,9 @@ public class SpotMorphologyAnalyzer<T extends RealType<T>> extends IndependentSp
 		Img<UnsignedByteType> img = new ArrayImgFactory<UnsignedByteType>()
 				.create(new int[] {200, 200}, new UnsignedByteType());
 		ImgPlus<UnsignedByteType> imgplus = new ImgPlus<UnsignedByteType>(img);
-		imgplus.setCalibration(calibration);
+		for (int d = 0; d < imgplus.numDimensions(); d++) {
+			imgplus.setAxis(new DefaultLinearAxis(imgplus.axis(d).type(), calibration[d]), d);
+		}
 		final byte on = (byte) 255;
 		
 		// Create an ellipse 
