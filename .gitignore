@@ -238,6 +238,7 @@ hs_err*.log
 /jars/pentaho-package-manager-[0-9]*.jar
 /jars/postgresql-[0-9]*.jar
 /jars/tools-[0-9]*.jar
+/jars/udunits-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
 /plugins/loci_plugins-[0-9]*.jar
 
