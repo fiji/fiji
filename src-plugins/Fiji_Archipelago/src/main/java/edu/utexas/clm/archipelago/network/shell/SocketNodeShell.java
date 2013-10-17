@@ -36,9 +36,8 @@ public class SocketNodeShell extends SSHNodeShell
     {
         final String eroot = param.getExecRoot();
         final ArchipelagoServer server = ArchipelagoServer.getServer(listener);
-        return "--jar-path " + eroot +
-                "/plugins/ --jar-path " + eroot +"/jars/ --classpath " + eroot +
-                " --allow-multiple --main-class edu.utexas.clm.archipelago.Fiji_Archipelago " +
+        return "--allow-multiple --full-classpath " +
+                " --main-class edu.utexas.clm.archipelago.Fiji_Archipelago " +
                 Cluster.getCluster().getLocalHostName() + " " + server.getPort() + " " + param.getID() +
                 " 2>&1 > ~/" + param.getHost() + "_" + param.getID() + ".log";    
     }

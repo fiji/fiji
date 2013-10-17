@@ -38,6 +38,7 @@ package edu.utexas.clm.archipelago.compute;
 
 import edu.utexas.clm.archipelago.Cluster;
 import edu.utexas.clm.archipelago.FijiArchipelago;
+import edu.utexas.clm.archipelago.network.node.ClusterNode;
 
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
@@ -57,7 +58,7 @@ public class ArchipelagoFuture<T> implements Future<T>
     private final Vector<Thread> waitingThreads;
     private final ReentrantLock threadLock;
     private Exception e;
-   
+    private ClusterNode ranOnNode = null;
    
     
     public ArchipelagoFuture(Cluster.ProcessScheduler scheduler)
@@ -102,6 +103,7 @@ public class ArchipelagoFuture<T> implements Future<T>
                 {
                     t = result;
                 }
+                ranOnNode = scheduler.getNode(pm.getRunningOn());
                 e = pm.getRemoteException();
                 done.set(true);
                 // MUST set done to true before interrupting threads, or we'll get a bunch of
@@ -228,7 +230,8 @@ public class ArchipelagoFuture<T> implements Future<T>
 
         if (e != null)
         {
-            throw new ExecutionException(e);
+            throw new ExecutionException("On host " +
+                    (ranOnNode == null ? "null" : ranOnNode.getHost()), e);
         }
 
         return t;
