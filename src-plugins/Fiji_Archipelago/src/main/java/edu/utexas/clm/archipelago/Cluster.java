@@ -126,7 +126,8 @@ public class Cluster implements NodeStateListener, NodeShellListener
             {
                 if (priority)
                 {
-                    FijiArchipelago.debug("Scheduler: Put job " + pm.getID() + " on the priority queue");
+                    FijiArchipelago.debug("Scheduler: Put job " + pm.getID() +
+                            " on the priority queue");
                 }
                 queue.add(pm);
                 return true;
@@ -134,6 +135,17 @@ public class Cluster implements NodeStateListener, NodeShellListener
             {
                 return false;
             }
+        }
+
+        /**
+         * Convenience function to allow objects with scheduler references but not Cluster
+         *  references to identify ClusterNodes by id.
+         * @param id the id of the desired ClusterNode
+         * @return the ClusterNode with the given id
+         */
+        public ClusterNode getNode(long id)
+        {
+            return self.getNode(id);
         }
         
         private synchronized ClusterNode getFreeNode()
@@ -859,6 +871,21 @@ public class Cluster implements NodeStateListener, NodeShellListener
         return cluster;
     }
     
+    public static Cluster getClusterWithUI()
+    {
+        if (!initializedCluster())
+        {
+            cluster = new Cluster();
+        }
+        
+        if (cluster.numRegisteredUIs() <= 0)
+        {
+            FijiArchipelago.runClusterGUI(cluster);
+        }
+        
+        return cluster;
+    }
+    
     public static boolean activeCluster()
     {
         return cluster != null && cluster.getState() == ClusterState.RUNNING;
@@ -1096,14 +1123,15 @@ public class Cluster implements NodeStateListener, NodeShellListener
             {
                 if (t instanceof NotSerializableException)
                 {
+                    FijiArchipelago.debug("NSE trace.", t);
                     reportTX(t, "Ensure that your class and all" +
-                            " member objects are Serializable.", xc);
+                            " member objects are Serializable: " + t, xc);
                     return false;
                 }
                 else if (t instanceof ConcurrentModificationException)
                 {
                     reportTX(t, "Take care not to modify member objects" +
-                            " as your Callable is being Serialized.", xc);
+                            " as your Callable is being Serialized: " + t, xc);
                     return false;
                 }
                 else if (t instanceof IOException)

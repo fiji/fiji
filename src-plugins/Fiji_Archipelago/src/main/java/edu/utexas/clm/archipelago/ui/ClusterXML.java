@@ -91,10 +91,37 @@ public class ClusterXML
         }
     }
 
+    public static String replaceProperties(final String instring)
+    {
+        String string = instring;
+        String key = "";
+        int b, e;
+        try
+        {
+        while ((b = string.indexOf("[")) >= 0)
+        {
+            e = string.indexOf("]");
+            key = string.substring(b + 1, e);
+            string = string.replace("[" + key + "]", System.getProperty(key));
+        }
+        }
+        catch (StringIndexOutOfBoundsException ioobe)
+        {
+            FijiArchipelago.debug("Warning: Malformed input string " + instring);
+        }
+        catch (NullPointerException npe)
+        {
+            FijiArchipelago.debug("No such system property: " + key + ". Input string: " + instring);
+        }
+        
+        FijiArchipelago.debug("Translated " + instring + " -> " + string);
+        
+        return string;
+    }
 
     private static String getXMLField(Element e, String tag)
     {
-        return e.getElementsByTagName(tag).item(0).getTextContent();
+        return replaceProperties(e.getElementsByTagName(tag).item(0).getTextContent());
     }
 
     private static void addXMLField(Document doc, Element parent, String field, String value)
@@ -143,7 +170,7 @@ public class ClusterXML
         fileRoot = getXMLField(rootNode, "file");
         dExecRoot = getXMLField(rootNode, "default-exec");
         dFileRoot = getXMLField(rootNode, "default-file");
-        user = getXMLField(rootNode, "default-user");
+        user = getXMLField(rootNode, "default-user");        
 
         ok = Cluster.configureCluster(cluster, dExecRoot, dFileRoot, execRoot, fileRoot, user);
 

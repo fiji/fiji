@@ -32,6 +32,7 @@ public class RootNodeConfigDialog implements ActionListener
         final Button fileRootButton = new Button("Select file root...");
         final Button okButton = new Button("OK");
         final Button cancelButton = new Button("Cancel");
+        final boolean useDefault = cluster.getState() == Cluster.ClusterState.INSTANTIATED;
 
         this.cluster = cluster;
         isConfigured = configured;
@@ -42,11 +43,23 @@ public class RootNodeConfigDialog implements ActionListener
         prefRoot = FijiArchipelago.PREF_ROOT;
         rootConfigFrame = new Frame("Root Node Configuration");
 
-        setEntry("execRoot", "");
-        setEntry("fileRoot", "");
-        setEntry("execRootRemote", "");
-        setEntry("fileRootRemote", "");
-        setEntry("username", System.getenv("USER"));
+        if (useDefault)
+        {
+            FijiArchipelago.debug("RootNodeConfigDialog: Using default parameters");
+        }
+        else
+        {
+            FijiArchipelago.debug("RootNodeConfigDialog: Using configured parameters");
+        }
+        
+        setEntry("execRoot", FijiArchipelago.getExecRoot(), useDefault);
+        setEntry("fileRoot", FijiArchipelago.getFileRoot(), useDefault);
+        setEntry("execRootRemote",
+                cluster.getNodeManager().getDefaultParameters().getExecRoot(), useDefault);
+        setEntry("fileRootRemote",
+                cluster.getNodeManager().getDefaultParameters().getFileRoot(), useDefault);
+        setEntry("username",
+                cluster.getNodeManager().getDefaultParameters().getUser(), useDefault);
 
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 0.0;
@@ -179,9 +192,10 @@ public class RootNodeConfigDialog implements ActionListener
         }
     }
 
-    private void setEntry(final String key, final String dValue)
+    private void setEntry(final String key, final String dValue, boolean useDefault)
     {
-        String value = Prefs.get(prefRoot + "." + key, dValue);
+        final String value = useDefault ? Prefs.get(prefRoot + "." + key, dValue) :
+                dValue;
         paramMap.put(key, value);
     }
 

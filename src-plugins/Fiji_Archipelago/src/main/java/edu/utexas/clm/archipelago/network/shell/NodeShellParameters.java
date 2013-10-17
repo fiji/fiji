@@ -1,6 +1,7 @@
 package edu.utexas.clm.archipelago.network.shell;
 
 import edu.utexas.clm.archipelago.FijiArchipelago;
+import edu.utexas.clm.archipelago.ui.ClusterXML;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -138,7 +139,8 @@ public class NodeShellParameters
             final String name = children.item(i).getNodeName();            
             if (keyList.contains(name))
             {
-                final String value = children.item(i).getTextContent();
+                final String value = ClusterXML.replaceProperties(children.item(i).getTextContent());
+                
                 keyList.remove(name);
                 FijiArchipelago.debug("fromXML: " + name + " <- " + value);
                 parameterMap.put(name, value);

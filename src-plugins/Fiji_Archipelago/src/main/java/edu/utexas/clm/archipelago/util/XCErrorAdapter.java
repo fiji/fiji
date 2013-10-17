@@ -79,7 +79,8 @@ public class XCErrorAdapter implements TransceiverExceptionListener
     
     protected void reportRX(final Throwable t, final String message, final MessageXC mxc)
     {
-        final NodeManager.NodeParameters np = nodeManager.getParam(mxc.getId());
+        final NodeManager.NodeParameters np = nodeManager == null ? null :
+                nodeManager.getParam(mxc.getId());
         final String hostString = np == null ? "" : np.getHost() + ": ";
 
         report(t, "RX: " + hostString + message, throwablesSeenRX);

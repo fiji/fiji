@@ -33,12 +33,14 @@ public class FileChunk extends DataChunk<String>
     private static final long serialVersionUID = -8641288090205214129L;
 
     private final String fileName;
+    private final boolean doAppend;
 
     public FileChunk(String path)
     {
         super();
         File f = new File(path);
         fileName = FijiArchipelago.truncateFileRoot(f.getAbsolutePath());
+        doAppend = !(fileName.equals(f.getAbsolutePath()));
     }
     
     public FileChunk(String path, DataChunk oldChunk)
@@ -46,11 +48,12 @@ public class FileChunk extends DataChunk<String>
         super(oldChunk);
         File f = new File(path);
         fileName = FijiArchipelago.truncateFileRoot(f.getAbsolutePath());
+        doAppend = !(fileName.equals(f.getAbsolutePath()));
     }
     
     public String getData()
     {
-        return FijiArchipelago.getFileRoot() + fileName;
+        return doAppend ? FijiArchipelago.getFileRoot() + fileName : fileName;
     }
 
     public Iterator<DataChunk<String>> iterator()
@@ -59,8 +62,18 @@ public class FileChunk extends DataChunk<String>
         return new ArrayList<DataChunk<String>>().iterator();
     }
     
+    public boolean equals(Object o)
+    {
+        return o instanceof FileChunk && ((FileChunk) o).fileName.equals(fileName);
+    }
+    
     public String toString()
     {
         return getData();
+    }
+    
+    public int hashCode()
+    {
+        return fileName.hashCode();
     }
 }

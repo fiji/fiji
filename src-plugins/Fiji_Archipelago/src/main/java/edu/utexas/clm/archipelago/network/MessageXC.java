@@ -190,6 +190,16 @@ public class MessageXC
             xcListener.streamClosed();
             txThread.interrupt();
             rxThread.interrupt();
+            try
+            {
+                inStream.close();
+            }
+            catch (IOException ioe) {/**/}
+            try
+            {
+                outStream.close();
+            }
+            catch (IOException ioe) {/**/}
         }
     }
 

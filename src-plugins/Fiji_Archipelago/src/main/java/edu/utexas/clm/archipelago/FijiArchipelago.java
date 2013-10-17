@@ -261,6 +261,17 @@ public final class FijiArchipelago
         return client;
     }
 
+    public static boolean runClusterGUI(final Cluster cluster)
+    {
+        FijiArchipelago.setDebugLogger(new NullLogger());
+        FijiArchipelago.setInfoLogger(new IJLogger());
+        FijiArchipelago.setErrorLogger(new IJPopupLogger());
+
+        new ClusterUI(cluster);
+
+        return true;
+    }
+    
     public static boolean runClusterGUI(final String file)
     {
         ClusterUI ui;
@@ -282,6 +293,6 @@ public final class FijiArchipelago
     
     public static boolean runClusterGUI()
     {
-        return runClusterGUI(null);
+        return runClusterGUI((String)null);
     }
 }
