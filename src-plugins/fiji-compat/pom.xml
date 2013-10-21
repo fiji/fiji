@@ -42,6 +42,22 @@
 			<artifactId>ij-legacy</artifactId>
 			<version>${imagej.version}</version>
 		</dependency>
+
+		<!-- NB: Artifacts which we would like included with Fiji regardless
+		     of whether any Fiji plugin depends on them directly. -->
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.17</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.7.2</version>
+			<scope>runtime</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
