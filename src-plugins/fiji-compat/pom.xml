@@ -34,7 +34,7 @@
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
-			<artifactId>ij-app</artifactId>
+			<artifactId>ij-core</artifactId>
 			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
@@ -45,6 +45,12 @@
 
 		<!-- NB: Artifacts which we would like included with Fiji regardless
 		     of whether any Fiji plugin depends on them directly. -->
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij-app</artifactId>
+			<version>${imagej.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
