@@ -16,7 +16,6 @@
 	<version>1.0.2-SNAPSHOT</version>
 
 	<name>plugins/Scala_Interpreter.jar</name>
-	<description>A Maven project implementing an ImageJ 1.x plugin</description>
 
 	<!--> repos: ImageJ repositories + scala tools <-->
 	<repositories>
