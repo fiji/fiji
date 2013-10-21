@@ -1,12 +1,44 @@
-Sholl Analysis
+Sholl Analysis, http://fiji.sc/Sholl_Analysis/
 
 WISH LIST
 =========
+    - Obtain a mask for every chosen method (slices of an ImageStack?)
+    - Fix dialog prompt: Can become higher than 700px and may not be displayed on netbooks
     - Restrict analysis to area ROIs (rather than hemicircles/spheres?)
+
 
 RELEASE NOTES
 =============
-Version 3.0 (latest)
+   (Unfortunately, the numbering scheme is somewhat arbitrary and not that meaningful.
+    However, large increments usually indicate changes in the user interface).
+
+Version 3.2 (August 2013) [latest]
+    - Enclosing radius is defined as the widest distance associated with a specified
+      cutoff value of intersection counts. At the default cutoff (1), it is the largest
+      of intersecting radii.
+
+Version 3.1
+    - Hold dow "Alt" to analyze profiles obtained elsewhere, including those from Simple
+      Neurite Tracer, http://fiji.sc/Simple_Neurite_Tracer
+    - Multiple profiles can be obtained at once
+    - Plugin can now predict (or at least try) the polynomial of best approximation
+    - New descriptors: Median and Barycenter of sampled profile
+    - Added a "batch mode" option that saves profiles without displaying them
+    - Sholl decay is calculated using the full rage of data or values within percentiles
+      10 and 90, which usually provides a better fit. However, Sholl decay is only
+      calculated when logarithmic methods are chosen (v2.2 behavior)
+    - Normalization can be performed against: Area of circle/Volume of sphere, Perimeter
+      of circumference/Surface of sphere or Area of annulus/Volume of spheric shell.
+    - Made main dialog more intuitive. This may brake previous macros created with the
+      Macro Recorder
+    - Barycenter and other descriptors are highlighted on plot
+    - Updated the URL of help page to http://fiji.sc/Sholl_Analysis/
+    - Eliminated the "Sholl LUT" command (with IJ 1.48a an later LUTs of non-8-bit TIFFs
+      are saved with the image)
+    - Sholl mask reports only values from "Linear Sholl". "Semi-log" and "Linear-norm."
+      masks are no longer created. This could be reinstated if needed
+
+Version 3.0
     - 3D Sholl:
       - Better handling of anisotropic voxels
       - Option to ignore isolated (noise) voxels

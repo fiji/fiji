@@ -1,12 +1,16 @@
-2D mask of a Drosophila class IV ddaC sensory neuron labeled by
-ppk1.9-GAL4-driven UAS-mCD8-GFP.
+2D mask of a Drosophila class IV ddaC sensory neuron imaged
+directly through the body wall of a late third instar larva (L3)
+expressing mCD8::GFP under the control of ppk1.9-GAL4.
 
-This binary mask (downsized by 40%) was obtained from a maximum
-intensity projection that was smoothed, thresholded and from
-which the cell axon was manually removed. The original 1.1um
-z-step stack was acquired using a Ultraview spinning disk confocal
-system on a Nikon TE2000-U using an Hamamatsu ORCA-ER CCD camera
-at the McGill University Centre for Research in Neuroscience.
+This binary image (downsized by 40%) was obtained from a
+maximum intensity projection that was smoothed, thresholded
+and from which the cell axon was manually removed.
 
-Courtesy of Tiago Ferreira, author of the Advanced Sholl Analysis plugin
-(http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start)
+The original 1.1um z-step stack was acquired in 2010 at the
+McGill University Centre for Research in Neuroscience with a
+Nipkow spinning disk confocal microscope (Yokogawa system
+mounted on a Nikon Eclipse TE2000-U equipped with a
+Hamamatsu ORCA-ER CCD camera) using a 20x .45 NA lens.
+
+Courtesy of Tiago Ferreira, author of the Sholl Analysis plugin,
+http://fiji.sc/Sholl_Analysis/
