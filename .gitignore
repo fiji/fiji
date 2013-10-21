@@ -96,6 +96,7 @@ hs_err*.log
 /plugins/AnalyzeSkeleton_-[0-9]*.jar
 /plugins/Analyze_Reader_Writer-[0-9]*.jar
 /plugins/Anisotropic_Diffusion_2D-[0-9]*.jar
+/plugins/Archipelago_Plugins-[0-9]*.jar
 /plugins/Arrow_-[0-9]*.jar
 /plugins/Auto_Threshold-[0-9]*.jar
 /plugins/BalloonSegmentation_-[0-9]*.jar
@@ -304,7 +305,10 @@ hs_err*.log
 /jars/ij-options-[0-9]*.jar
 /jars/ij-platforms-[0-9]*.jar
 /jars/ij-scripting-beanshell-[0-9]*.jar
+/jars/ij-scripting-clojure-[0-9]*.jar
 /jars/ij-scripting-java-[0-9]*.jar
+/jars/ij-scripting-jruby-[0-9]*.jar
+/jars/ij-scripting-jython-[0-9]*.jar
 /jars/ij-text-[0-9]*.jar
 /jars/ij-tools-[0-9]*.jar
 /jars/ij-ui-[0-9]*.jar
@@ -319,6 +323,7 @@ hs_err*.log
 /jars/ij-updater-webdav-[0-9]*.jar
 /jars/ij-util-awt-[0-9]*.jar
 /jars/ij-util-swing-[0-9]*.jar
+/jars/jdatepicker-1.3.2.jar
 /jars/jhotdraw-[0-9]*.jar
 /jars/markdownj-[0-9]*.jar
 /jars/miglayout-[0-9]*.jar
