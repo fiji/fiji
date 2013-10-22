@@ -595,9 +595,8 @@ public class Stitching_Grid implements PlugIn
 
 			if (addTilesAsRois) {
 				float[] offset = new float[dimensionality];
-				Fusion.estimateBounds(offset, new int[dimensionality], images, models,
-					dimensionality);
-
+        Fusion.estimateBounds(offset, new int[dimensionality], images, models,
+                dimensionality);
 				generateRois(offset, optimized);
 				RoiManager rm = RoiManager.getInstance();
 
@@ -623,83 +622,71 @@ public class Stitching_Grid implements PlugIn
 	 * fusedImage is the resultant on which the ROIs will be drawn. The offset
 	 * is a global offset to 0,0 for the upper leftmost tile.
 	 */
-	protected void generateRois(float[] offset,
-		ArrayList<ImagePlusTimePoint> optimizedImages)
+	protected void generateRois(float[] offsets, ArrayList<ImagePlusTimePoint> optimizedImages)
 	{
-		float[][] coordinates =
-			new float[optimizedImages.size()][optimizedImages.get(0).getImagePlus()
-				.getDimensions().length];
-
-		// Compute tile positions. Each tile's model is the translation from
-		// the offset position.
-		for (int i = 0; i < optimizedImages.size(); i++) {
-			for (int j = 0; j < offset.length; j++)
-				coordinates[i][j] -= offset[j];
-			optimizedImages.get(i).getModel().applyInPlace(coordinates[i]);
-		}
 		IJ.showStatus("Generating ROIs from image tiles...");
 
 		RoiManager rm = RoiManager.getInstance();
 		if (rm == null) rm = new RoiManager();
 
-		final String fileName =
-			optimizedImages.get(0).getElement().getFile().getAbsolutePath();
-
-		// Get a Bio-Formats reader to determine file IDs
-		IJ.log("Initializing Bio-Formats reader to determine file ids...");
-		IFormatReader reader = null;
-		try {
-			reader = initializeReader(fileName);
-		}
-		catch (FormatException e) {
-			IJ.log("Failed to discover file names. FormatException when parsing: " +
-				fileName);
-		}
-		catch (IOException e) {
-			IJ.log("Failed to discover file names. IOException when parsing: " +
-				fileName);
-		}
-
 		// we'll make a map of rois to their ImageStack slice #, allowing them
 		// to be added to the RoiManager in the correct order.
 		Map<Integer, List<Roi>> roisBySlice = new HashMap<Integer, List<Roi>>();
 
-		// tracks position in the elements/coordinates arrays
-		int coordIndex = 0;
-		// Skip any .xml, .cfg, etc... when looking up the image names
-		final int pixelOffset = reader.getSeriesUsedFiles(true).length;
-		// keeps counts of the # of rois added for each stack position
-		int sizeZ = reader.getSizeZ();
-		int sizeT = reader.getSizeT();
-		int sizeC = reader.getSizeC();
-		int[] tiles = new int[sizeC * sizeT * sizeZ];
+		// This reader is used to determine associations between tiles and files on disk
+		IFormatReader reader = null;
 
-		// Generate the actual rois
-		for (int series = 0; series < reader.getSeriesCount(); series++) {
-			reader.setSeries(series);
-			ImagePlus unfused = optimizedImages.get(coordIndex).getImagePlus();
+		// Generate ROIs
+		for (int i=0; i<optimizedImages.size(); i++) {
+			// Each element of optimizedImages is assumed, for a given zct, to be part
+			// of the same tile (slice)
+			ImagePlusTimePoint iptp = optimizedImages.get(i);
+			reader = initializeReader(reader, iptp.getElement().getFile().getAbsolutePath());
+			int sizeZ = reader.getSizeZ();
+			int sizeT = reader.getSizeT();
+			int sizeC = reader.getSizeC();
+
+			// Skip any .xml, .cfg, etc... when looking up the image names
+			String[] seriesFiles = reader.getSeriesUsedFiles(true);
+			final int pixelOffset = seriesFiles == null ? 0 : seriesFiles.length;
+			// Assume that each series correlates to an element of optimizedImages
+			if (reader.getSeriesCount() > 1) {
+				reader.setSeries(i);
+			}
+			seriesFiles = reader.getSeriesUsedFiles();
+
+			ImagePlus unfused = iptp.getImagePlus();
+			// ROI/ImageJ slice number
 			int slice = 1;
+			// compute the x,y coordinates within this slice
+			float[] coords = new float[iptp.getElement().getDimensionality()];
+			iptp.getModel().applyInPlace(coords);
+			for (int j=0; j<offsets.length; j++) {
+				coords[j] -= offsets[j];
+			}
+			int coordXOffset = (int) Math.floor(coords[0]);
+			int coordYOffset = (int) Math.floor(coords[1]);
 			for (int t = 0; t < sizeT; t++) {
-				// Each ImageCollectionelement is a Z stack for a particular T point.
-				// We also generate a roi for each channel
 				for (int z = 0; z < sizeZ; z++) {
 					for (int c = 0; c < sizeC; c++) {
-						// apply global offset
-						int coordXOffset = (int) Math.floor(coordinates[series][0]);
-						int coordYOffset = (int) Math.floor(coordinates[series][1]);
 						Roi roi =
-							new Roi(coordXOffset, coordYOffset, unfused.getWidth(), unfused
-								.getHeight());
+								new Roi(coordXOffset, coordYOffset, unfused.getWidth(), unfused
+									.getHeight());
 
 						// set roi name and position
 						roi.setPosition(c + 1, z + 1, t + 1);
 						String roiName =
-							"sp=" + slice + "; label=" + ++tiles[slice - 1] + "; series=" +
-								series + "; C=" + (c + 1) + "; Z=" + (z + 1) + "; T=" + (t + 1);
+								"sp=" + slice + "; label=" + i + "; series=" +
+										reader.getSeries() + "; C=" + (c + 1) + "; Z=" + (z + 1) + "; T=" + (t + 1);
 						if (reader != null) {
-							String sourceName =
-								reader.getSeriesUsedFiles()[reader.getIndex(z, c, t) + pixelOffset];
-							roiName += "; file=" + new File(sourceName).getName();
+							String sourceName = "unknown file " + reader.getIndex(z, c, t);
+							if (seriesFiles != null &&
+									seriesFiles.length > reader.getIndex(z, c, t) + pixelOffset)
+							{
+								sourceName =
+										new File(seriesFiles[reader.getIndex(z, c, t) + pixelOffset]).getName();
+							}
+							roiName += "; file=" + sourceName;
 						}
 						roi.setName(roiName);
 
@@ -713,7 +700,6 @@ public class Stitching_Grid implements PlugIn
 				}
 
 			}
-			coordIndex++;
 		}
 
 		try {
@@ -740,13 +726,45 @@ public class Stitching_Grid implements PlugIn
 		IJ.log("ROIs generated.");
 	}
 
-	protected IFormatReader initializeReader(final String file)
-		throws FormatException, IOException
+	/**
+	 * Initializes an {@link ImageReader} if the provided reader is null, or
+	 * does not match the given file id.
+	 * <p>
+	 * NB: All exceptions are handled in this method. If an exception is caught,
+	 * null will be returned.
+	 * </p>
+	 */
+	protected IFormatReader initializeReader(IFormatReader in, final String file)
 	{
-		final ImageReader in = new ImageReader();
-		final IMetadata omeMeta = MetadataTools.createOMEXMLMetadata();
-		in.setMetadataStore(omeMeta);
-		in.setId(file);
+		IJ.log("Initializing Bio-Formats reader...");
+		if (in == null || !file.equalsIgnoreCase(in.getCurrentFile())) {
+			if (in != null) {
+				try {
+					in.close();
+				}
+				catch (IOException e) {
+					IJ.log("Failed to close Bio-Formats reader.");
+					return null;
+				}
+			}
+			in = new ImageReader();
+			final IMetadata omeMeta = MetadataTools.createOMEXMLMetadata();
+			in.setMetadataStore(omeMeta);
+			try {
+				in.setId(file);
+			}
+			catch (FormatException e) {
+				IJ.log("Failed to discover file names. FormatException when parsing: " +
+						file);
+				return null;
+			}
+			catch (IOException e) {
+				IJ.log("Failed to discover file names. IOException when parsing: " +
+						file);
+				return null;
+			}
+		}
+
 		return in;
 	}
 
