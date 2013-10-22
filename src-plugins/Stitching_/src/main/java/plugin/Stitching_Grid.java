@@ -3,7 +3,6 @@ package plugin;
 import static stitching.CommonFunctions.addHyperLinkListener;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.MultiLineLabel;
 import ij.gui.Roi;
@@ -371,15 +370,18 @@ public class Stitching_Grid implements PlugIn
 		// get all imagecollectionelements
 		final ArrayList< ImageCollectionElement > elements;
 		
+		Downsampler ds = null;
+		if ( downSample && !( gridType == 5 || gridType == 7) ) ds = new Downsampler();
+		
 		if ( gridType < 5 )
-			elements = getGridLayout( grid, gridSizeX, gridSizeY, overlapX, overlapY, directory, filenames, startI, startX, startY, params.virtual );
+			elements = getGridLayout( grid, gridSizeX, gridSizeY, overlapX, overlapY, directory, filenames, startI, startX, startY, params.virtual, ds );
 		//John Lapage modified this: copying setup for Unknown Positions
 		else if ( gridType == 5 || gridType == 7)
 			elements = getAllFilesInDirectory( directory, confirmFiles );
 		else if ( gridType == 6 && gridOrder == 1 )
-			elements = getLayoutFromMultiSeriesFile( seriesFile, increaseOverlap, ignoreCalibration, invertX, invertY, ignoreZStage, downSample );
+			elements = getLayoutFromMultiSeriesFile( seriesFile, increaseOverlap, ignoreCalibration, invertX, invertY, ignoreZStage, ds );
 		else if ( gridType == 6 )
-			elements = getLayoutFromFile( directory, outputFile );
+			elements = getLayoutFromFile( directory, outputFile, ds );
 		else
 			elements = null;
 		
@@ -414,6 +416,14 @@ public class Stitching_Grid implements PlugIn
 			
 			if ( imp == null )
 				return;
+			
+			if (downSample && ( gridType == 5 || gridType == 7)) {
+				if (ds == null) {
+					ds = new Downsampler();
+					ds.getInput(imp.getWidth(), imp.getHeight());
+				}
+				ds.run(imp);
+			}
 			
 			int lastNumChannels = numChannels;
 			int lastNumTimePoints = numTimePoints;
@@ -740,7 +750,7 @@ public class Stitching_Grid implements PlugIn
 		return in;
 	}
 
-	protected ArrayList< ImageCollectionElement > getLayoutFromMultiSeriesFile( final String multiSeriesFile, final double increaseOverlap, final boolean ignoreCalibration, final boolean invertX, final boolean invertY, final boolean ignoreZStage, final boolean downSample )
+	protected ArrayList< ImageCollectionElement > getLayoutFromMultiSeriesFile( final String multiSeriesFile, final double increaseOverlap, final boolean ignoreCalibration, final boolean invertX, final boolean invertY, final boolean ignoreZStage, final Downsampler ds )
 	{
 		if ( multiSeriesFile == null || multiSeriesFile.length() == 0 )
 		{
@@ -894,8 +904,10 @@ public class Stitching_Grid implements PlugIn
 			
 			final ImagePlus[] imps = BF.openImagePlus( options );
 
-			if  ( downSample ) {
-				new Downsampler(imps[0].getWidth(), imps[0].getHeight()).run(imps, elements);;
+			if  ( ds != null ) {
+				ds.getInput(imps[0].getWidth(), imps[0].getHeight());
+				ds.run(imps);
+				ds.run(elements);
 			}
 			
 			if ( imps.length != elements.size() )
@@ -933,7 +945,7 @@ public class Stitching_Grid implements PlugIn
 		return elements;
 	}	
 	
-	protected ArrayList< ImageCollectionElement > getLayoutFromFile( final String directory, final String layoutFile )
+	protected ArrayList< ImageCollectionElement > getLayoutFromFile( final String directory, final String layoutFile, final Downsampler ds )
 	{
 		final ArrayList< ImageCollectionElement > elements = new ArrayList< ImageCollectionElement >();
 		int dim = -1;
@@ -1065,6 +1077,11 @@ public class Stitching_Grid implements PlugIn
 			return null;
 		};
 		
+		if (ds != null) {
+			ImagePlus img = elements.get(0).open(true);
+			ds.getInput(img.getWidth(), img.getHeight());
+			ds.run(elements);
+		}
 		return elements;
 	}
 	
@@ -1135,7 +1152,7 @@ public class Stitching_Grid implements PlugIn
 	}
 	
 	protected ArrayList< ImageCollectionElement > getGridLayout( final GridType grid, final int gridSizeX, final int gridSizeY, final double overlapX, final double overlapY, final String directory, final String filenames, 
-			final int startI, final int startX, final int startY, final boolean virtual )
+			final int startI, final int startX, final int startY, final boolean virtual, final Downsampler ds )
 	{
 		final int gridType = grid.getType();
 		final int gridOrder = grid.getOrder();
@@ -1244,6 +1261,12 @@ public class Stitching_Grid implements PlugIn
 				
 				long time = System.currentTimeMillis();
 				final ImagePlus imp = gridLayout[ x ][ y ].open( virtual );
+				if (ds != null) {
+					if (!ds.hasInput()) {
+						ds.getInput(imp.getWidth(), imp.getHeight());
+					}
+					ds.run( imp );
+				}
 				time = System.currentTimeMillis() - time;
 				
 				if ( imp == null )
