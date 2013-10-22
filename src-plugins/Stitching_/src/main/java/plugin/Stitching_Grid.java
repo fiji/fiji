@@ -6,6 +6,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.MultiLineLabel;
 import ij.gui.Roi;
+import ij.gui.Toolbar;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.RoiManager;
 
@@ -607,7 +608,15 @@ public class Stitching_Grid implements PlugIn
 				else {
 					// Display our rois
 					rm.runCommand("Show All");
-					IJ.runPlugIn(RoiPicker.class.getName(), "");
+					// Activate the RoiPicker tool
+					Toolbar bar = Toolbar.getInstance();
+					int roiPickerId = bar.getToolId(new RoiPicker().getToolName());
+					if (roiPickerId >= 0) {
+						bar.setTool(roiPickerId);
+					}
+					else {
+						IJ.runPlugIn(RoiPicker.class.getName(), "");
+					}
 				}
 			}
 		}
