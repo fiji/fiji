@@ -12,10 +12,6 @@ import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import javax.swing.JFileChooser;
 
 import fiji.util.gui.GenericDialogPlus;
 
@@ -23,7 +19,6 @@ import mpicbg.trakem2.transform.CoordinateTransform;
 import mpicbg.trakem2.transform.CoordinateTransformList;
 
 import ij.IJ;
-import ij.io.OpenDialog;
 import ij.plugin.PlugIn;
 
 /** 
@@ -215,7 +210,7 @@ public class Transform_Virtual_Stack_MT implements PlugIn
 					ctl.add(ct);
 				}
 			}
-		
+			br.close();
 		} catch (FileNotFoundException e) {
 			IJ.error("File not found exception" + e);
 			
@@ -345,6 +340,7 @@ public class Transform_Virtual_Stack_MT implements PlugIn
 					ctl.add(ct);
 				}
 			}
+			br.close();
 		
 		} catch (FileNotFoundException e) {
 			IJ.error("File not found exception" + e);
