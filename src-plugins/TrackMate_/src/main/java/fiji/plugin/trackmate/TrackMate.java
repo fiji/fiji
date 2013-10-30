@@ -36,7 +36,7 @@ import fiji.plugin.trackmate.util.TMUtils;
 public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 
 	public static final String PLUGIN_NAME_STR = "TrackMate";
-	public static final String PLUGIN_NAME_VERSION = "2.1.0";
+	public static final String PLUGIN_NAME_VERSION = "2.1.1";
 
 	/**
 	 * The model this trackmate will shape.
