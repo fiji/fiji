@@ -8,6 +8,11 @@ import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.
 import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.featurelist_phi;
 import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.featurelist_sa;
 import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.featurelist_theta;
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.util.SpotNeighborhood;
+import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -21,47 +26,49 @@ import net.imglib2.meta.ImgPlus;
 import net.imglib2.meta.axis.DefaultLinearAxis;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
-import Jama.EigenvalueDecomposition;
-import Jama.Matrix;
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.util.SpotNeighborhood;
-import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
 
 /**
- * This {@link SpotAnalyzer} computes morphology features for the given spots. 
+ * This {@link SpotAnalyzer} computes morphology features for the given spots.
  * <p>
- * It estimates shape parameters by computing the most resembling ellipsoid from the pixels
- * contained within the spot radius. From this ellipsoid, it determines what are its semi-axes lengths,
- * and their orientation.
+ * It estimates shape parameters by computing the most resembling ellipsoid from
+ * the pixels contained within the spot radius. From this ellipsoid, it
+ * determines what are its semi-axes lengths, and their orientation.
  * <p>
- * In the 3D case, the features ELLIPSOIDFIT_SEMIAXISLENGTH_* contains the semi-axes lengths, ordered from 
- * the largest (A) to the smallest (C). ELLIPSOIDFIT_AXISPHI_* and ELLIPSOIDFIT_AXISTHETA_* give the 
- * orientation angles of the corresponding ellipsoid axis, in spherical coordinates. Angles are expressed
- * in radians. 
+ * In the 3D case, the features ELLIPSOIDFIT_SEMIAXISLENGTH_* contains the
+ * semi-axes lengths, ordered from the largest (A) to the smallest (C).
+ * ELLIPSOIDFIT_AXISPHI_* and ELLIPSOIDFIT_AXISTHETA_* give the orientation
+ * angles of the corresponding ellipsoid axis, in spherical coordinates. Angles
+ * are expressed in radians.
  * <ul>
- * 	<li>φ is the azimuth int the XY plane and its range is ]-π/2 ; π/2]  
- * 	<li>ϑ is the elevation with respect to the Z axis and ranges from 0 to π
+ * <li>φ is the azimuth int the XY plane and its range is ]-π/2 ; π/2]
+ * <li>ϑ is the elevation with respect to the Z axis and ranges from 0 to π
  * </ul>
  * <p>
- * In the 2D case, ELLIPSOIDFIT_SEMIAXISLENGTH_A and ELLIPSOIDFIT_AXISPHI_A are always 0, the THETA angles are 0, and  
- * ELLIPSOIDFIT_AXISPHI_B and ELLIPSOIDFIT_AXISPHI_C differ by π/2.
+ * In the 2D case, ELLIPSOIDFIT_SEMIAXISLENGTH_A and ELLIPSOIDFIT_AXISPHI_A are
+ * always 0, the THETA angles are 0, and ELLIPSOIDFIT_AXISPHI_B and
+ * ELLIPSOIDFIT_AXISPHI_C differ by π/2.
  * <p>
- * From the semi-axis length, a morphology index is computed, echoed in the {@link SpotFeature#MORPHOLOGY} feature.
- * Spots are classified according to the shape of their most-resembling ellipsoid. We look for equality between
- * semi-axes, with a certain tolerance, which value is {@link #SIGNIFICANCE_FACTOR}. 
+ * From the semi-axis length, a morphology index is computed, echoed in the
+ * {@link SpotFeature#MORPHOLOGY} feature. Spots are classified according to the
+ * shape of their most-resembling ellipsoid. We look for equality between
+ * semi-axes, with a certain tolerance, which value is
+ * {@link #SIGNIFICANCE_FACTOR}.
  * <p>
  * In the 2D case, if b > c are the semi-axes length
  * <ul>
- * 	<li> if b ≅ c, then this index has the value {@link #SPHERE}
- * 	<li> otherwise, it has the value {@link #PROLATE}
+ * <li>if b ≅ c, then this index has the value {@link #SPHERE}
+ * <li>otherwise, it has the value {@link #PROLATE}
  * </ul>
  * <p>
  * In the 2D case, if a > b > c are the semi-axes length
  * <ul>
- * 	<li> if a ≅ b ≅ c, then this index has the value {@link #SPHERE}
- * 	<li> if a ≅ b > c, then this index has the value {@link #OBLATE}: the spot resembles a flat disk
- * 	<li> if a > b ≅ c, then this index has the value {@link #PROLATE}: the spot resembles a rugby ball
- * 	<li> otherwise it has the value {@link #SCALENE}; the spot's shape has nothing particular
+ * <li>if a ≅ b ≅ c, then this index has the value {@link #SPHERE}
+ * <li>if a ≅ b > c, then this index has the value {@link #OBLATE}: the spot
+ * resembles a flat disk
+ * <li>if a > b ≅ c, then this index has the value {@link #PROLATE}: the spot
+ * resembles a rugby ball
+ * <li>otherwise it has the value {@link #SCALENE}; the spot's shape has nothing
+ * particular
  * </ul>
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Apr 1, 2011 - 2012
@@ -328,7 +335,8 @@ public class SpotMorphologyAnalyzer<T extends RealType<T>> extends IndependentSp
 		long[] center = new long[] { size_x/2, size_y/2};
 		long[] radiuses = new long[] { max_radius, max_radius };
 		
-		EllipseNeighborhood<UnsignedByteType, Img<UnsignedByteType>> disc = new EllipseNeighborhood<UnsignedByteType, Img<UnsignedByteType>>(img, center, radiuses);
+		EllipseNeighborhood<UnsignedByteType> disc =
+			new EllipseNeighborhood<UnsignedByteType>(img, center, radiuses);
 		EllipseCursor<UnsignedByteType> sc = disc.cursor();
 		
 		double r2, phi, term;
@@ -364,7 +372,10 @@ public class SpotMorphologyAnalyzer<T extends RealType<T>> extends IndependentSp
 			lv = spot.getFeature(featurelist_sa[j]);
 			phiv = spot.getFeature(featurelist_phi[j]);
 			thetav = spot.getFeature(featurelist_theta[j]);
-			System.out.println(String.format("For axis of semi-length %.1f, orientation is phi = %.1f°, theta = %.1f°",
+			System.out
+				.println(String
+					.format(
+						"For axis of semi-length %.1f, orientation is phi = %.1f°, theta = %.1f°",
 					lv, Math.toDegrees(phiv), Math.toDegrees(thetav)));
 		}
 		System.out.println(spot.echo());
