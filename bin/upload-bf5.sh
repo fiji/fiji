@@ -26,4 +26,4 @@ export UPDATE_SITE_NAME="Bio-Formats 5"
 export UPDATE_SITE_USER="Bio-Formats-5"
 export UPDATE_SITE_URL="http://sites.imagej.net/$UPDATE_SITE_USER/"
 
-sh upload-update-site.sh
+sh "$(dirname "$0")"/upload-update-site.sh
