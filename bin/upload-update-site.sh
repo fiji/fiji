@@ -1,28 +1,11 @@
 #!/bin/sh
 
 #
-# bf-imagej.sh
+# upload-update-site.sh
 #
 
-# Uploads Bio-Formats daily builds to the Bio-Formats update site.
-
-# -- Parameters --
-
-JAR_URL="http://hudson.openmicroscopy.org.uk/job/BIOFORMATS-stable/lastSuccessfulBuild/artifact/artifacts"
-JAR_FILES="
-jars/bio-formats
-jars/bio-formats/jai_imageio
-jars/bio-formats/scifio
-jars/loci-common
-jars/mdbtools-java
-jars/metakit
-jars/ome-xml
-jars/poi-loci
-plugins/loci_plugins
-"
-UPDATE_SITE_NAME="Bio-Formats daily builds"
-UPDATE_SITE_URL="http://sites.imagej.net/Bio-Formats/"
-UPDATE_SITE_USER="Bio-Formats"
+# Uploads JARs from an external location to an ImageJ update site.
+# See upload-bf4.sh and upload-bf5.sh for examples of usage.
 
 # -- Constants --
 
@@ -30,7 +13,13 @@ FIJI_ARCHIVE=fiji-linux64.tar.gz
 FIJI_URL=http://jenkins.imagej.net/job/Stable-Fiji/lastSuccessfulBuild/artifact/$FIJI_ARCHIVE
 FIJI_DIR=Fiji.app
 
-# -- Derived variables --
+# -- Check parameters --
+
+if [ -z "$JAR_URL" ]; then echo "No JAR_URL."; exit 1; fi
+if [ -z "$JAR_FILES" ]; then echo "No JAR_FILES."; exit 2; fi
+if [ -z "$UPDATE_SITE_NAME" ]; then echo "No UPDATE_SITE_NAME."; exit 3; fi
+if [ -z "$UPDATE_SITE_URL" ]; then echo "No UPDATE_SITE_URL."; exit 4; fi
+if [ -z "$UPDATE_SITE_USER" ]; then echo "No UPDATE_SITE_USER."; exit 5; fi
 
 PASSWD_FILE="$HOME/$UPDATE_SITE_USER-WebDAV.passwd"
 
