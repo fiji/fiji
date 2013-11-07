@@ -6,14 +6,10 @@
 
 # Uploads Bio-Formats daily builds to the Bio-Formats update site.
 
-# -- Constants --
+# -- Parameters --
 
-FIJI_ARCHIVE=fiji-linux64.tar.gz
-FIJI_URL=http://jenkins.imagej.net/job/Stable-Fiji/lastSuccessfulBuild/artifact/$FIJI_ARCHIVE
-FIJI_DIR=Fiji.app
-
-BF_URL=http://hudson.openmicroscopy.org.uk/job/BIOFORMATS-stable/lastSuccessfulBuild/artifact/artifacts
-BF_FILES="
+JAR_URL="http://hudson.openmicroscopy.org.uk/job/BIOFORMATS-stable/lastSuccessfulBuild/artifact/artifacts"
+JAR_FILES="
 jars/bio-formats
 jars/bio-formats/jai_imageio
 jars/bio-formats/scifio
@@ -24,8 +20,19 @@ jars/ome-xml
 jars/poi-loci
 plugins/loci_plugins
 "
-BF_UPDATE_SITE="Bio-Formats daily builds"
-BF_PASSWD_FILE="$HOME/Bio-Formats-WebDAV.passwd"
+UPDATE_SITE_NAME="Bio-Formats daily builds"
+UPDATE_SITE_URL="http://sites.imagej.net/Bio-Formats/"
+UPDATE_SITE_USER="Bio-Formats"
+
+# -- Constants --
+
+FIJI_ARCHIVE=fiji-linux64.tar.gz
+FIJI_URL=http://jenkins.imagej.net/job/Stable-Fiji/lastSuccessfulBuild/artifact/$FIJI_ARCHIVE
+FIJI_DIR=Fiji.app
+
+# -- Derived variables --
+
+PASSWD_FILE="$HOME/$UPDATE_SITE_USER-WebDAV.passwd"
 
 # -- Download and unpack Fiji if it is not already present --
 
@@ -34,9 +41,9 @@ then
 	wget -nv "$FIJI_URL"
 	tar xf "$FIJI_ARCHIVE"
 	rm "$FIJI_ARCHIVE"
-	"$FIJI_DIR"/ImageJ-linux64 --update add-update-site "$BF_UPDATE_SITE" \
-		http://sites.imagej.net/Bio-Formats/ \
-		"webdav:Bio-Formats:$(cat "$BF_PASSWD_FILE")" .
+	"$FIJI_DIR"/ImageJ-linux64 --update add-update-site "$UPDATE_SITE_NAME" \
+		"$UPDATE_SITE_URL" \
+		"webdav:$UPDATE_SITE_USER:$(cat "$PASSWD_FILE")" .
 fi
 
 cd "$FIJI_DIR"
@@ -45,17 +52,17 @@ cd "$FIJI_DIR"
 
 ./ImageJ-linux64 --update update-force-pristine
 
-# -- Download latest Bio-Formats stable build and install into local Fiji --
+# -- Download JAR files and install into local Fiji --
 
 FILES_TO_UPLOAD=""
-for jar in $BF_FILES
+for jar in $JAR_FILES
 do
 	echo
 	echo "--== $jar ==--"
 	echo
 
 	FILENAME="$(echo $jar | sed 's/.*\///').jar"
-	REMOTE_URL="$BF_URL/$FILENAME"
+	REMOTE_URL="$JAR_URL/$FILENAME"
 	RM_PATHS="$jar.jar $jar-[0-9]*.jar"
 
 	wget -nv "$REMOTE_URL"
@@ -65,7 +72,7 @@ do
 	FILES_TO_UPLOAD="$FILES_TO_UPLOAD $jar.jar"
 done
 
-# -- Upload files to the Bio-Formats update site! --
+# -- Upload files to the update site! --
 
 ./ImageJ-linux64 --update upload \
-	--update-site "$BF_UPDATE_SITE" --force-shadow $FILES_TO_UPLOAD
+	--update-site "$UPDATE_SITE_NAME" --force-shadow $FILES_TO_UPLOAD
