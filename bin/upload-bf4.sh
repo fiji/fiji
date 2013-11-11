@@ -14,7 +14,6 @@ jars/bio-formats/scifio
 jars/loci-common
 jars/mdbtools-java
 jars/metakit
-jars/netcdf-4.0.03
 jars/ome-xml
 jars/poi-loci
 jars/slf4j-api-1.7.2
