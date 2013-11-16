@@ -10,6 +10,7 @@ public interface PreDeconvolutionFusionInterface
 {
 	public Image<FloatType> getFusedImage( final int index );
 	public Image<FloatType> getWeightImage( final int index );
+	public Image<FloatType> getOverlapImage();
 	public ArrayList< Image< FloatType > > getPointSpreadFunctions();
 	public ExtractPSF getExtractPSFInstance();
 }

@@ -27,7 +27,7 @@ import ij.IJ;
 
 public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconvolutionFusionInterface
 {
-	final Image<FloatType> images[], weights[];
+	final Image<FloatType> images[], weights[], overlap;
 	final int numViews;
 	final boolean normalize;
 	final ExtractPSF extractPSF;
@@ -47,31 +47,42 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
 		numViews = viewStructure.getNumViews();
 				
-		if ( conf.extractPSF )
-			extractPSF = new ExtractPSF( viewStructure );
-		else
-			extractPSF = ExtractPSF.loadAndTransformPSF( conf.psfFiles, conf.transformPSFs, viewStructure );			
-		
-		images = new Image[ numViews ];
-		weights = new Image[ numViews ];
-
-		if ( extractPSF == null )
-			return;
-
-		for ( int view = 0; view < numViews; view++ )
+		if ( conf.deconvolutionJustShowOverlap )
 		{
-			weights[ view ] = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "weights_" + view );
-			images[ view ] = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "view_" + view ); 
+			overlap = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "overlap" );
+			images = null;
+			weights = null;
+			extractPSF = null;
+		}
+		else
+		{
+			overlap = null;
 			
-			if ( images[ view ] == null || weights[ view ] == null )
-			{
-				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-					IOFunctions.println("PreDeconvolutionFusion.constructor: Cannot create output image: " + conf.outputImageFactory.getErrorMessage() );
-
+			if ( conf.extractPSF )
+				extractPSF = new ExtractPSF( viewStructure );
+			else
+				extractPSF = ExtractPSF.loadAndTransformPSF( conf.psfFiles, conf.transformPSFs, viewStructure );			
+			
+			images = new Image[ numViews ];
+			weights = new Image[ numViews ];
+	
+			if ( extractPSF == null )
 				return;
-			}
-
-		}		
+	
+			for ( int view = 0; view < numViews; view++ )
+			{
+				weights[ view ] = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "weights_" + view );
+				images[ view ] = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "view_" + view ); 
+				
+				if ( images[ view ] == null || weights[ view ] == null )
+				{
+					if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+						IOFunctions.println("PreDeconvolutionFusion.constructor: Cannot create output image: " + conf.outputImageFactory.getErrorMessage() );
+	
+					return;
+				}
+			}	
+		}
 	}
 	
 	public static void subtractBackground( final Image< FloatType > img, final float value )
@@ -83,9 +94,6 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 	@Override
 	public void fuseSPIMImages( final int channelIndex )
 	{
-		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println("Loading source images (Channel " + channelIndex +  ").");
-		
 		//
 		// update views so that only the current channel is being fused
 		//
@@ -96,7 +104,16 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 				views.add( view );
 		
 		final int numViews = views.size();
-		
+
+		if ( conf.deconvolutionJustShowOverlap )
+		{
+			PreDeconvolutionFusionSequential.computeOverlap( overlap, views, viewStructure,cropOffsetX, cropOffsetY, cropOffsetZ, scale, min );
+			return;
+		}
+
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println("Loading source images (Channel " + channelIndex +  ").");
+				
 		// this is only single channel for noew
 		if ( channelIndex > 0 )
 			return;
@@ -473,4 +490,6 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 	@Override
 	public ExtractPSF getExtractPSFInstance() { return this.extractPSF; }
 
+	@Override
+	public Image<FloatType> getOverlapImage() { return overlap; }
 }

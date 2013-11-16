@@ -94,6 +94,7 @@ public class SPIMConfiguration
     public boolean multipleImageFusion = false;
     public boolean isDeconvolution = false;
     public boolean deconvolutionLoadSequentially = false;
+    public boolean deconvolutionJustShowOverlap = false;
     public int deconvolutionDisplayPSF = 1;
     public boolean extractPSF = true;
     public boolean transformPSFs = true;

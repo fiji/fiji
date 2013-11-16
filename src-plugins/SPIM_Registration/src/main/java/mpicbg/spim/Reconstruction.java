@@ -192,7 +192,7 @@ public class Reconstruction
 				continue;
         	}
         	
-			if (!conf.registerOnly)
+			if ( !conf.registerOnly )
 			{
 				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Fusion for timepoint " + conf.timepoints[timePointIndex]);		
 				

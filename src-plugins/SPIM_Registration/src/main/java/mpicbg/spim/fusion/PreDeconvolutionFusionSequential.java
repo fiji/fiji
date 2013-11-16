@@ -24,7 +24,7 @@ import mpicbg.spim.registration.ViewStructure;
 
 public class PreDeconvolutionFusionSequential extends SPIMImageFusion implements PreDeconvolutionFusionInterface
 {
-	final Image<FloatType> images[], weights[];
+	final Image<FloatType> images[], weights[], overlap;
 	final int numViews;
 	final boolean normalize;
 	final ExtractPSF extractPSF;
@@ -44,39 +44,159 @@ public class PreDeconvolutionFusionSequential extends SPIMImageFusion implements
 		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
 		numViews = viewStructure.getNumViews();
 		
-		if ( conf.extractPSF )
-			extractPSF = new ExtractPSF( viewStructure );
-		else
-			extractPSF = ExtractPSF.loadAndTransformPSF( conf.psfFiles, conf.transformPSFs, viewStructure );
-		
-
-		images = new Image[ numViews ];
-		weights = new Image[ numViews ];
-
-		if ( extractPSF == null )
-			return;
-		
-		for ( int view = 0; view < numViews; view++ )
+		if ( conf.deconvolutionJustShowOverlap )
 		{
-			weights[ view ] = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "weights_" + view );
-			images[ view ] = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "view_" + view ); 
+			overlap = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "overlap" );
+			images = null;
+			weights = null;
+			extractPSF = null;
+		}
+		else
+		{
+			overlap = null;
 			
-			if ( images[ view ] == null || weights[ view ] == null )
-			{
-				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-					IOFunctions.println("PreDeconvolutionFusion.constructor: Cannot create output image: " + conf.outputImageFactory.getErrorMessage() );
-
+			if ( conf.extractPSF )
+				extractPSF = new ExtractPSF( viewStructure );
+			else
+				extractPSF = ExtractPSF.loadAndTransformPSF( conf.psfFiles, conf.transformPSFs, viewStructure );
+			
+			images = new Image[ numViews ];
+			weights = new Image[ numViews ];
+	
+			if ( extractPSF == null )
 				return;
+			
+			for ( int view = 0; view < numViews; view++ )
+			{
+				weights[ view ] = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "weights_" + view );
+				images[ view ] = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "view_" + view ); 
+				
+				if ( images[ view ] == null || weights[ view ] == null )
+				{
+					if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+						IOFunctions.println("PreDeconvolutionFusion.constructor: Cannot create output image: " + conf.outputImageFactory.getErrorMessage() );
+	
+					return;
+				}
 			}
-		}			
+		}
+	}
+	
+	public static void computeOverlap( final Image< FloatType > overlap, final ArrayList<ViewDataBeads> views, final ViewStructure viewStructure, final int cropOffsetX, final int cropOffsetY, final int cropOffsetZ, final int scale, final Point3f min )
+	{
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println( "Computing overlap" );
+
+		final int numViews = views.size();
+
+		final boolean useView[] = new boolean[ numViews ];
+		final AbstractAffineModel3D<?> models[] = new AbstractAffineModel3D[ numViews ];
+		
+		for ( int i = 0; i < numViews; ++i )
+		{
+			useView[ i ] = Math.max( views.get( i ).getViewErrorStatistics().getNumConnectedViews(), views.get( i ).getTile().getConnectedTiles().size() ) > 0 || views.get( i ).getViewStructure().getNumViews() == 1;
+			
+			// if a corresponding view that was used for registration is valid, this one is too
+			if ( views.get( i ).getUseForRegistration() == false )
+			{
+				final int angle = views.get( i ).getAcqusitionAngle();
+				final int timepoint = views.get( i ).getViewStructure().getTimePoint();
+				
+				for ( final ViewDataBeads view2 : viewStructure.getViews() )
+					if ( view2.getAcqusitionAngle() == angle && timepoint == view2.getViewStructure().getTimePoint() && view2.getUseForRegistration() == true )
+						useView[ i ] = true;
+			}
+			
+			models[ i ] = (AbstractAffineModel3D<?>)views.get( i ).getTile().getModel(); 
+		}
+		
+		final int[][] imageSizes = new int[numViews][];		
+		for ( int i = 0; i < numViews; ++i )
+			imageSizes[ i ] = views.get( i ).getImageSize();
+		
+		final AtomicInteger ai = new AtomicInteger(0);					
+        Thread[] threads = SimpleMultiThreading.newThreads();
+        final int numThreads = threads.length;
+
+		for (int ithread = 0; ithread < threads.length; ++ithread)
+            threads[ithread] = new Thread(new Runnable()
+            {
+                public void run()
+                {
+                	try
+                	{
+                        final int myNumber = ai.getAndIncrement();
+
+                        // temporary float array
+		            	final float[] tmp = new float[ 3 ];
+		            			        		
+		    			final Point3f[] tmpCoordinates = new Point3f[ numViews ];
+		    			final int[][] loc = new int[ numViews ][ 3 ];
+		    			
+		    			for ( int i = 0; i < numViews; ++i )
+		    				tmpCoordinates[ i ] = new Point3f();
+		    			
+		    			final LocalizableCursor<FloatType> cursor = overlap.createLocalizableCursor();
+		    					    			
+		    			while ( cursor.hasNext() )
+		    			{
+		    				cursor.fwd();
+		    				
+		        			if ( cursor.getPosition(2) % numThreads == myNumber )
+		        			{
+		        				// get the coordinates if cropped (all coordinates are the same, so we only use the first cursor)
+		        				final int x = cursor.getPosition( 0 ) + cropOffsetX;
+		        				final int y = cursor.getPosition( 1 ) + cropOffsetY;
+		        				final int z = cursor.getPosition( 2 ) + cropOffsetZ;
+
+		        				// how many view contribute at this position
+								int num = 0;
+								for ( int i = 0; i < numViews; ++i )
+								{
+									if ( useView[ i ] )
+									{	            							
+		    							tmpCoordinates[ i ].x = x * scale + min.x;
+		    							tmpCoordinates[ i ].y = y * scale + min.y;
+		    							tmpCoordinates[ i ].z = z * scale + min.z;
+		
+		    							mpicbg.spim.mpicbg.Java3d.applyInverseInPlace( models[i], tmpCoordinates[i], tmp );
+			
+		    							loc[i][0] = Util.round( tmpCoordinates[i].x );
+		    							loc[i][1] = Util.round( tmpCoordinates[i].y );
+		    							loc[i][2] = Util.round( tmpCoordinates[i].z );	
+
+		    							// do we hit the source image?
+										if ( loc[ i ][ 0 ] >= 0 && loc[ i ][ 1 ] >= 0 && loc[ i ][ 2 ] >= 0 && 
+											 loc[ i ][ 0 ] < imageSizes[ i ][ 0 ] && 
+											 loc[ i ][ 1 ] < imageSizes[ i ][ 1 ] && 
+											 loc[ i ][ 2 ] < imageSizes[ i ][ 2 ] )
+		    							{
+		    								++num;
+		    							}	
+									}
+								}
+								
+								cursor.getType().set( num );
+	    						
+	            			} // myThread loop       				
+	        			} // iterator loop
+	        			
+        				cursor.close();     
+                	}
+                	catch (NoninvertibleModelException e)
+                	{
+                		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+                			IOFunctions.println( "PreDeconvolutionFusionSequential(): Model not invertible for " + viewStructure );
+                	}
+                }// Thread.run loop
+            });
+        
+        SimpleMultiThreading.startAndJoin(threads);	
 	}
 
 	@Override
 	public void fuseSPIMImages( final int channelIndex )
 	{
-		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println("Loading source images (Channel " + channelIndex +  ").");
-		
 		//
 		// update views so that only the current channel is being fused
 		//
@@ -87,6 +207,16 @@ public class PreDeconvolutionFusionSequential extends SPIMImageFusion implements
 				views.add( view );
 		
 		final int numViews = views.size();
+
+		if ( conf.deconvolutionJustShowOverlap )
+		{
+			computeOverlap( overlap, views, viewStructure,cropOffsetX, cropOffsetY, cropOffsetZ, scale, min );
+			return;
+		}
+		
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println("Loading source images (Channel " + channelIndex +  ").");
+		
 		
 		// this is only single channel for noew
 		if ( channelIndex > 0 )
@@ -457,4 +587,7 @@ public class PreDeconvolutionFusionSequential extends SPIMImageFusion implements
 
 	@Override
 	public ExtractPSF getExtractPSFInstance() { return this.extractPSF; }
+
+	@Override
+	public Image<FloatType> getOverlapImage() { return overlap; }
 }

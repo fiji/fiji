@@ -2,6 +2,7 @@ package fiji.plugin;
 
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
+import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
@@ -87,6 +88,15 @@ public class Multi_View_Deconvolution implements PlugIn
 		// get the input images for the deconvolution
 		final FusionControl fusionControl = viewStructure.getFusionControl();
 		final PreDeconvolutionFusionInterface fusion = (PreDeconvolutionFusionInterface)fusionControl.getFusion();
+		
+		if ( conf.deconvolutionJustShowOverlap )
+		{
+			fusion.getOverlapImage().getDisplay().setMinMax();
+			ImagePlus overlap = ImageJFunctions.copyToImagePlus( fusion.getOverlapImage() );
+			overlap.setTitle( "overlap for each pixel [" + viewStructure.getSPIMConfiguration().inputFilePattern + "]" );
+			overlap.show();
+			return;
+		}
 		
 		final int numViews = viewStructure.getNumViews();
 		
@@ -262,7 +272,12 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static int defaultComputationIndex = 0;
 	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
 	
-	public static String[] iterationTypeString = new String[]{ "Efficient Bayesian - Optimization II (very fast, imprecise)", "Efficient Bayesian - Optimization I (fast, precise)", "Efficient Bayesian (less fast, more precise)", "Independent (slow, very precise)" };
+	public static String[] iterationTypeString = new String[]{ 
+		"Efficient Bayesian - Optimization II (very fast, imprecise)", 
+		"Efficient Bayesian - Optimization I (fast, precise)", 
+		"Efficient Bayesian (less fast, more precise)", 
+		"Independent (slow, very precise)",
+		"Illustrate overlap of views per pixel (do not deconvolve)" };
 	public static String[] imglibContainer = new String[]{ "Array container (input files smaller ~2048x2048x450 px)", "Cell container (input files larger ~2048x2048x450 px)" };
 	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Nvidia CUDA via JNA)" };
 	public static String[] extractPSFs = new String[]{ "Extract from beads", "Provide file with PSF" };
@@ -606,14 +621,18 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		defaultIterationType = gd2.getNextChoiceIndex();
 		
+		conf.deconvolutionJustShowOverlap = false;
+		
 		if ( defaultIterationType == 0 )
 			iterationType = PSFTYPE.OPTIMIZATION_II;
 		else if ( defaultIterationType == 1 )
 			iterationType = PSFTYPE.OPTIMIZATION_I;
-		else if ( defaultIterationType == 1 )
+		else if ( defaultIterationType == 2 )
 			iterationType = PSFTYPE.EFFICIENT_BAYESIAN;
-		else
+		else if ( defaultIterationType == 3 )
 			iterationType = PSFTYPE.INDEPENDENT;
+		else
+			conf.deconvolutionJustShowOverlap = true; // just show the overlap
 		
 		numIterations = defaultNumIterations = (int)Math.round( gd2.getNextNumber() );
 		useTikhonovRegularization = defaultUseTikhonovRegularization = gd2.getNextBoolean();
