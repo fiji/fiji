@@ -55,7 +55,7 @@ public class BayesMVDeconvolution implements Deconvolver
 	ArrayList<LRFFT> data;
 	String name;
 	
-	public BayesMVDeconvolution( final LRInput views, final PSFTYPE iterationType, final int numIterations, final double lambda, final String name )
+	public BayesMVDeconvolution( final LRInput views, final PSFTYPE iterationType, final int numIterations, final double lambda, double osemspeedup, final int osemspeedupindex, final String name )
 	{
 		this.name = name;
 		this.data = views.getViews();
@@ -67,9 +67,18 @@ public class BayesMVDeconvolution implements Deconvolver
 		if ( initialImage != null )
 			this.psi = loadInitialImage( initialImage, checkNumbers, minValue, data.get( 0 ).getImage().getDimensions(), data.get( 0 ).getImage().getImageFactory() );
 				
-		this.avg = (float)AdjustInput.normAllImages( data );
+		final double[] result = AdjustInput.normAllImages( data );
+		this.avg = (float)result[ 0 ];
+	
+		if ( osemspeedupindex == 1 )//min
+			osemspeedup = Math.max( 1, result[ 1 ] );//but not smaller than 1
+		else if ( osemspeedupindex == 2 )//avg
+			osemspeedup = Math.max( 1, result[ 2 ] );//but not smaller than 1
+		
+		adjustOSEMspeedup( views, osemspeedup );
 		
 		IJ.log( "Average intensity in overlapping area: " + avg );        
+		IJ.log( "OSEM acceleration: " + osemspeedup );
 		
 		// init all views
 		views.init( iterationType );
@@ -146,6 +155,19 @@ public class BayesMVDeconvolution implements Deconvolver
 	}
 	
 	
+	private void adjustOSEMspeedup( final LRInput views, final double osemspeedup )
+	{
+		if ( osemspeedup == 1.0 )
+			return;
+		
+		for ( final LRFFT view : views.getViews() )
+		{
+			for ( final FloatType f : view.getWeight() )
+				f.set( Math.min( 1, f.get() * (float)osemspeedup ) ); // individual contribution never higher than 1
+		}
+	}
+
+
 	protected static Image< FloatType > loadInitialImage( final String fileName, final boolean checkNumbers, final float minValue, final int[] dimensions, final ImageFactory< FloatType > imageFactory )
 	{
 		IOFunctions.println( "Loading image '" + fileName + "' as start for iteration." );

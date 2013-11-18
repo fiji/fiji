@@ -50,7 +50,7 @@ public class AdjustInput
 		return sum.getSum();
 	}	
 
-	public static double normAllImages( final ArrayList<LRFFT> data )
+	public static double[] normAllImages( final ArrayList<LRFFT> data )
 	{
 		final Vector< Chunk > threadChunks = SimpleMultiThreading.divideIntoChunks( data.get( 0 ).getImage().getNumPixels(), Runtime.getRuntime().availableProcessors() );
 		final int numThreads = threadChunks.size();
@@ -230,17 +230,18 @@ public class AdjustInput
         	sumResult.add( sum[ i ].getSum() );
         }
         
+        double avgNumOverlapFinal = (avgNumOverlapResult/(double)countAvgNumOverlapResult);
 		IJ.log( "Min number of overlapping views: " + minNumOverlapResult );
-		IJ.log( "Average number of overlapping views: " + (avgNumOverlapResult/(double)countAvgNumOverlapResult) );
+		IJ.log( "Average number of overlapping views: " + avgNumOverlapFinal );
 
 		if ( countResult == 0 )
-			return 1;
+			return new double[]{ 1, minNumOverlapResult, avgNumOverlapFinal };
 		
 		// compute the average sum
 		final double avg = sumResult.getSum() / (double)countResult;
 		
 		// return the average intensity in the overlapping area
-		return avg;
+		return new double[]{ avg, minNumOverlapResult, avgNumOverlapFinal };
 	}
 
 	/**
