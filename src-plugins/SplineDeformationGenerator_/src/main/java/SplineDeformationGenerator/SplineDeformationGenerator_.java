@@ -308,53 +308,53 @@ PlugIn
 
 		int TRANSFORMATIONSPLINEDEGREE = 3;
 		// Mode = elastic
-				int deformationModelIndex = SplineDeformationGenerator_.MODE_ELASTIC;
+		int deformationModelIndex = SplineDeformationGenerator_.MODE_ELASTIC;
 
-				// Show parameters
-				IJ.log("Source image           : " + fn_source);                
-				IJ.log("Min. Scale Deformation : " + min_scale);
-				IJ.log("Max. Scale Deformation : " + max_scale);
-				IJ.log("Noise Spline           : " + noiseSpline);
-				IJ.log("Output image file      : " + fn_out);
-				IJ.log("Output transf. file    : " + fn_tnf);
+		// Show parameters
+		IJ.log("Source image           : " + fn_source);                
+		IJ.log("Min. Scale Deformation : " + min_scale);
+		IJ.log("Max. Scale Deformation : " + max_scale);
+		IJ.log("Noise Spline           : " + noiseSpline);
+		IJ.log("Output image file      : " + fn_out);
+		IJ.log("Output transf. file    : " + fn_tnf);
 
-				// Open source
-				Opener opener = new Opener();
+		// Open source
+		Opener opener = new Opener();
 
-				ImagePlus sourceImp = opener.openImage(fn_source);   
+		ImagePlus sourceImp = opener.openImage(fn_source);   
 
-				splineDeformationGeneratorImageModel source =
-						new splineDeformationGeneratorImageModel(sourceImp.getProcessor());
+		splineDeformationGeneratorImageModel source =
+				new splineDeformationGeneratorImageModel(sourceImp.getProcessor());
 
-				source.getThread().start();       
-				// Join threads.
-				try 
-				{
-					source.getThread().join();
-				} 
-				catch (InterruptedException e) 
-				{
-					IJ.error("Unexpected interruption exception");
-				}
+		source.getThread().start();       
+		// Join threads.
+		try 
+		{
+			source.getThread().join();
+		} 
+		catch (InterruptedException e) 
+		{
+			IJ.error("Unexpected interruption exception");
+		}
 
-				ImagePlus output_ip = new ImagePlus();
+		ImagePlus output_ip = new ImagePlus();
 
-				final splineDeformationGeneratorTransformation warp =
-						new splineDeformationGeneratorTransformation(
-								sourceImp, source, deformationModelIndex,
-								min_scale, max_scale, noiseSpline, TRANSFORMATIONSPLINEDEGREE,
-								0, 0, 0, 0, 0, 0, 0, 0, 0, bSaveTransformation, false, false,
-								fn_out, fn_tnf, output_ip);
-				warp.generateDeformation();
+		final splineDeformationGeneratorTransformation warp =
+				new splineDeformationGeneratorTransformation(
+						sourceImp, source, deformationModelIndex,
+						min_scale, max_scale, noiseSpline, TRANSFORMATIONSPLINEDEGREE,
+						0, 0, 0, 0, 0, 0, 0, 0, 0, bSaveTransformation, false, false,
+						fn_out, fn_tnf, output_ip);
+		warp.generateDeformation();
 
-				// Save result as JPEG
-				ImageConverter converter = new ImageConverter(output_ip);
-				converter.convertToGray16();
-				FileSaver fs = new FileSaver(output_ip);
-				JpegWriter js = new JpegWriter();
-				js.setQuality(100);
-				WindowManager.setTempCurrentImage(output_ip);	
-				js.run(fn_out);               
+		// Save result as JPEG
+		ImageConverter converter = new ImageConverter(output_ip);
+		converter.convertToGray16();
+		FileSaver fs = new FileSaver(output_ip);
+		JpegWriter js = new JpegWriter();
+		js.setQuality(100);
+		WindowManager.setTempCurrentImage(output_ip);	
+		js.run(fn_out);               
 	}
 	/*------------------------------------------------------------------*/
 	/**
@@ -389,54 +389,54 @@ PlugIn
 
 		int TRANSFORMATIONSPLINEDEGREE = 3;
 		// Mode = fisheye
-				int deformationModelIndex = SplineDeformationGenerator_.MODE_FISHEYE;
+		int deformationModelIndex = SplineDeformationGenerator_.MODE_FISHEYE;
 
-				// Show parameters
-				IJ.log("Source image           : " + fn_source);        
-				IJ.log("Number of magnifiers   : " + num_of_magnifiers);
-				IJ.log("Magnifier power        : " + magnifier_power);
-				IJ.log("Magnifier size         : " + magnifier_size);
-				IJ.log("Output image file      : " + fn_out);
-				IJ.log("Output transf. file    : " + fn_tnf);
+		// Show parameters
+		IJ.log("Source image           : " + fn_source);        
+		IJ.log("Number of magnifiers   : " + num_of_magnifiers);
+		IJ.log("Magnifier power        : " + magnifier_power);
+		IJ.log("Magnifier size         : " + magnifier_size);
+		IJ.log("Output image file      : " + fn_out);
+		IJ.log("Output transf. file    : " + fn_tnf);
 
-				// Open source
-				Opener opener = new Opener();
+		// Open source
+		Opener opener = new Opener();
 
-				ImagePlus sourceImp = opener.openImage(fn_source);   
+		ImagePlus sourceImp = opener.openImage(fn_source);   
 
-				splineDeformationGeneratorImageModel source =
-						new splineDeformationGeneratorImageModel(sourceImp.getProcessor());
+		splineDeformationGeneratorImageModel source =
+				new splineDeformationGeneratorImageModel(sourceImp.getProcessor());
 
-				source.getThread().start();       
-				// Join threads.
-				try 
-				{
-					source.getThread().join();
-				} 
-				catch (InterruptedException e) 
-				{
-					IJ.error("Unexpected interruption exception");
-				}
+		source.getThread().start();       
+		// Join threads.
+		try 
+		{
+			source.getThread().join();
+		} 
+		catch (InterruptedException e) 
+		{
+			IJ.error("Unexpected interruption exception");
+		}
 
-				ImagePlus output_ip = new ImagePlus();
+		ImagePlus output_ip = new ImagePlus();
 
-				final splineDeformationGeneratorTransformation warp =
-						new splineDeformationGeneratorTransformation(
-								sourceImp, source, deformationModelIndex,
-								0, 0, 0, TRANSFORMATIONSPLINEDEGREE,
-								num_of_magnifiers, magnifier_power, magnifier_size,
-								0, 0, 0, 0, 0, 0, bSaveTransformation, false, false,
-								fn_out, fn_tnf, output_ip);
-				warp.generateDeformation();
+		final splineDeformationGeneratorTransformation warp =
+				new splineDeformationGeneratorTransformation(
+						sourceImp, source, deformationModelIndex,
+						0, 0, 0, TRANSFORMATIONSPLINEDEGREE,
+						num_of_magnifiers, magnifier_power, magnifier_size,
+						0, 0, 0, 0, 0, 0, bSaveTransformation, false, false,
+						fn_out, fn_tnf, output_ip);
+		warp.generateDeformation();
 
-				// Save result as JPEG
-				ImageConverter converter = new ImageConverter(output_ip);
-				converter.convertToGray16();
-				FileSaver fs = new FileSaver(output_ip);
-				JpegWriter js = new JpegWriter();
-				js.setQuality(100);
-				WindowManager.setTempCurrentImage(output_ip);	
-				js.run(fn_out);               
+		// Save result as JPEG
+		ImageConverter converter = new ImageConverter(output_ip);
+		converter.convertToGray16();
+		FileSaver fs = new FileSaver(output_ip);
+		JpegWriter js = new JpegWriter();
+		js.setQuality(100);
+		WindowManager.setTempCurrentImage(output_ip);	
+		js.run(fn_out);               
 	}
 
 	/*------------------------------------------------------------------*/
@@ -470,52 +470,52 @@ PlugIn
 		int TRANSFORMATIONSPLINEDEGREE = 3;
 
 		// Mode = perspective
-				int deformationModelIndex = SplineDeformationGenerator_.MODE_PERSPECTIVE;
+		int deformationModelIndex = SplineDeformationGenerator_.MODE_PERSPECTIVE;
 
-				// Show parameters
-				IJ.log("Source image           : " + fn_source);        
-				IJ.log("Noise scale            : " + noise_scale);
-				IJ.log("Noise shift            : " + noise_shift);        
-				IJ.log("Output image file      : " + fn_out);
-				IJ.log("Output transf. file    : " + fn_tnf);
+		// Show parameters
+		IJ.log("Source image           : " + fn_source);        
+		IJ.log("Noise scale            : " + noise_scale);
+		IJ.log("Noise shift            : " + noise_shift);        
+		IJ.log("Output image file      : " + fn_out);
+		IJ.log("Output transf. file    : " + fn_tnf);
 
-				// Open source
-				Opener opener = new Opener();
+		// Open source
+		Opener opener = new Opener();
 
-				ImagePlus sourceImp = opener.openImage(fn_source);   
+		ImagePlus sourceImp = opener.openImage(fn_source);   
 
-				splineDeformationGeneratorImageModel source =
-						new splineDeformationGeneratorImageModel(sourceImp.getProcessor());
+		splineDeformationGeneratorImageModel source =
+				new splineDeformationGeneratorImageModel(sourceImp.getProcessor());
 
-				source.getThread().start();       
-				// Join threads.
-				try 
-				{
-					source.getThread().join();
-				} 
-				catch (InterruptedException e) 
-				{
-					IJ.error("Unexpected interruption exception");
-				}
+		source.getThread().start();       
+		// Join threads.
+		try 
+		{
+			source.getThread().join();
+		} 
+		catch (InterruptedException e) 
+		{
+			IJ.error("Unexpected interruption exception");
+		}
 
-				ImagePlus output_ip = new ImagePlus();
+		ImagePlus output_ip = new ImagePlus();
 
-				final splineDeformationGeneratorTransformation warp =
-						new splineDeformationGeneratorTransformation(
-								sourceImp, source, deformationModelIndex,
-								0, 0, 0, TRANSFORMATIONSPLINEDEGREE,
-								0, 0, 0, noise_scale, noise_shift, 0, 0, 0, 0, bSaveTransformation, false, false,
-								fn_out, fn_tnf, output_ip);
-				warp.generateDeformation();
+		final splineDeformationGeneratorTransformation warp =
+				new splineDeformationGeneratorTransformation(
+						sourceImp, source, deformationModelIndex,
+						0, 0, 0, TRANSFORMATIONSPLINEDEGREE,
+						0, 0, 0, noise_scale, noise_shift, 0, 0, 0, 0, bSaveTransformation, false, false,
+						fn_out, fn_tnf, output_ip);
+		warp.generateDeformation();
 
-				// Save result as JPEG
-				ImageConverter converter = new ImageConverter(output_ip);
-				converter.convertToGray16();
-				FileSaver fs = new FileSaver(output_ip);
-				JpegWriter js = new JpegWriter();
-				js.setQuality(100);
-				WindowManager.setTempCurrentImage(output_ip);	
-				js.run(fn_out);               
+		// Save result as JPEG
+		ImageConverter converter = new ImageConverter(output_ip);
+		converter.convertToGray16();
+		FileSaver fs = new FileSaver(output_ip);
+		JpegWriter js = new JpegWriter();
+		js.setQuality(100);
+		WindowManager.setTempCurrentImage(output_ip);	
+		js.run(fn_out);               
 	}
 
 	/*------------------------------------------------------------------*/
@@ -549,54 +549,54 @@ PlugIn
 		int TRANSFORMATIONSPLINEDEGREE = 3;
 
 		// Mode = barrel/pincushion
-				int deformationModelIndex = SplineDeformationGenerator_.MODE_BARREL;
+		int deformationModelIndex = SplineDeformationGenerator_.MODE_BARREL;
 
-				// Show parameters
-				IJ.log("Source image         : " + fn_source);        
-				IJ.log("Output image file    : " + fn_out);
-				IJ.log("Noise K1             : " + noise_K1);
-				IJ.log("Noise K2             : " + noise_K2);        
-				IJ.log("Output image file    : " + fn_out);
-				IJ.log("Output transf. file  : " + fn_tnf);
+		// Show parameters
+		IJ.log("Source image         : " + fn_source);        
+		IJ.log("Output image file    : " + fn_out);
+		IJ.log("Noise K1             : " + noise_K1);
+		IJ.log("Noise K2             : " + noise_K2);        
+		IJ.log("Output image file    : " + fn_out);
+		IJ.log("Output transf. file  : " + fn_tnf);
 
-				// Open source
-				Opener opener = new Opener();
+		// Open source
+		Opener opener = new Opener();
 
-				ImagePlus sourceImp = opener.openImage(fn_source);   
+		ImagePlus sourceImp = opener.openImage(fn_source);   
 
-				splineDeformationGeneratorImageModel source =
-						new splineDeformationGeneratorImageModel(sourceImp.getProcessor());
+		splineDeformationGeneratorImageModel source =
+				new splineDeformationGeneratorImageModel(sourceImp.getProcessor());
 
-				source.getThread().start();       
-				// Join threads.
-				try 
-				{
-					source.getThread().join();
-				} 
-				catch (InterruptedException e) 
-				{
-					IJ.error("Unexpected interruption exception");
-				}
+		source.getThread().start();       
+		// Join threads.
+		try 
+		{
+			source.getThread().join();
+		} 
+		catch (InterruptedException e) 
+		{
+			IJ.error("Unexpected interruption exception");
+		}
 
-				ImagePlus output_ip = new ImagePlus();
+		ImagePlus output_ip = new ImagePlus();
 
-				final splineDeformationGeneratorTransformation warp =
-						new splineDeformationGeneratorTransformation(
-								sourceImp, source, deformationModelIndex,
-								0, 0, 0, TRANSFORMATIONSPLINEDEGREE,
-								0, 0, 0, 0, 0, noise_K1, noise_K2,
-								0, 0, bSaveTransformation, false, false,
-								fn_out, fn_tnf, output_ip);
-				warp.generateDeformation();
+		final splineDeformationGeneratorTransformation warp =
+				new splineDeformationGeneratorTransformation(
+						sourceImp, source, deformationModelIndex,
+						0, 0, 0, TRANSFORMATIONSPLINEDEGREE,
+						0, 0, 0, 0, 0, noise_K1, noise_K2,
+						0, 0, bSaveTransformation, false, false,
+						fn_out, fn_tnf, output_ip);
+		warp.generateDeformation();
 
-				// Save result as JPEG
-				ImageConverter converter = new ImageConverter(output_ip);
-				converter.convertToGray16();
-				FileSaver fs = new FileSaver(output_ip);
-				JpegWriter js = new JpegWriter();
-				js.setQuality(100);
-				WindowManager.setTempCurrentImage(output_ip);	
-				js.run(fn_out);               
+		// Save result as JPEG
+		ImageConverter converter = new ImageConverter(output_ip);
+		converter.convertToGray16();
+		FileSaver fs = new FileSaver(output_ip);
+		JpegWriter js = new JpegWriter();
+		js.setQuality(100);
+		WindowManager.setTempCurrentImage(output_ip);	
+		js.run(fn_out);               
 	}    
 
 	/*------------------------------------------------------------------*/
@@ -631,55 +631,55 @@ PlugIn
 		int TRANSFORMATIONSPLINEDEGREE = 3;
 
 		// Mode = 2D gels
-				int deformationModelIndex = SplineDeformationGenerator_.MODE_2D_GEL;
+		int deformationModelIndex = SplineDeformationGenerator_.MODE_2D_GEL;
 
-				// Show parameters
-				IJ.log("Source image         : " + fn_source);        
-				IJ.log("Output image file    : " + fn_out);
-				IJ.log("Lenght reduction     : " + length_reduction);
-				IJ.log("Maximum shift        : " + max_shift);        
-				IJ.log("Output image file    : " + fn_out);
-				IJ.log("Output transf. file  : " + fn_tnf);
+		// Show parameters
+		IJ.log("Source image         : " + fn_source);        
+		IJ.log("Output image file    : " + fn_out);
+		IJ.log("Lenght reduction     : " + length_reduction);
+		IJ.log("Maximum shift        : " + max_shift);        
+		IJ.log("Output image file    : " + fn_out);
+		IJ.log("Output transf. file  : " + fn_tnf);
 
-				// Open source
-				Opener opener = new Opener();
+		// Open source
+		Opener opener = new Opener();
 
-				ImagePlus sourceImp = opener.openImage(fn_source);   
+		ImagePlus sourceImp = opener.openImage(fn_source);   
 
-				splineDeformationGeneratorImageModel source =
-						new splineDeformationGeneratorImageModel(sourceImp.getProcessor());
+		splineDeformationGeneratorImageModel source =
+				new splineDeformationGeneratorImageModel(sourceImp.getProcessor());
 
-				source.getThread().start();       
-				// Join threads.
-				try 
-				{
-					source.getThread().join();
-				} 
-				catch (InterruptedException e) 
-				{
-					IJ.error("Unexpected interruption exception");
-				}
+		source.getThread().start();       
+		// Join threads.
+		try 
+		{
+			source.getThread().join();
+		} 
+		catch (InterruptedException e) 
+		{
+			IJ.error("Unexpected interruption exception");
+		}
 
-				ImagePlus output_ip = new ImagePlus();
+		ImagePlus output_ip = new ImagePlus();
 
-				final splineDeformationGeneratorTransformation warp =
-						new splineDeformationGeneratorTransformation(
-								sourceImp, source, deformationModelIndex,
-								0, 0, 0, TRANSFORMATIONSPLINEDEGREE,
-								0, 0, 0, 0, 0, 0, 0,
-								length_reduction, max_shift, 
-								bSaveTransformation, false, false,
-								fn_out, fn_tnf, output_ip);
-				warp.generateDeformation();
+		final splineDeformationGeneratorTransformation warp =
+				new splineDeformationGeneratorTransformation(
+						sourceImp, source, deformationModelIndex,
+						0, 0, 0, TRANSFORMATIONSPLINEDEGREE,
+						0, 0, 0, 0, 0, 0, 0,
+						length_reduction, max_shift, 
+						bSaveTransformation, false, false,
+						fn_out, fn_tnf, output_ip);
+		warp.generateDeformation();
 
-				// Save result as JPEG
-				ImageConverter converter = new ImageConverter(output_ip);
-				converter.convertToGray16();
-				FileSaver fs = new FileSaver(output_ip);
-				JpegWriter js = new JpegWriter();
-				js.setQuality(100);
-				WindowManager.setTempCurrentImage(output_ip);	
-				js.run(fn_out);               
+		// Save result as JPEG
+		ImageConverter converter = new ImageConverter(output_ip);
+		converter.convertToGray16();
+		FileSaver fs = new FileSaver(output_ip);
+		JpegWriter js = new JpegWriter();
+		js.setQuality(100);
+		WindowManager.setTempCurrentImage(output_ip);	
+		js.run(fn_out);               
 	}    
 
 	/*------------------------------------------------------------------*/
@@ -1287,58 +1287,58 @@ PlugIn
 
 			// Create checkbox for saving the transformation
 			final Panel saveTransformationPanel = new Panel();
-					saveTransformationPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-					ckSaveTransformation = new Checkbox(" Save Transformation", bSaveTransformation);
-					saveTransformationPanel.add(ckSaveTransformation);
+			saveTransformationPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+			ckSaveTransformation = new Checkbox(" Save Transformation", bSaveTransformation);
+			saveTransformationPanel.add(ckSaveTransformation);
 
-					// Create checkbox for showing the transformation
-					final Panel showTransformationPanel = new Panel();
-					showTransformationPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-					ckShowTransformation = new Checkbox(" Show Transformation", bShowTransformation);
-					showTransformationPanel.add(ckShowTransformation);
+			// Create checkbox for showing the transformation
+			final Panel showTransformationPanel = new Panel();
+			showTransformationPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+			ckShowTransformation = new Checkbox(" Show Transformation", bShowTransformation);
+			showTransformationPanel.add(ckShowTransformation);
 
-					// Build Done Cancel panel
-					final Panel buttonPanel = new Panel();
-					buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-					DoneButton.addActionListener(this);
-					final Button cancelButton = new Button("Cancel");
-					cancelButton.addActionListener(this);
-					buttonPanel.add(DoneButton);
-					buttonPanel.add(cancelButton);
+			// Build Done Cancel panel
+			final Panel buttonPanel = new Panel();
+			buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+			DoneButton.addActionListener(this);
+			final Button cancelButton = new Button("Cancel");
+			cancelButton.addActionListener(this);
+			buttonPanel.add(DoneButton);
+			buttonPanel.add(cancelButton);
 
-					// Build separations
-					final Label separation1 = new Label("");
-					final Label separation2 = new Label("    --------- Elastic splines ---------");
-					final Label separation3 = new Label("    ------------ Fisheye ------------");
-					final Label separation4 = new Label("    ---------- Perspective ----------");
-					final Label separation5 = new Label("    ------- Barrel/Pincushion -------");
-					final Label separation6 = new Label("    ------------ 2D Gels ------------");
-					final Label separation7 = new Label("");
+			// Build separations
+			final Label separation1 = new Label("");
+			final Label separation2 = new Label("    --------- Elastic splines ---------");
+			final Label separation3 = new Label("    ------------ Fisheye ------------");
+			final Label separation4 = new Label("    ---------- Perspective ----------");
+			final Label separation5 = new Label("    ------- Barrel/Pincushion -------");
+			final Label separation6 = new Label("    ------------ 2D Gels ------------");
+			final Label separation7 = new Label("");
 
-					// Finally build dialog
-					add(sourcePanel);
-					add(deformationModelPanel);
-					add(saveTransformationPanel);
-					add(showTransformationPanel);
-					add(separation2);
-					add(min_scalePanel);
-					add(max_scalePanel);
-					add(noiseSplinePanel);
-					add(separation3);
-					add(number_magPanel);
-					add(mag_powerPanel);
-					add(mag_sizePanel);
-					add(separation4);
-					add(noisePerspectiveScalePanel);
-					add(noisePerspectiveShiftPanel);
-					add(separation5);
-					add(noiseK1Panel);
-					add(noiseK2Panel);
-					add(separation6);
-					add(lengthReductionPanel);
-					add(maxShiftPanel);        
-					add(buttonPanel);
-					pack();
+			// Finally build dialog
+			add(sourcePanel);
+			add(deformationModelPanel);
+			add(saveTransformationPanel);
+			add(showTransformationPanel);
+			add(separation2);
+			add(min_scalePanel);
+			add(max_scalePanel);
+			add(noiseSplinePanel);
+			add(separation3);
+			add(number_magPanel);
+			add(mag_powerPanel);
+			add(mag_sizePanel);
+			add(separation4);
+			add(noisePerspectiveScalePanel);
+			add(noisePerspectiveShiftPanel);
+			add(separation5);
+			add(noiseK1Panel);
+			add(noiseK2Panel);
+			add(separation6);
+			add(lengthReductionPanel);
+			add(maxShiftPanel);        
+			add(buttonPanel);
+			pack();
 		} /* end splineDeformationGeneratorDialog */
 
 		/*....................................................................
@@ -1929,10 +1929,10 @@ PlugIn
 		 * @param c
 		 * @param s
 		 */
-		 private void symmetricFirMirrorOffBounds1D (
-				 final double[] h,
-				 final double[] c,
-				 final double[] s) 
+		private void symmetricFirMirrorOffBounds1D (
+				final double[] h,
+				final double[] c,
+				final double[] s) 
 		{
 			switch (h.length) {
 			case 2:
@@ -2325,7 +2325,7 @@ PlugIn
                 Private methods
         ....................................................................*/
 
-        /*-------------------------------------------------------------------*/
+		/*-------------------------------------------------------------------*/
 		/**
 		 * Barrel/pincushion deformation
 		 *
