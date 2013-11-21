@@ -41,15 +41,12 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.Macro;
 import ij.plugin.PlugIn;
-import ij.plugin.JpegWriter;
 import ij.process.ByteProcessor;
 import ij.process.ShortProcessor;
 import ij.process.FloatProcessor;
-import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.WindowManager;
 import ij.io.Opener;
-import ij.io.FileSaver;
 
 import java.awt.Button;
 import java.awt.Checkbox;
@@ -348,14 +345,8 @@ PlugIn
 						fn_out, fn_tnf, output_ip);
 		warp.generateDeformation();
 
-		// Save result as JPEG
-		ImageConverter converter = new ImageConverter(output_ip);
-		converter.convertToGray16();
-		FileSaver fs = new FileSaver(output_ip);
-		JpegWriter js = new JpegWriter();
-		JpegWriter.setQuality(100);
-		WindowManager.setTempCurrentImage(output_ip);	
-		js.run(fn_out);               
+		// Save result as TIFF
+		IJ.saveAsTiff( output_ip, fn_out );               
 	}
 	/*------------------------------------------------------------------*/
 	/**
@@ -430,14 +421,8 @@ PlugIn
 						fn_out, fn_tnf, output_ip);
 		warp.generateDeformation();
 
-		// Save result as JPEG
-		ImageConverter converter = new ImageConverter(output_ip);
-		converter.convertToGray16();
-		FileSaver fs = new FileSaver(output_ip);
-		JpegWriter js = new JpegWriter();
-		JpegWriter.setQuality(100);
-		WindowManager.setTempCurrentImage(output_ip);	
-		js.run(fn_out);               
+		// Save result as TIFF
+		IJ.saveAsTiff( output_ip, fn_out );                
 	}
 
 	/*------------------------------------------------------------------*/
@@ -509,14 +494,8 @@ PlugIn
 						fn_out, fn_tnf, output_ip);
 		warp.generateDeformation();
 
-		// Save result as JPEG
-		ImageConverter converter = new ImageConverter(output_ip);
-		converter.convertToGray16();
-		FileSaver fs = new FileSaver(output_ip);
-		JpegWriter js = new JpegWriter();
-		JpegWriter.setQuality(100);
-		WindowManager.setTempCurrentImage(output_ip);	
-		js.run(fn_out);               
+		// Save result as TIFF
+		IJ.saveAsTiff( output_ip, fn_out );              
 	}
 
 	/*------------------------------------------------------------------*/
@@ -590,14 +569,8 @@ PlugIn
 						fn_out, fn_tnf, output_ip);
 		warp.generateDeformation();
 
-		// Save result as JPEG
-		ImageConverter converter = new ImageConverter(output_ip);
-		converter.convertToGray16();
-		FileSaver fs = new FileSaver(output_ip);
-		JpegWriter js = new JpegWriter();
-		JpegWriter.setQuality(100);
-		WindowManager.setTempCurrentImage(output_ip);	
-		js.run(fn_out);               
+		// Save result as TIFF
+		IJ.saveAsTiff( output_ip, fn_out );              
 	}    
 
 	/*------------------------------------------------------------------*/
@@ -673,14 +646,8 @@ PlugIn
 						fn_out, fn_tnf, output_ip);
 		warp.generateDeformation();
 
-		// Save result as JPEG
-		ImageConverter converter = new ImageConverter(output_ip);
-		converter.convertToGray16();
-		FileSaver fs = new FileSaver(output_ip);
-		JpegWriter js = new JpegWriter();
-		JpegWriter.setQuality(100);
-		WindowManager.setTempCurrentImage(output_ip);	
-		js.run(fn_out);               
+		// Save result as TIFF
+		IJ.saveAsTiff( output_ip, fn_out );               
 	}    
 
 	/*------------------------------------------------------------------*/
