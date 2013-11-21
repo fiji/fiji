@@ -50,6 +50,7 @@ import ij.process.ImageProcessor;
 import ij.WindowManager;
 import ij.io.Opener;
 import ij.io.FileSaver;
+
 import java.awt.Button;
 import java.awt.Checkbox;
 import java.awt.Choice;
@@ -352,7 +353,7 @@ PlugIn
 		converter.convertToGray16();
 		FileSaver fs = new FileSaver(output_ip);
 		JpegWriter js = new JpegWriter();
-		js.setQuality(100);
+		JpegWriter.setQuality(100);
 		WindowManager.setTempCurrentImage(output_ip);	
 		js.run(fn_out);               
 	}
@@ -434,7 +435,7 @@ PlugIn
 		converter.convertToGray16();
 		FileSaver fs = new FileSaver(output_ip);
 		JpegWriter js = new JpegWriter();
-		js.setQuality(100);
+		JpegWriter.setQuality(100);
 		WindowManager.setTempCurrentImage(output_ip);	
 		js.run(fn_out);               
 	}
@@ -513,7 +514,7 @@ PlugIn
 		converter.convertToGray16();
 		FileSaver fs = new FileSaver(output_ip);
 		JpegWriter js = new JpegWriter();
-		js.setQuality(100);
+		JpegWriter.setQuality(100);
 		WindowManager.setTempCurrentImage(output_ip);	
 		js.run(fn_out);               
 	}
@@ -594,7 +595,7 @@ PlugIn
 		converter.convertToGray16();
 		FileSaver fs = new FileSaver(output_ip);
 		JpegWriter js = new JpegWriter();
-		js.setQuality(100);
+		JpegWriter.setQuality(100);
 		WindowManager.setTempCurrentImage(output_ip);	
 		js.run(fn_out);               
 	}    
@@ -677,7 +678,7 @@ PlugIn
 		converter.convertToGray16();
 		FileSaver fs = new FileSaver(output_ip);
 		JpegWriter js = new JpegWriter();
-		js.setQuality(100);
+		JpegWriter.setQuality(100);
 		WindowManager.setTempCurrentImage(output_ip);	
 		js.run(fn_out);               
 	}    
@@ -694,8 +695,8 @@ PlugIn
 		{
 			final ImagePlus imp = WindowManager.getImage(windowList[k]);
 			final int inputType = imp.getType();
-			if ((imp.getStackSize() == 1) || (inputType == imp.GRAY8) || (inputType == imp.GRAY16)
-					|| (inputType == imp.GRAY32)) 
+			if ((imp.getStackSize() == 1) || (inputType == ImagePlus.GRAY8) || (inputType == ImagePlus.GRAY16)
+					|| (inputType == ImagePlus.GRAY32)) 
 			{
 				stack.push(imp);
 			}
@@ -1390,7 +1391,8 @@ PlugIn
 			while (source.getThread().isAlive()) {
 				source.getThread().interrupt();
 			}
-			source.getThread().interrupted();
+			source.getThread();
+			Thread.interrupted();
 		} /* end stopSourceThread */
 
 	} /* end class splineDeformationGeneratorDialog */
@@ -2279,37 +2281,37 @@ PlugIn
 				String fn_tnf,
 				final ImagePlus output_ip) 
 		{
-			this.source    					= source;
-			this.mode                                       = mode;
+			splineDeformationGeneratorTransformation.source    					= source;
+			splineDeformationGeneratorTransformation.mode                                       = mode;
 
-			this.min_scale 					= min_scale;
-			this.max_scale 					= max_scale;
-			this.noiseSpline                = noiseSpline;
-			this.transformationSplineDegree = transformationSplineDegree;
+			splineDeformationGeneratorTransformation.min_scale 					= min_scale;
+			splineDeformationGeneratorTransformation.max_scale 					= max_scale;
+			splineDeformationGeneratorTransformation.noiseSpline                = noiseSpline;
+			splineDeformationGeneratorTransformation.transformationSplineDegree = transformationSplineDegree;
 			intervals                       = 0;
 			cx                              = null;
 			cy                              = null;
 
-			this.number_mag					= number_mag;
-			this.mag_power 					= mag_power;
-			this.mag_size                   = mag_size;
+			splineDeformationGeneratorTransformation.number_mag					= number_mag;
+			splineDeformationGeneratorTransformation.mag_power 					= mag_power;
+			splineDeformationGeneratorTransformation.mag_size                   = mag_size;
 			mag_x0                          = new double [number_mag];
 			mag_y0                          = new double [number_mag];
 
-			this.noisePerspectiveScale      = noisePerspectiveScale/100;
-			this.noisePerspectiveShift      = noisePerspectiveShift/100;
+			splineDeformationGeneratorTransformation.noisePerspectiveScale      = noisePerspectiveScale/100;
+			splineDeformationGeneratorTransformation.noisePerspectiveShift      = noisePerspectiveShift/100;
 			a                               = new double [8];
 
-			this.noiseK1                    = noiseK1;
-			this.noiseK2                    = noiseK2;
+			splineDeformationGeneratorTransformation.noiseK1                    = noiseK1;
+			splineDeformationGeneratorTransformation.noiseK2                    = noiseK2;
 			r_dist_max                      = 0;
 
-			this.lengthReduction            = lengthReduction;
-			this.maxShift                   = maxShift;
+			splineDeformationGeneratorTransformation.lengthReduction            = lengthReduction;
+			splineDeformationGeneratorTransformation.maxShift                   = maxShift;
 
-			this.bSaveTransformation        = bSaveTransformation;
-			this.bShowTransformation        = bShowTransformation;
-			this.bShowOuputImage            = bShowOutputImage;
+			splineDeformationGeneratorTransformation.bSaveTransformation        = bSaveTransformation;
+			splineDeformationGeneratorTransformation.bShowTransformation        = bShowTransformation;
+			splineDeformationGeneratorTransformation.bShowOuputImage            = bShowOutputImage;
 
 			this.fn_out                     = fn_out;
 			this.fn_tnf                     = fn_tnf;
@@ -2652,7 +2654,7 @@ PlugIn
 			this.output_ip.setProcessor(title, aux.getProcessor());
 
 			ImageWindow iw = null;
-			if(this.bShowOuputImage)
+			if(splineDeformationGeneratorTransformation.bShowOuputImage)
 				iw = new ImageWindow(this.output_ip);
 
 			this.output_ip.updateImage();
@@ -2724,7 +2726,7 @@ PlugIn
 			}
 
 			// Show deformation
-			if (this.bShowTransformation) 
+			if (splineDeformationGeneratorTransformation.bShowTransformation) 
 			{
 				splineDeformationGeneratorMiscTools.showImage("Transf. X", transformation_x);
 				splineDeformationGeneratorMiscTools.showImage("Transf. Y", transformation_y);
@@ -2753,7 +2755,7 @@ PlugIn
 			showImage(title, transformedImage);
 
 			// Save transformation.
-			if(this.bSaveTransformation)
+			if(splineDeformationGeneratorTransformation.bSaveTransformation)
 				splineDeformationGeneratorMiscTools.saveRawTransformation(this.fn_tnf, sourceWidth, sourceHeight, transformation_x, transformation_y);
 
 		}
