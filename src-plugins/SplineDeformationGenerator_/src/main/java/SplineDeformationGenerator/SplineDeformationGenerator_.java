@@ -199,65 +199,65 @@ public class SplineDeformationGenerator_
      */
     private static void dumpSyntax () 
     {
-       IJ.write("Purpose: Spline deformations generator.");
-       IJ.write(" ");
-       IJ.write("Usage: SplineDeformationGenerator_ ");
-       IJ.write("  -help                       : SHOW THIS MESSAGE");
-       IJ.write("");
-       IJ.write("  -elastic                    : GENERATE AN ELASTIC DEFORMED VERSION OF THE INPUT IMAGE");
-       IJ.write("          source_image        : In any image format");
-       IJ.write("          minimum_scale       : Scale of the coarsest deformation");
-       IJ.write("                                0 is the coarsest possible");
-       IJ.write("          maximum_scale       : Scale of the finest deformation");
-       IJ.write("          noise_spline        : noise spline");
-       IJ.write("          output_image        : Output result in JPEG");
-       IJ.write("          Optional parameters :");
-       IJ.write("              output_transformation : Output transformation raw file");
-       IJ.write("");
-       IJ.write("  -fisheye                    : GENERATE A FISHEYE DEFORMED VERSION OF THE INPUT IMAGE");
-       IJ.write("          source_image        : In any image format");
-       IJ.write("          num_of_magnifiers   : Number of fisheye magnifiers");
-       IJ.write("          magnifier_power     : Magnifier fisheye power");
-       IJ.write("          magnifier_size      : Magnifier fisheye diameter");
-       IJ.write("          output_image        : Output result in JPEG");
-       IJ.write("          Optional parameters :");
-       IJ.write("              output_transformation : Output transformation raw file");
-       IJ.write("");
-       IJ.write("  -perspective                : GENERATE A PERSPECTIVE DEFORMED VERSION OF THE INPUT IMAGE");
-       IJ.write("              source_image        : In any image format");
-       IJ.write("              noise_scale         : Noise perspective scale");
-       IJ.write("              noise_shift         : Noise perspective shift");
-       IJ.write("              output_image        : Output result in JPEG");
-       IJ.write("              Optional parameters :");
-       IJ.write("                  output_transformation : Output transformation raw file");
-       IJ.write("");
-       IJ.write("  -barrel                    : GENERATE A BARREL/PINCUSHION DEFORMED VERSION OF THE INPUT IMAGE");
-       IJ.write("         source_image        : In any image format");
-       IJ.write("         noise_K1            : Noise K1");
-       IJ.write("         noise_K2            : Noise K2");
-       IJ.write("         output_image        : Output result in JPEG");
-       IJ.write("         Optional parameters :");
-       IJ.write("              output_transformation : Output transformation raw file");
-       IJ.write("");
-       IJ.write("  -gels                    : GENERATE A 2D-GELS DEFORMED VERSION OF THE INPUT IMAGE");
-       IJ.write("       source_image        : In any image format");
-       IJ.write("       length_reduction    : Length reduction");
-       IJ.write("       max_shift           : Maximum shift");
-       IJ.write("       output_image        : Output result in JPEG");
-       IJ.write("       Optional parameters :");
-       IJ.write("              output_transformation : Output transformation raw file");
-       IJ.write(""); 
-       IJ.write("Examples:");
-       IJ.write("Generate an elastic deformed image saving the raw transformation");
-       IJ.write("   SplineDeformationGenerator_ -elastic source.jpg 0 3 10 output.jpg output_transf.txt");
-       IJ.write("Generate a fisheye deformed image saving the raw transformation");
-       IJ.write("   SplineDeformationGenerator_ -fisheye source.jpg 1 3.0 60.0 output.jpg output_transf.txt");
-       IJ.write("Generate a perspective deformed image saving the raw transformation");
-       IJ.write("   SplineDeformationGenerator_ -perspective source.jpg 10.0 10.0 output.jpg output_transf.txt");
-       IJ.write("Generate a barrel/pincushion deformed image saving the raw transformation");
-       IJ.write("   SplineDeformationGenerator_ -barrel source.jpg 0.1 0.05 output.jpg output_transf.txt");
-       IJ.write("Generate a 2D-gels deformed image saving the raw transformation");
-       IJ.write("   SplineDeformationGenerator_ -gels source.jpg 5.0 30.0 output.jpg output_transf.txt");
+       IJ.log("Purpose: Spline deformations generator.");
+       IJ.log(" ");
+       IJ.log("Usage: SplineDeformationGenerator_ ");
+       IJ.log("  -help                       : SHOW THIS MESSAGE");
+       IJ.log("");
+       IJ.log("  -elastic                    : GENERATE AN ELASTIC DEFORMED VERSION OF THE INPUT IMAGE");
+       IJ.log("          source_image        : In any image format");
+       IJ.log("          minimum_scale       : Scale of the coarsest deformation");
+       IJ.log("                                0 is the coarsest possible");
+       IJ.log("          maximum_scale       : Scale of the finest deformation");
+       IJ.log("          noise_spline        : noise spline");
+       IJ.log("          output_image        : Output result in JPEG");
+       IJ.log("          Optional parameters :");
+       IJ.log("              output_transformation : Output transformation raw file");
+       IJ.log("");
+       IJ.log("  -fisheye                    : GENERATE A FISHEYE DEFORMED VERSION OF THE INPUT IMAGE");
+       IJ.log("          source_image        : In any image format");
+       IJ.log("          num_of_magnifiers   : Number of fisheye magnifiers");
+       IJ.log("          magnifier_power     : Magnifier fisheye power");
+       IJ.log("          magnifier_size      : Magnifier fisheye diameter");
+       IJ.log("          output_image        : Output result in JPEG");
+       IJ.log("          Optional parameters :");
+       IJ.log("              output_transformation : Output transformation raw file");
+       IJ.log("");
+       IJ.log("  -perspective                : GENERATE A PERSPECTIVE DEFORMED VERSION OF THE INPUT IMAGE");
+       IJ.log("              source_image        : In any image format");
+       IJ.log("              noise_scale         : Noise perspective scale");
+       IJ.log("              noise_shift         : Noise perspective shift");
+       IJ.log("              output_image        : Output result in JPEG");
+       IJ.log("              Optional parameters :");
+       IJ.log("                  output_transformation : Output transformation raw file");
+       IJ.log("");
+       IJ.log("  -barrel                    : GENERATE A BARREL/PINCUSHION DEFORMED VERSION OF THE INPUT IMAGE");
+       IJ.log("         source_image        : In any image format");
+       IJ.log("         noise_K1            : Noise K1");
+       IJ.log("         noise_K2            : Noise K2");
+       IJ.log("         output_image        : Output result in JPEG");
+       IJ.log("         Optional parameters :");
+       IJ.log("              output_transformation : Output transformation raw file");
+       IJ.log("");
+       IJ.log("  -gels                    : GENERATE A 2D-GELS DEFORMED VERSION OF THE INPUT IMAGE");
+       IJ.log("       source_image        : In any image format");
+       IJ.log("       length_reduction    : Length reduction");
+       IJ.log("       max_shift           : Maximum shift");
+       IJ.log("       output_image        : Output result in JPEG");
+       IJ.log("       Optional parameters :");
+       IJ.log("              output_transformation : Output transformation raw file");
+       IJ.log(""); 
+       IJ.log("Examples:");
+       IJ.log("Generate an elastic deformed image saving the raw transformation");
+       IJ.log("   SplineDeformationGenerator_ -elastic source.jpg 0 3 10 output.jpg output_transf.txt");
+       IJ.log("Generate a fisheye deformed image saving the raw transformation");
+       IJ.log("   SplineDeformationGenerator_ -fisheye source.jpg 1 3.0 60.0 output.jpg output_transf.txt");
+       IJ.log("Generate a perspective deformed image saving the raw transformation");
+       IJ.log("   SplineDeformationGenerator_ -perspective source.jpg 10.0 10.0 output.jpg output_transf.txt");
+       IJ.log("Generate a barrel/pincushion deformed image saving the raw transformation");
+       IJ.log("   SplineDeformationGenerator_ -barrel source.jpg 0.1 0.05 output.jpg output_transf.txt");
+       IJ.log("Generate a 2D-gels deformed image saving the raw transformation");
+       IJ.log("   SplineDeformationGenerator_ -gels source.jpg 5.0 30.0 output.jpg output_transf.txt");
     } /* end dumpSyntax */
     
     /*------------------------------------------------------------------*/
@@ -311,12 +311,12 @@ public class SplineDeformationGenerator_
         int deformationModelIndex = SplineDeformationGenerator_.MODE_ELASTIC;
         
         // Show parameters
-        IJ.write("Source image           : " + fn_source);                
-        IJ.write("Min. Scale Deformation : " + min_scale);
-        IJ.write("Max. Scale Deformation : " + max_scale);
-        IJ.write("Noise Spline           : " + noiseSpline);
-        IJ.write("Output image file      : " + fn_out);
-        IJ.write("Output transf. file    : " + fn_tnf);
+        IJ.log("Source image           : " + fn_source);                
+        IJ.log("Min. Scale Deformation : " + min_scale);
+        IJ.log("Max. Scale Deformation : " + max_scale);
+        IJ.log("Noise Spline           : " + noiseSpline);
+        IJ.log("Output image file      : " + fn_out);
+        IJ.log("Output transf. file    : " + fn_tnf);
         
         // Open source
         Opener opener = new Opener();
@@ -392,12 +392,12 @@ public class SplineDeformationGenerator_
         int deformationModelIndex = SplineDeformationGenerator_.MODE_FISHEYE;
         
         // Show parameters
-        IJ.write("Source image           : " + fn_source);        
-        IJ.write("Number of magnifiers   : " + num_of_magnifiers);
-        IJ.write("Magnifier power        : " + magnifier_power);
-        IJ.write("Magnifier size         : " + magnifier_size);
-        IJ.write("Output image file      : " + fn_out);
-        IJ.write("Output transf. file    : " + fn_tnf);
+        IJ.log("Source image           : " + fn_source);        
+        IJ.log("Number of magnifiers   : " + num_of_magnifiers);
+        IJ.log("Magnifier power        : " + magnifier_power);
+        IJ.log("Magnifier size         : " + magnifier_size);
+        IJ.log("Output image file      : " + fn_out);
+        IJ.log("Output transf. file    : " + fn_tnf);
         
         // Open source
         Opener opener = new Opener();
@@ -473,11 +473,11 @@ public class SplineDeformationGenerator_
         int deformationModelIndex = SplineDeformationGenerator_.MODE_PERSPECTIVE;
        
         // Show parameters
-        IJ.write("Source image           : " + fn_source);        
-        IJ.write("Noise scale            : " + noise_scale);
-        IJ.write("Noise shift            : " + noise_shift);        
-        IJ.write("Output image file      : " + fn_out);
-        IJ.write("Output transf. file    : " + fn_tnf);
+        IJ.log("Source image           : " + fn_source);        
+        IJ.log("Noise scale            : " + noise_scale);
+        IJ.log("Noise shift            : " + noise_shift);        
+        IJ.log("Output image file      : " + fn_out);
+        IJ.log("Output transf. file    : " + fn_tnf);
         
         // Open source
         Opener opener = new Opener();
@@ -552,12 +552,12 @@ public class SplineDeformationGenerator_
         int deformationModelIndex = SplineDeformationGenerator_.MODE_BARREL;
        
         // Show parameters
-        IJ.write("Source image         : " + fn_source);        
-        IJ.write("Output image file    : " + fn_out);
-        IJ.write("Noise K1             : " + noise_K1);
-        IJ.write("Noise K2             : " + noise_K2);        
-        IJ.write("Output image file    : " + fn_out);
-        IJ.write("Output transf. file  : " + fn_tnf);
+        IJ.log("Source image         : " + fn_source);        
+        IJ.log("Output image file    : " + fn_out);
+        IJ.log("Noise K1             : " + noise_K1);
+        IJ.log("Noise K2             : " + noise_K2);        
+        IJ.log("Output image file    : " + fn_out);
+        IJ.log("Output transf. file  : " + fn_tnf);
         
         // Open source
         Opener opener = new Opener();
@@ -634,12 +634,12 @@ public class SplineDeformationGenerator_
         int deformationModelIndex = SplineDeformationGenerator_.MODE_2D_GEL;
        
         // Show parameters
-        IJ.write("Source image         : " + fn_source);        
-        IJ.write("Output image file    : " + fn_out);
-        IJ.write("Lenght reduction     : " + length_reduction);
-        IJ.write("Maximum shift        : " + max_shift);        
-        IJ.write("Output image file    : " + fn_out);
-        IJ.write("Output transf. file  : " + fn_tnf);
+        IJ.log("Source image         : " + fn_source);        
+        IJ.log("Output image file    : " + fn_out);
+        IJ.log("Lenght reduction     : " + length_reduction);
+        IJ.log("Maximum shift        : " + max_shift);        
+        IJ.log("Output image file    : " + fn_out);
+        IJ.log("Output transf. file  : " + fn_tnf);
         
         // Open source
         Opener opener = new Opener();
