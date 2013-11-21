@@ -657,7 +657,7 @@ PlugIn
 	private ImagePlus[] createImageList () 
 	{
 		final int[] windowList = WindowManager.getIDList();
-		final Stack stack = new Stack();
+		final Stack<ImagePlus> stack = new Stack<ImagePlus>();
 		for (int k = 0; ((windowList != null) && (k < windowList.length)); k++) 
 		{
 			final ImagePlus imp = WindowManager.getImage(windowList[k]);
@@ -1274,15 +1274,11 @@ PlugIn
 			buttonPanel.add(DoneButton);
 			buttonPanel.add(cancelButton);
 
-			// Build separations
-			final Label separation1 = new Label("");
 			final Label separation2 = new Label("    --------- Elastic splines ---------");
 			final Label separation3 = new Label("    ------------ Fisheye ------------");
 			final Label separation4 = new Label("    ---------- Perspective ----------");
 			final Label separation5 = new Label("    ------- Barrel/Pincushion -------");
 			final Label separation6 = new Label("    ------------ 2D Gels ------------");
-			final Label separation7 = new Label("");
-
 			// Finally build dialog
 			add(sourcePanel);
 			add(deformationModelPanel);
@@ -1689,11 +1685,7 @@ PlugIn
 		 */
 		private void buildCoefficients () 
 		{
-			int fullWidth;
-			int fullHeight;
 			double[] fullDual = new double[width * height];
-			int halfWidth = width;
-			int halfHeight = height;
 			basicToCardinal2D(coefficient, fullDual, width, height, 7);
 		} /* end buildCoefficients */
 
