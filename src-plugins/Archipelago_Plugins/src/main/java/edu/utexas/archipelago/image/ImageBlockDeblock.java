@@ -3,7 +3,6 @@ package edu.utexas.archipelago.image;
 
 import edu.utexas.clm.archipelago.FijiArchipelago;
 import edu.utexas.clm.archipelago.compute.SerializableCallable;
-import edu.utexas.clm.archipelago.data.FileChunk;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -24,14 +23,14 @@ import java.util.concurrent.*;
  */
 public class ImageBlockDeblock implements Serializable
 {
-    public class BlockCallable implements Callable<FileChunk>
+    public class BlockCallable implements Callable<File>
     {
         final int[][] pix;
         final int x0, x1, y0, y1;
         final ImageProcessor ip;
 
         public BlockCallable(final int x0, final int x1, final int y0, final int y1,
-                             final int[][] pix, ImageProcessor ip, FileChunk inputFile)
+                             final int[][] pix, ImageProcessor ip, File inputFile)
         {
             this.pix = pix;
             this.x0 = x0;
@@ -43,9 +42,8 @@ public class ImageBlockDeblock implements Serializable
 
         private String blockFilePath(final int w, final int h, final int x, final int y)
         {
-            File inFile = new File(inputFile.getData()).getAbsoluteFile();
-            String afterSlashName = inFile.getName();
-            String directoryName = inFile.getParent() + "/";
+            String afterSlashName = inputFile.getName();
+            String directoryName = inputFile.getParent() + "/";
             String blockDirectoryName = directoryName + subfolder;
             File blockFolder = new File(blockDirectoryName);
 
@@ -66,12 +64,19 @@ public class ImageBlockDeblock implements Serializable
             return blockDirectoryName + blockName;
         }
 
-        public FileChunk call() throws Exception
+        public File call() throws Exception
         {
             final int w = x1 - x0, h = y1 - y0;
             final int[][] pixBlock = new int[w][h];
             final ImageProcessor ipBlock = ip.createProcessor(w, h);
             final String filePath = blockFilePath(w, h, x0, y0);
+            final File outputFile = new File(filePath);
+
+            // if the output file exists and it is older than the input file, don't re-compute.
+            if (outputFile.exists() && outputFile.lastModified() > inputFile.lastModified())
+            {
+                return outputFile;
+            }
 
             for (int x = 0; x < w; ++x)
             {
@@ -94,22 +99,22 @@ public class ImageBlockDeblock implements Serializable
                 FijiArchipelago.log("Successfully wrote file " + filePath);
             }
 
-            return new FileChunk(filePath, inputFile);
+            return outputFile;
         }
     }
 
     /**
      * Contains input file path
      */
-    private final FileChunk inputFile;
+    private final File inputFile;
     /**
      * Contains output file path
      */
-    private final FileChunk outputFile;
+    private final File outputFile;
     /**
      * List of files containing image blocks.
      */
-    private final ArrayList<FileChunk> blockFiles;
+    private final ArrayList<File> blockFiles;
 
     /**
      * Corresponding list of bounding box maps. Each array is like
@@ -135,7 +140,7 @@ public class ImageBlockDeblock implements Serializable
     /**
      * Maps input block image files to output block image files.
      */
-    private final ArrayList<Hashtable<FileChunk, FileChunk>> chunkMaps;
+    private final ArrayList<Hashtable<File, File>> chunkMaps;
     
     private final int n;
 
@@ -165,12 +170,12 @@ public class ImageBlockDeblock implements Serializable
                              final int[] bs, final int[] o, int nOutput)
     {
         n = nOutput;
-        inputFile = new FileChunk(inFile.getAbsolutePath());
-        outputFile = new FileChunk(outFileFormat.getAbsolutePath(), inputFile);
+        inputFile = new File(inFile.getAbsolutePath());
+        outputFile = outFileFormat;
         blockSize = bs;        
-        blockFiles = new ArrayList<FileChunk>();
+        blockFiles = new ArrayList<File>();
         boxMap = new ArrayList<int[]>();
-        chunkMaps = new ArrayList<Hashtable<FileChunk, FileChunk>>(nOutput);
+        chunkMaps = new ArrayList<Hashtable<File, File>>(nOutput);
         halfOverlap = new int[2];
         ovlpCorrection = new int[2];
         
@@ -187,20 +192,20 @@ public class ImageBlockDeblock implements Serializable
         
         for (int i = 0; i < nOutput; ++i)
         {
-            chunkMaps.add(new Hashtable<FileChunk, FileChunk>());
+            chunkMaps.add(new Hashtable<File, File>());
         }
     }
 
     /**
      * Splits the input file into blocks. Computation is done in parallel.
-     * @return An ArrayList containing FileChunks representing the file paths for each image block file.
+     * @return An ArrayList containing Files representing the file paths for each image block file.
      * @throws ExecutionException if an ExecutionError is encountered
      * @throws InterruptedException if this method is interrupted,
      */
-    public ArrayList<FileChunk> blockFile() throws ExecutionException, InterruptedException
+    public ArrayList<File> blockFile() throws ExecutionException, InterruptedException
     {
         FijiArchipelago.debug("Splitting image " + inputFile + " into blocks");
-        ImageProcessor ip = IJ.openImage(inputFile.getData()).getProcessor();
+        ImageProcessor ip = IJ.openImage(inputFile.getAbsolutePath()).getProcessor();
         w = ip.getWidth();
         h = ip.getHeight();
         int cblock = (int)Math.ceil((float)w / (float)blockSize[0]);
@@ -215,7 +220,7 @@ public class ImageBlockDeblock implements Serializable
             final ExecutorService localService =
                     Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
             final int[][] pix = ip.getIntArray();
-            final ArrayList<Future<FileChunk>> futures = new ArrayList<Future<FileChunk>>();                    
+            final ArrayList<Future<File>> futures = new ArrayList<Future<File>>();
             
             for (int c = 0; c < cblock; c++)
             {
@@ -237,9 +242,9 @@ public class ImageBlockDeblock implements Serializable
                 }
             }
             
-            for (Future<FileChunk> future : futures)
+            for (Future<File> future : futures)
             {
-                FileChunk file = future.get();
+                File file = future.get();
                 blockFiles.add(file);
             }
         }
@@ -251,10 +256,10 @@ public class ImageBlockDeblock implements Serializable
     /**
      * Recombine image blocks into the original image shape.
      * @param idx the slice index to deblock
-     * @return a FileChunk containing the output file.
+     * @return a File containing the output file.
      * @throws ExecutionException if something goes wrong, probably file IO related
      */
-    public FileChunk deblockFile(final int idx) throws ExecutionException
+    public File deblockFile(final int idx) throws ExecutionException
     {
         if (blockFiles.isEmpty())
         {
@@ -270,23 +275,23 @@ public class ImageBlockDeblock implements Serializable
 
         if (blockFiles.size() == 1)
         {
-            final ImagePlus imp = IJ.openImage(getChunkOrException(idx, 0).getData());
+            final ImagePlus imp = IJ.openImage(getFileOrException(idx, 0).getAbsolutePath());
             IJ.save(imp, getOutputFileName(idx));
         }
         else
         {
             final ImageProcessor blockIpZero =
-                    getFirstSliceIP(getChunkOrException(idx, 0).getData());
+                    getFirstSliceIP(getFileOrException(idx, 0).getAbsolutePath());
             final ImageProcessor ipOut = blockIpZero.createProcessor(w, h);
             final int[][] pix = new int[w][h];
 
             for (int i = 0; i < blockFiles.size(); ++i)
             {
-                final FileChunk outChunk = getChunkOrException(idx, i);
+                final File outChunkFile = getFileOrException(idx, i);
                 final int[] bmap = boxMap.get(i);
 
                 final ImageProcessor blockIp = i == 0 ? blockIpZero :
-                        getFirstSliceIP(outChunk.getData());
+                        getFirstSliceIP(outChunkFile.getAbsolutePath());
                 final int[][] blockPix = blockIp.getIntArray();
 
                 for (int x = 0; x < bmap[4]; ++x)
@@ -309,24 +314,24 @@ public class ImageBlockDeblock implements Serializable
      * Map a new block file of the same size to the original one given. The new block file will
      * be used in the output. This method is intended for use in the case that a block image
      * file has been opened, processed, then written to a new file.
-     * @param origChunk the FileChunk representing the original image block file, created by
+     * @param origChunk the File representing the original image block file, created by
      *                  blockImage().
-     * @param newChunk the FileChunk representing a new image block file representing the output of
+     * @param newChunk the File representing a new image block file representing the output of
      *                 processing on the original block image.
      */
-    public void mapChunks(final FileChunk origChunk, final FileChunk newChunk)
+    public void mapChunks(final File origChunk, final File newChunk)
     {
         mapChunks(origChunk, newChunk, 0);
     }
 
     
-    public void mapChunks(final FileChunk origChunk, final FileChunk newChunk, final int idx)
+    public void mapChunks(final File origChunk, final File newChunk, final int idx)
     {
         checkIdx(idx);
 
         if (blockFiles.contains(origChunk))
         {
-            Hashtable<FileChunk, FileChunk> chunkTable = getTable(idx);
+            Hashtable<File, File> chunkTable = getTable(idx);
 
             chunkTable.put(origChunk, newChunk);
             
@@ -343,19 +348,19 @@ public class ImageBlockDeblock implements Serializable
         }
     }
 
-    public FileChunk getInputFile()
+    public File getInputFile()
     {
         return inputFile;
     }
 
-    public FileChunk getOutputFile(int idx)
+    public File getOutputFile(int idx)
     {
-        return new FileChunk(getOutputFileName(idx), outputFile);
+        return new File(getOutputFileName(idx));
     }
 
     public String getOutputFileName(int idx)
     {
-        return (String.format(outputFile.getData(), idx));
+        return (String.format(outputFile.getAbsolutePath(), idx));
     }
 
     public Callable<ImageBlockDeblock> imageBlockCallable()
@@ -385,9 +390,9 @@ public class ImageBlockDeblock implements Serializable
         };
     }
     
-    public ArrayList<FileChunk> imageBlockFiles()
+    public ArrayList<File> imageBlockFiles()
     {
-        return new ArrayList<FileChunk>(blockFiles);
+        return new ArrayList<File>(blockFiles);
     }
     
     public int numUnmappedBlocks()
@@ -415,23 +420,23 @@ public class ImageBlockDeblock implements Serializable
         return chunkMaps.size();
     }
     
-    private Hashtable<FileChunk, FileChunk> getTable(final int idx)
+    private Hashtable<File, File> getTable(final int idx)
     {
         return chunkMaps.get(idx);
     }
     
-    private FileChunk getChunk(final int idx, final int chunkIdx)
+    private File getFile(final int idx, final int fileIdx)
     {
-        return getTable(idx).get(blockFiles.get(chunkIdx));
+        return getTable(idx).get(blockFiles.get(fileIdx));
     }
 
-    private FileChunk getChunkOrException(final int idx, final int chunkIdx)
+    private File getFileOrException(final int idx, final int fileIdx)
             throws ExecutionException
     {
-        final FileChunk fc = getChunk(idx, chunkIdx);
+        final File fc = getFile(idx, fileIdx);
         if (fc == null)
         {
-            throw new ExecutionException(new Exception("No file " + chunkIdx +" for index " + idx));
+            throw new ExecutionException(new Exception("No file " + fileIdx +" for index " + idx));
         }
         return fc;
     }
