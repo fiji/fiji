@@ -34,7 +34,7 @@ public class ProcessManager<T> implements Runnable, Serializable
     private Callable<T> callable;
     private T output;
     private final long id;
-    private Exception remoteException;
+    private Throwable remoteException;
     private long runningOn;
     private final float numCores;
     private final boolean isFractional;
@@ -96,9 +96,17 @@ public class ProcessManager<T> implements Runnable, Serializable
         return id;
     }
     
-    public Exception getRemoteException()
+    public Throwable getRemoteException()
     {
         return remoteException;
+    }
+
+    public synchronized void setException(final Throwable exception)
+    {
+        if (remoteException == null)
+        {
+            remoteException = exception;
+        }
     }
     
     public int requestedCores(int totalCores)

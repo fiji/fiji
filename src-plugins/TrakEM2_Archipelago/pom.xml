@@ -27,7 +27,7 @@
 			<artifactId>Fiji_Archipelago</artifactId>
 			<version>${fiji.version}</version>
 		</dependency>
-	</dependencies>
+        </dependencies>
 
 	<!-- NB: for project parent -->
 	<repositories>

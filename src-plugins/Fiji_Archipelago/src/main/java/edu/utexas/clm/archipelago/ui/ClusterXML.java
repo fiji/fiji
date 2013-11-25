@@ -7,6 +7,7 @@ import edu.utexas.clm.archipelago.network.node.NodeManager;
 import edu.utexas.clm.archipelago.network.shell.NodeShellParameters;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -30,7 +31,8 @@ public class ClusterXML
         try
         {
             FijiArchipelago.debug("Save called");
-            final DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            final DocumentBuilder docBuilder =
+                    DocumentBuilderFactory.newInstance().newDocumentBuilder();
             final NodeManager nm = cluster.getNodeManager();
             final ArrayList<NodeManager.NodeParameters> params = cluster.getNodeParameters();
             final Document doc = docBuilder.newDocument();
@@ -113,15 +115,16 @@ public class ClusterXML
         {
             FijiArchipelago.debug("No such system property: " + key + ". Input string: " + instring);
         }
-        
+
         FijiArchipelago.debug("Translated " + instring + " -> " + string);
-        
+
         return string;
     }
 
-    private static String getXMLField(Element e, String tag)
+    private static String getXMLField(final Element e, final String tag)
     {
-        return replaceProperties(e.getElementsByTagName(tag).item(0).getTextContent());
+        final Node n = e.getElementsByTagName(tag).item(0);
+        return n == null ? null : replaceProperties(n.getTextContent());
     }
 
     private static void addXMLField(Document doc, Element parent, String field, String value)
@@ -153,7 +156,7 @@ public class ClusterXML
         final Document doc = docBuilder.parse(file);
         Element rootNode;
         NodeList clusterNodes;
-        String execRoot, fileRoot, dExecRoot, dFileRoot, user;
+        String execRoot, fileRoot, dExecRoot, dFileRoot, user, autoStart;
         boolean ok;
 
         if (nodeExceptions == null)
@@ -170,7 +173,8 @@ public class ClusterXML
         fileRoot = getXMLField(rootNode, "file");
         dExecRoot = getXMLField(rootNode, "default-exec");
         dFileRoot = getXMLField(rootNode, "default-file");
-        user = getXMLField(rootNode, "default-user");        
+        user = getXMLField(rootNode, "default-user");
+        autoStart = getXMLField(rootNode, "auto-start");
 
         ok = Cluster.configureCluster(cluster, dExecRoot, dFileRoot, execRoot, fileRoot, user);
 
@@ -188,6 +192,11 @@ public class ClusterXML
                 e.printStackTrace();
                 nodeExceptions.add(e);
             }
+        }
+
+        if ("yes".equals(autoStart))
+        {
+            cluster.start();
         }
 
         return ok;

@@ -24,18 +24,90 @@ import edu.utexas.clm.archipelago.data.ClusterMessage;
 import edu.utexas.clm.archipelago.listen.MessageType;
 import edu.utexas.clm.archipelago.listen.TransceiverExceptionListener;
 import edu.utexas.clm.archipelago.listen.TransceiverListener;
+import edu.utexas.clm.archipelago.network.translation.Bottle;
+import edu.utexas.clm.archipelago.network.translation.Bottler;
+import edu.utexas.clm.archipelago.network.translation.FileTranslator;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Message transciever class
+ * Message transceiver class
  */
 public class MessageXC
 {
+    private class NullFileTranslator implements FileTranslator
+    {
+
+        public String getLocalPath(final String remotePath)
+        {
+            return remotePath;
+        }
+
+        public String getRemotePath(final String localPath)
+        {
+            return localPath;
+        }
+    }
+
+
+    private class BottlingInputStream extends ObjectInputStream
+    {
+        public BottlingInputStream(final InputStream is) throws IOException
+        {
+            super(is);
+            enableResolveObject(true);
+        }
+
+        protected final Object resolveObject(final Object object) throws IOException
+        {
+            if (object instanceof Bottle)
+            {
+                Bottle bottle = (Bottle)object;
+                return bottle.unBottle(xc);
+            }
+            else
+            {
+                return object;
+            }
+        }
+    }
+
+    private class BottlingOutputStream extends ObjectOutputStream
+    {
+
+        public BottlingOutputStream(final OutputStream os) throws IOException
+        {
+            super(os);
+            enableReplaceObject(true);
+        }
+
+        protected final Object replaceObject(final Object object) throws IOException
+        {
+            /*
+            This seems like it could get costly as the number of bottles increases.
+            If this is the case, explore lower cost options, like look up tables or hashmaps on
+            the class name.
+             */
+            List<Bottler> bottlerList = new ArrayList<Bottler>(bottlers);
+            for (final Bottler bottler : bottlerList)
+            {
+                if (bottler.accepts(object))
+                {
+                    return bottler.bottle(object, xc);
+                }
+            }
+            return object;
+        }
+    }
 
     private class RXThread extends Thread
     {
@@ -58,9 +130,8 @@ public class MessageXC
                         }
                     }
                     xcListener.handleMessage(message);
-                    objectInputStream = new ObjectInputStream(inStream);
                 }
-                catch (ClassCastException cce)
+                /*catch (ClassCastException cce)
                 {
                     xcExceptionListener.handleRXThrowable(cce, xc);
                 }
@@ -71,6 +142,21 @@ public class MessageXC
                 catch (ClassNotFoundException cnfe)
                 {
                     xcExceptionListener.handleRXThrowable(cnfe, xc);
+                }*/
+                catch (Throwable e)
+                {
+                    xcExceptionListener.handleRXThrowable(e, xc, null);
+                }
+                finally
+                {
+                    try
+                    {
+                        objectInputStream = new BottlingInputStream(inStream);
+                    }
+                    catch (IOException ioe)
+                    {
+                        close();
+                    }
                 }
             }
         }
@@ -86,6 +172,10 @@ public class MessageXC
                 try
                 {
                     nextMessage = messageQ.poll(waitTime, tUnit);
+/*                    if (nextMessage.type == MessageType.PROCESS)
+                    {
+                        lastSentID.set(((ProcessManager) nextMessage.o).getID());
+                    }*/
                 }
                 catch (InterruptedException ie)
                 {
@@ -103,9 +193,9 @@ public class MessageXC
                         }
                         objectOutputStream.writeObject(nextMessage);
                         objectOutputStream.flush();
-                        objectOutputStream = new ObjectOutputStream(outStream);
+
                     }
-                    catch (NotSerializableException nse)
+                    /*catch (NotSerializableException nse)
                     {
                         xcExceptionListener.handleTXThrowable(nse, xc);
                     }
@@ -117,9 +207,24 @@ public class MessageXC
                     {
                         xcExceptionListener.handleTXThrowable(ccme, xc);
                     }
-                    catch (Exception e)
+                    catch (RuntimeException re)
                     {
-                        xcExceptionListener.handleTXThrowable(e, xc);
+                        xcExceptionListener.handleTXThrowable(re, xc);
+                    }*/
+                    catch (Throwable e)
+                    {
+                        xcExceptionListener.handleTXThrowable(e, xc, nextMessage);
+                    }
+                    finally
+                    {
+                        try
+                        {
+                            objectOutputStream = new BottlingOutputStream(outStream);
+                        }
+                        catch (IOException ioe)
+                        {
+                            close();
+                        }
                     }
                 }
             }
@@ -129,11 +234,14 @@ public class MessageXC
     public static final long DEFAULT_WAIT = 10000;
     public static final TimeUnit DEFAULT_UNIT = TimeUnit.MILLISECONDS;
 
+    private final List<Bottler> bottlers;
     private final ArrayBlockingQueue<ClusterMessage> messageQ;
-    private ObjectOutputStream objectOutputStream;
-    private ObjectInputStream objectInputStream;
+    private BottlingOutputStream objectOutputStream;
+    private BottlingInputStream objectInputStream;
+    private FileTranslator fileTranslator;
     private final Thread txThread, rxThread;
     private final AtomicBoolean active;
+    private final AtomicLong lastSentID;
     private final long waitTime;
     private final TimeUnit tUnit;
     private final TransceiverListener xcListener;
@@ -141,7 +249,7 @@ public class MessageXC
     private final OutputStream outStream;
     private final InputStream inStream;
     private long id;
-    
+
     private final MessageXC xc = this;
 
     public MessageXC(final InputStream inStream,
@@ -160,13 +268,16 @@ public class MessageXC
                      TimeUnit unit) throws IOException
     {
         FijiArchipelago.debug("Creating Message Transciever");
+        fileTranslator = new NullFileTranslator();
+        bottlers = Collections.synchronizedList(new Vector<Bottler>());
         messageQ = new ArrayBlockingQueue<ClusterMessage>(16, true);
-        objectOutputStream = new ObjectOutputStream(outStream);
-        objectInputStream =  new ObjectInputStream(inStream);
+        objectOutputStream = new BottlingOutputStream(outStream);
+        objectInputStream =  new BottlingInputStream(inStream);
         FijiArchipelago.debug("XC: streams are set");
         this.inStream = inStream;
         this.outStream = outStream;
         active = new AtomicBoolean(true);
+        lastSentID = new AtomicLong(-1);
         waitTime = wait;
         tUnit = unit;
         xcListener = listener;
@@ -179,6 +290,11 @@ public class MessageXC
 
         rxThread.start();
         txThread.start();
+    }
+
+    public long getLastProcessID()
+    {
+        return lastSentID.get();
     }
 
     public void close()
@@ -228,6 +344,7 @@ public class MessageXC
     {
         try
         {
+            System.out.println("XC: Queuing message: " + ClusterMessage.messageToString(message));
             messageQ.put(message);
             return true;
         }
@@ -258,5 +375,48 @@ public class MessageXC
     public void setId(final long id)
     {
         this.id = id;
+    }
+
+    public String getLocalPath(final String remotePath)
+    {
+        return fileTranslator.getLocalPath(remotePath);
+    }
+
+    public String getRemotePath(final String localPath)
+    {
+        return fileTranslator.getRemotePath(localPath);
+    }
+
+    public File getLocalFile(final File remoteFile)
+    {
+        return new File(getLocalPath(remoteFile.getAbsolutePath()));
+    }
+
+    public File getRemoteFile(final File localFile)
+    {
+        return new File(fileTranslator.getRemotePath(localFile.getAbsolutePath()));
+    }
+
+    public synchronized void setFileSystemTranslator(final FileTranslator ft)
+    {
+        fileTranslator = ft;
+    }
+
+    public synchronized void unsetFileSystemTranslation()
+    {
+        if (!(fileTranslator instanceof NullFileTranslator))
+        {
+            fileTranslator = new NullFileTranslator();
+        }
+    }
+
+    public void addBottler(final Bottler bottler)
+    {
+        bottlers.add(bottler);
+    }
+
+    public List<Bottler> getBottlers()
+    {
+        return bottlers;
     }
 }
