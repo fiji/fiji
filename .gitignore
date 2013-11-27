@@ -216,7 +216,7 @@ hs_err*.log
 /jars/bcprov-jdk14-[0-9]*.jar
 /jars/bsh-[0-9]*.jar
 /jars/clojure-[0-9]*.jar
-/jars/commons-math-[0-9]*.jar
+/jars/commons-math3-[0-9]*.jar
 /jars/itext-[0-9]*.jar
 /jars/itextpdf-[0-9]*.jar
 /jars/jai_codec-[0-9]*.jar
