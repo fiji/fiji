@@ -20,9 +20,9 @@ package trainableSegmentation.utils;
 * Authors: Ignacio Arganda-Carreras (iarganda@mit.edu), 
 */
 
-import org.apache.commons.math.linear.Array2DRowRealMatrix;
-import org.apache.commons.math.linear.RealMatrix;
-import org.apache.commons.math.linear.SingularValueDecompositionImpl;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -81,7 +81,7 @@ public class PrincipalComponentAnalysis
 		// Calculate SVD and get V
 		final long start = System.currentTimeMillis();
 
-		final SingularValueDecompositionImpl svd = new SingularValueDecompositionImpl( m ); 
+		final SingularValueDecomposition svd = new SingularValueDecomposition( m );
 		
 		final RealMatrix v = svd.getV();
 

@@ -90,7 +90,7 @@ import org.apache.batik.dom.GenericDOMImplementation;
 import org.w3c.dom.Document;
 import org.apache.batik.svggen.SVGGraphics2D;
 
-import org.apache.commons.math.stat.regression.SimpleRegression;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 @SuppressWarnings("serial")
 public class ShollAnalysisDialog extends Dialog implements WindowListener, ActionListener, TextListener, ItemListener {
