@@ -344,7 +344,6 @@ public class MessageXC
     {
         try
         {
-            System.out.println("XC: Queuing message: " + ClusterMessage.messageToString(message));
             messageQ.put(message);
             return true;
         }

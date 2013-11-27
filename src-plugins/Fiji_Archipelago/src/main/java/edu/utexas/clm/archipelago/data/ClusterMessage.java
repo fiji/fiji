@@ -61,6 +61,8 @@ public class ClusterMessage implements Serializable
                 return "halt";
             case PROCESS:
                 return "process";
+            case ACK:
+                return "acknowledge";
             case USER:
                 return "user";
 //            case SETFILEROOT:

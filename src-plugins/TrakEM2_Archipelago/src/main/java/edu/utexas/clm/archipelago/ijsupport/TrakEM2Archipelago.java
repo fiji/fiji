@@ -23,6 +23,7 @@ import edu.utexas.clm.archipelago.FijiArchipelago;
 import edu.utexas.clm.archipelago.ijsupport.bottle.LayerBottler;
 import edu.utexas.clm.archipelago.ijsupport.bottle.PatchBottler;
 import edu.utexas.clm.archipelago.ijsupport.bottle.PointBottler;
+import edu.utexas.clm.archipelago.ijsupport.bottle.SIFTParamBottler;
 import edu.utexas.clm.archipelago.listen.ClusterStateListener;
 import edu.utexas.clm.archipelago.network.client.ArchipelagoClient;
 import ini.trakem2.ControlWindow;
@@ -135,6 +136,7 @@ public class TrakEM2Archipelago implements TPlugIn
         cluster.addBottler(new PointBottler());
         cluster.addBottler(new LayerBottler());
         cluster.addBottler(new PatchBottler());
+        cluster.addBottler(new SIFTParamBottler());
 
         cluster.addStateListener(new ProviderListener());
         ExecutorProvider.setProvider(new ClusterProvider(cluster));

@@ -26,6 +26,7 @@ import edu.utexas.clm.archipelago.compute.ProcessManager;
 import edu.utexas.clm.archipelago.data.ClusterMessage;
 import edu.utexas.clm.archipelago.network.MessageXC;
 import edu.utexas.clm.archipelago.network.translation.Bottler;
+import edu.utexas.clm.archipelago.network.translation.PMAcknowledgingSender;
 import edu.utexas.clm.archipelago.network.translation.PathSubstitutingFileTranslator;
 
 import java.io.IOException;
@@ -49,6 +50,7 @@ public class ClusterNode implements TransceiverListener
 
     private final Hashtable<Long, ProcessListener> processHandlers;
     private final Hashtable<Long, ProcessManager> runningProcesses;
+    private final Hashtable<Long, PMAcknowledgingSender> processAcks;
     private final AtomicInteger ramMBAvail, ramMBTot, ramMBMax, runningCores;
     private long nodeID;
     private long lastBeatTime;
@@ -76,6 +78,7 @@ public class ClusterNode implements TransceiverListener
         runningCores = new AtomicInteger(0);
         processHandlers = new Hashtable<Long, ProcessListener>();
         runningProcesses = new Hashtable<Long, ProcessManager>();
+        processAcks = new Hashtable<Long, PMAcknowledgingSender>();
         nodeID = -1;
         nodeParam = null;
         stateListeners = new Vector<NodeStateListener>();
@@ -279,11 +282,13 @@ public class ClusterNode implements TransceiverListener
         {
             if (processHandlers.get(process.getID()) == null)
             {
+                final PMAcknowledgingSender ack = new PMAcknowledgingSender(xc, process);
                 processHandlers.put(process.getID(), listener);
                 runningProcesses.put(process.getID(), process);
                 process.setRunningOn(this);
                 runningCores.addAndGet(process.requestedCores(this));
-                return xc.queueMessage(MessageType.PROCESS, process);
+                processAcks.put(process.getID(), ack);
+                return ack.go();
             }
             else
             {
@@ -364,16 +369,41 @@ public class ClusterNode implements TransceiverListener
                     break;
 
                 case LOG:
-                    FijiArchipelago.log(object.toString());
+                    FijiArchipelago.log("[" + getHost() + "] " + object.toString());
                     break;
 
                 case PROCESS:
                     ProcessManager<?> pm = (ProcessManager<?>)object;
                     ProcessListener listener = processHandlers.remove(pm.getID());
-                    removeProcess(pm);
-                    //runningProcesses.remove(pm.getID());
 
-                    listener.processFinished(pm);
+                    xc.queueMessage(MessageType.ACK, pm.getID());
+
+                    if (removeProcess(pm))
+                    {
+                        FijiArchipelago.debug("Finishing process " + pm.getID() + " on host " +
+                                getHost());
+                        listener.processFinished(pm);
+                    }
+                    else
+                    {
+                        FijiArchipelago.debug("Process " + pm.getID() + " could not be removed from "
+                                + getHost());
+                    }
+
+                    break;
+
+                case ACK:
+                    long pmid = (Long)object;
+                    PMAcknowledgingSender ack = processAcks.remove(pmid);
+
+                    // ack can be null in the situation in which a previous ACK message was sent by the remote just
+                    // as we were re-sending a process message.
+
+                    if (ack != null)
+                    {
+                        ack.acknowledge();
+                    }
+
                     break;
 
                 case NUMTHREADS:
@@ -538,11 +568,19 @@ public class ClusterNode implements TransceiverListener
         return false;
     }
     
-    private void removeProcess(ProcessManager pm)
+    private boolean removeProcess(ProcessManager pm)
     {
-        runningProcesses.remove(pm.getID());
-        processHandlers.remove(pm.getID());
-        runningCores.addAndGet(-(pm.requestedCores(this)));
+        if (runningProcesses.containsKey(pm.getID()))
+        {
+            runningProcesses.remove(pm.getID());
+            processHandlers.remove(pm.getID());
+            runningCores.addAndGet(-(pm.requestedCores(this)));
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public List<ProcessManager> getRunningProcesses()

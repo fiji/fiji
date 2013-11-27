@@ -31,6 +31,7 @@ public enum MessageType
     PING,
     HALT,
     PROCESS,
+    ACK,
     USER,
 //    SETFILEROOT,
     GETFSTRANSLATION,

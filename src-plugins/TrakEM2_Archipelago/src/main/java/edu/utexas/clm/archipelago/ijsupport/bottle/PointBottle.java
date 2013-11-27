@@ -6,8 +6,9 @@ import mpicbg.models.Point;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -15,20 +16,33 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class PointBottle implements Bottle<Point>
 {
-    private static final Map<Integer, Point> idPointMap =
-            Collections.synchronizedMap(new HashMap<Integer, Point>());
-    /*
-    As of this writing, Point has no .equals() nor .hashCode(), meaning this map uses the
-    system default hashCode, and instance equality, which is exactly what we want.
-    TODO: Consider using IdentityHashMap, to be future-proof.
-     */
-    private static final Map<Point, Integer> pointIdMap =
-            Collections.synchronizedMap(new HashMap<Point, Integer>());
+    public class IdPoint extends Point
+    {
+        private final long id;
+
+        public IdPoint(final long id, final Point pt)
+        {
+            super(pt.getL(), pt.getW());
+            this.id = id;
+        }
+
+        public long getID()
+        {
+            return id;
+        }
+    }
+
+
+    private static final Map<Long, Point> idPointMap =
+            Collections.synchronizedMap(new HashMap<Long, Point>());
+
+    private static final Map<Point, Long> pointIdMap =
+            Collections.synchronizedMap(new IdentityHashMap<Point, Long>());
     private static final ReentrantLock idPointLock = new ReentrantLock();
     private static final ReentrantLock idIdLock = new ReentrantLock();
-    private static final AtomicInteger idGenerator = new AtomicInteger(1);
+    private static final AtomicLong idGenerator = new AtomicLong(1);
 
-    private static void mapIdToPoint(final Point point, final int original)
+    private static void mapIdToPoint(final Point point, final long original)
     {
         idIdLock.lock();
 
@@ -37,9 +51,9 @@ public class PointBottle implements Bottle<Point>
         idIdLock.unlock();
     }
 
-    private static int getId(final Point point, final int idDefault)
+    private static long getId(final Point point, final long idDefault)
     {
-        final Integer id;
+        final Long id;
         idIdLock.lock();
 
         id = pointIdMap.get(point);
@@ -49,7 +63,7 @@ public class PointBottle implements Bottle<Point>
         return id == null ? idDefault : id;
     }
 
-    private static void mapPointToID(final int orig, final Point point)
+    private static void mapPointToID(final long orig, final Point point)
     {
         idPointLock.lock();
 
@@ -58,7 +72,27 @@ public class PointBottle implements Bottle<Point>
         idPointLock.unlock();
     }
 
-    public static Point getPoint(final int orig, final Point localPoint)
+    private static boolean existsOrPut(final long id, final Point point)
+    {
+        idPointLock.lock();
+
+        if (idPointMap.containsKey(id))
+        {
+            idPointLock.unlock();
+            return true;
+        }
+        else
+        {
+            idIdLock.lock();
+            idPointMap.put(id, point);
+            pointIdMap.put(point, id);
+            idIdLock.unlock();
+            idPointLock.unlock();
+            return false;
+        }
+    }
+
+    public static Point getPoint(final long orig, final Point localPoint)
     {
         final Point point;
         idPointLock.lock();
@@ -69,7 +103,7 @@ public class PointBottle implements Bottle<Point>
     }
 
     private final float[] w, l;
-    private final int id;
+    private final long id;
     private final boolean fromOrigin;
 
     /**
@@ -113,21 +147,27 @@ public class PointBottle implements Bottle<Point>
         }
         else
         {
-            /*
-            Sending from client node to root node
-            */
-            id = getId(point, idHash);
+            // Sending from client to root.
+            if (point instanceof IdPoint)
+            {
+                id = ((IdPoint)point).getID();
+            }
+            else
+            {
+                id = -1;
+            }
         }
     }
 
     public Point unBottle(final MessageXC xc)
     {
-        final Point point = new Point(l, w);
+
 
         if (fromOrigin)
         {
+            final Point point = new IdPoint(id, new Point(l, w));
             // Operating on a client node
-            if (idPointMap.containsKey(id))
+            if (existsOrPut(id, point))
             {
                 /*
                 If we've already seen this point, return the new point that was generated last time.
@@ -136,28 +176,22 @@ public class PointBottle implements Bottle<Point>
             }
             else
             {
-                /*
-                Otherwise, map the new id to the original id
-                */
-                mapIdToPoint(point, id);
-                /*
-                Map the original id to the new point so that we can retrieve it if the original id
-                comes through again.
-                 */
-                mapPointToID(id, point);
-
                 return point;
             }
         }
         else
         {
-            /*
-            This is a copy of the original point. Retrieve the original and set its values to the
-            one we've just recieved.
-             */
-            final Point origPoint = getPoint(id, point);
-            syncPoint(origPoint, point);
-            return origPoint;
+            if (id >= 0)
+            {
+                final Point point = new Point(l, w);
+                final Point origPoint = getPoint(id, point);
+                syncPoint(origPoint, point);
+                return origPoint;
+            }
+            else
+            {
+                return new Point(l, w);
+            }
         }
     }
 
