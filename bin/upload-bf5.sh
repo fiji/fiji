@@ -8,7 +8,7 @@
 
 export JAR_URL="http://hudson.openmicroscopy.org.uk/job/BIOFORMATS-trunk/lastSuccessfulBuild/artifact/artifacts"
 export JAR_FILES="
-jars/JWlz
+jars/JWlz-1.4.0
 jars/bio-formats
 jars/bio-formats/jai_imageio
 jars/bio-formats/scifio
