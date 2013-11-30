@@ -12,8 +12,8 @@ import ij.plugin.*;
 // 1.1  01/Jun/2009
 // 1.2  25/May/2010
 // 1.3  1/Nov/2011 added constant offset to Niblack's method (request)
-// 1.4  2/Nov/2011 Niblack's new constant should be subtracted to match mean, mode and midgrey methods. Midgrey method had the wrong constant sign.
-
+// 1.4  2/Nov/2011 Niblack's new constant should be subtracted to match mean,mode and midgrey methods. Midgrey method had the wrong constant sign.
+// 1.5  18/Nov/2013 added 3 new local thresholding methdos: Constrast, Otsu and Phansalkar
                 
 public class Auto_Local_Threshold implements PlugIn {
         /** Ask for parameters and then execute.*/
@@ -33,8 +33,8 @@ public class Auto_Local_Threshold implements PlugIn {
 
 		 // 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Auto Local Threshold");
-		String [] methods={"Try all", "Bernsen",  "Mean", "Median", "MidGrey", "Niblack", "Sauvola"};
-		gd.addMessage("Auto Local Threshold v1.4");
+		String [] methods={"Try all", "Bernsen", "Contrast", "Mean", "Median", "MidGrey", "Niblack","Otsu", "Phansalkar", "Sauvola"};
+		gd.addMessage("Auto Local Threshold v1.5");
 		gd.addChoice("Method", methods, methods[0]);
 		gd.addNumericField ("Radius",  15, 0);
 		gd.addMessage ("Special paramters (if different from default)");
@@ -100,7 +100,7 @@ public class Auto_Local_Threshold implements PlugIn {
 					imp3 = new ImagePlus("Auto Threshold", stackNew);
 					imp3.updateAndDraw();
 					MontageMaker mm= new MontageMaker();
-					mm.makeMontage( imp3, 3, 2, 1.0, 1, (ml-1), 1, 0, true); // 5 columns and 3 rows
+					mm.makeMontage( imp3, 3, 3, 1.0, 1, (ml-1), 1, 0, true); // 3 columns and 3 rows
 				}
 				imp.setSlice(1);
 				//if (doItAnyway)
@@ -125,7 +125,7 @@ public class Auto_Local_Threshold implements PlugIn {
 				imp3 = new ImagePlus("Auto Threshold", stackNew);
 				imp3.updateAndDraw();
 				MontageMaker mm= new MontageMaker();
-				mm.makeMontage( imp3, 3, 2, 1.0, 1, (ml-1), 1, 0, true);
+				mm.makeMontage( imp3, 3, 3, 1.0, 1, (ml-1), 1, 0, true);
 				return;
 			}
 		}
@@ -163,10 +163,10 @@ public class Auto_Local_Threshold implements PlugIn {
 		int xe = ip.getWidth();
 		int ye = ip.getHeight();
 
-		int [] data = (ip.getHistogram());
+		//int [] data = (ip.getHistogram());
 
 		IJ.showStatus("Thresholding...");
-
+		long startTime = System.currentTimeMillis();
 		//1 Do it
 		if (imp.getStackSize()==1){
 			    ip.snapshot();
@@ -175,6 +175,9 @@ public class Auto_Local_Threshold implements PlugIn {
 		// Apply the selected algorithm
 		if(myMethod.equals("Bernsen")){
 			Bernsen(imp,  radius, par1, par2, doIwhite);
+		}
+		else if(myMethod.equals("Contrast")){
+			Contrast(imp, radius, par1, par2, doIwhite);
 		}
 		else if(myMethod.equals("Mean")){
 			Mean(imp, radius, par1, par2, doIwhite);
@@ -188,6 +191,12 @@ public class Auto_Local_Threshold implements PlugIn {
 		else if(myMethod.equals("Niblack")){
 			Niblack (imp, radius, par1, par2, doIwhite); 
 		}
+		else if(myMethod.equals("Otsu")){
+			Otsu(imp, radius, par1, par2, doIwhite);
+		}
+		else if(myMethod.equals("Phansalkar")){
+			Phansalkar(imp, radius, par1, par2, doIwhite);
+		}
 		else if(myMethod.equals("Sauvola")){
 			Sauvola(imp, radius, par1, par2, doIwhite);
 		}
@@ -195,6 +204,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		imp.updateAndDraw();
 		imp.getProcessor().setThreshold(255, 255, ImageProcessor.NO_LUT_UPDATE);
 		// 2 - Return the threshold and the image
+		IJ.showStatus("\nDone " + (System.currentTimeMillis() - startTime) / 1000.0);
 		return new Object[] {imp};
 	}
 
@@ -252,6 +262,48 @@ public class Auto_Local_Threshold implements PlugIn {
 				pixels[i] = ( mid_gray >= 128 ) ? object :  backg;  //Low contrast region
 			else
 				pixels[i] = (temp >= mid_gray ) ? object : backg;
+		}    
+		//imp.updateAndDraw();
+		return;
+	}
+
+	void Contrast(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite) {
+		// G. Landini, 2013
+		// Based on a simple contrast toggle. This procedure does not have user-provided paramters other than the kernel radius
+		// Sets the pixel value to either white or black depending on whether its current value is closest to the local Max or Min respectively
+		// The procedure is similar to Toggle Contrast Enhancement (see Soille, Morphological Image Analysis (2004), p. 259
+
+		ImagePlus Maximp, Minimp;
+		ImageProcessor ip=imp.getProcessor(), ipMax, ipMin;
+		int c_value =0;
+		int mid_gray;
+		byte object;
+		byte backg;
+
+
+		if (doIwhite){
+			object =  (byte) 0xff;
+			backg =   (byte) 0;
+		}
+		else {
+			object =  (byte) 0;
+			backg =  (byte) 0xff;
+		}
+
+		Maximp=duplicateImage(ip);
+		ipMax=Maximp.getProcessor();
+		RankFilters rf=new RankFilters();
+		rf.rank(ipMax, radius, rf.MAX);// Maximum
+		//Maximp.show();
+		Minimp=duplicateImage(ip);
+		ipMin=Minimp.getProcessor();
+		rf.rank(ipMin, radius, rf.MIN); //Minimum
+		//Minimp.show();
+		byte[] pixels = (byte [])ip.getPixels();
+		byte[] max = (byte [])ipMax.getPixels();
+		byte[] min = (byte [])ipMin.getPixels();
+		for (int i=0; i<pixels.length; i++) {
+			pixels[i] = ((Math.abs((int)(max[i]&0xff- pixels[i]&0xff)) <= Math.abs((int)(pixels[i]&0xff- min[i]&0xff)))) ? object : backg;
 		}    
 		//imp.updateAndDraw();
 		return;
@@ -438,6 +490,177 @@ public class Auto_Local_Threshold implements PlugIn {
 		return;
 	}
 
+	void Otsu(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite) {
+		// Otsu's threshold algorithm
+		// C++ code by Jordan Bevik <Jordan.Bevic@qtiworld.com>
+		// ported to ImageJ plugin by G.Landini. Same algorithm as in Auto_Threshold, this time on local circular regions
+		int[] data;
+		int w=imp.getWidth();
+		int h=imp.getHeight();
+		int position;
+		int radiusx2=radius * 2;
+		ImageProcessor ip=imp.getProcessor();
+		byte[] pixels = (byte []) ip.getPixels();
+		byte[] pixelsOut = new byte[pixels.length]; // need this to avoid changing the image data (and further histograms)
+		byte object;
+		byte backg;
+
+		if (doIwhite){
+			object =  (byte) 0xff;
+			backg =   (byte) 0;
+		}
+		else {
+			object =  (byte) 0;
+			backg =  (byte) 0xff;
+		}
+
+		int k,kStar;  // k = the current threshold; kStar = optimal threshold
+		int N1, N;    // N1 = # points with intensity <=k; N = total number of points
+		double BCV, BCVmax; // The current Between Class Variance and maximum BCV
+		double num, denom;  // temporary bookeeping
+		int Sk;  // The total intensity for all histogram points <=k
+		int S, L=256; // The total intensity of the image. Need to hange here if modifying for >8 bits images
+		int roiy;
+
+		Roi roi = new OvalRoi(0, 0, radiusx2, radiusx2);
+		//ip.setRoi(roi);
+		for (int y =0; y<h; y++){
+			IJ.showProgress((double)(y)/(h-1)); // this method is slow, so let's show the progress bar
+			roiy = y-radius;
+			for (int x = 0; x<w; x++){
+				roi.setLocation(x-radius,roiy);
+				ip.setRoi(roi);
+				//ip.setRoi(new OvalRoi(x-radius, roiy, radiusx2, radiusx2));
+				position=x+y*w;
+				data = ip.getHistogram();
+
+				// Initialize values:
+				S = N = 0;
+				for (k=0; k<L; k++){
+					S += k * data[k];	// Total histogram intensity
+					N += data[k];		// Total number of data points
+				}
+
+				Sk = 0;
+				N1 = data[0]; // The entry for zero intensity
+				BCV = 0;
+				BCVmax=0;
+				kStar = 0;
+
+				// Look at each possible threshold value,
+				// calculate the between-class variance, and decide if it's a max
+				for (k=1; k<L-1; k++) { // No need to check endpoints k = 0 or k = L-1
+					Sk += k * data[k];
+					N1 += data[k];
+
+					// The float casting here is to avoid compiler warning about loss of precision and
+					// will prevent overflow in the case of large saturated images
+					denom = (double)( N1) * (N - N1); // Maximum value of denom is (N^2)/4 =  approx. 3E10
+
+					if (denom != 0 ){
+						// Float here is to avoid loss of precision when dividing
+						num = ( (double)N1 / N ) * S - Sk; 	// Maximum value of num =  255*N = approx 8E7
+						BCV = (num * num) / denom;
+					}
+					else
+						BCV = 0;
+
+					if (BCV >= BCVmax){ // Assign the best threshold found so far
+						BCVmax = BCV;
+						kStar = k;
+					}
+				}
+				// kStar += 1;	// Use QTI convention that intensity -> 1 if intensity >= k
+				// (the algorithm was developed for I-> 1 if I <= k.)
+				//return kStar;
+				pixelsOut[position] = ((int) (pixels[position]&0xff)>kStar) ? object : backg;
+			}
+		}
+		for (position=0; position<w*h; position++) pixels[position]=pixelsOut[position]; //update with thresholded pixels
+	}
+
+	void Phansalkar(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite) {
+		// This is a modification of Sauvola's thresholding method to deal with low contrast images.
+		// Phansalskar N. et al. Adaptive local thresholding for detection of nuclei in diversity stained
+		// cytology images.International Conference on Communications and Signal Processing (ICCSP), 2011, 
+		// 218 - 220.
+		// In this method, the threshold t = mean*(1+p*exp(-q*mean)+k*((stdev/r)-1))
+		// Phansalkar recommends k = 0.25, r = 0.5, p = 2 and q = 10. In this plugin, k and r are the 
+                // parameters 1 and 2 respectively, but the values of p and q are fixed.
+		//
+		// Implemented from Phansalkar's paper description by G. Landini
+		// This version uses a circular local window, instead of a rectagular one
+
+		ImagePlus Meanimp, Varimp, Orimp;
+		ImageProcessor ip=imp.getProcessor(), ipMean, ipVar, ipOri;
+		double k_value = 0.25;
+		double r_value = 0.5;
+		double p_value = 2.0;
+		double q_value = 10.0;
+		byte object;
+		byte backg;
+
+		if (par1!=0) {
+			IJ.log("Phansalkar: changed k_value from :"+ k_value + "  to:" + par1);
+			k_value= par1;
+		}
+
+		if (par2!=0) {
+			IJ.log("Phansalkar: changed r_value from :"+r_value + "  to:" + par2);
+			r_value= par2;
+		}
+
+		if (doIwhite){
+			object =  (byte) 0xff;
+			backg =   (byte) 0;
+		}
+		else {
+			object =  (byte) 0;
+			backg =  (byte) 0xff;
+		}
+
+		Meanimp=duplicateImage(ip);
+		ContrastEnhancer ce = new ContrastEnhancer();
+		ce.stretchHistogram(Meanimp, 0.0);
+		ImageConverter ic = new ImageConverter(Meanimp);
+		ic.convertToGray32();
+		ipMean=Meanimp.getProcessor();
+		ipMean.multiply(1.0/255);
+
+		Orimp=duplicateImage(ip);
+		ce.stretchHistogram(Orimp, 0.0);
+		ic = new ImageConverter(Orimp);
+		ic.convertToGray32();
+		ipOri=Orimp.getProcessor();
+		ipOri.multiply(1.0/255); //original to compare
+		//Orimp.show();
+
+		RankFilters rf=new RankFilters();
+		rf.rank(ipMean, radius, rf.MEAN);// Mean
+
+		//Meanimp.show();
+		Varimp=duplicateImage(ip);
+		ce.stretchHistogram(Varimp, 0.0);
+		ic = new ImageConverter(Varimp);
+		ic.convertToGray32();
+		ipVar=Varimp.getProcessor();
+		ipVar.multiply(1.0/255);
+
+		rf.rank(ipVar, radius, rf.VARIANCE); //Variance
+		ipVar.sqr(); //SD
+
+		//Varimp.show();
+		byte[] pixels = (byte []) ip.getPixels();
+		float[] ori = (float []) ipOri.getPixels();
+		float[] mean = (float []) ipMean.getPixels();
+		float[] sd = (float []) ipVar.getPixels();
+
+		for (int i=0; i<pixels.length; i++) 
+			pixels[i] = ( (ori[i]) > ( mean[i] * (1.0 + p_value * Math.exp(-q_value * mean[i]) + k_value * (( sd[i] / r_value)- 1.0)))) ? object : backg;
+		//imp.updateAndDraw();
+		return;
+	}
+
 	void Sauvola(ImagePlus imp, int radius,  double par1, double par2, boolean doIwhite) {
 		// Sauvola recommends K_VALUE = 0.5 and R_VALUE = 128.
 		// This is a modification of Niblack's thresholding method.
@@ -496,6 +719,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		//imp.updateAndDraw();
 		return;
 	}
+
 
 	private ImagePlus duplicateImage(ImageProcessor iProcessor){
 		int w=iProcessor.getWidth();
