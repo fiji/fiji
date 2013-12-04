@@ -544,9 +544,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	 * Loads the preferences for the JFrame from file
 	 */
 	public void loadPreferences() {
-
 		Dimension dim = getSize();
-		System.out.println(dim.width);
+	
 		// If a dimension is 0 then use the default dimension size
 		if( 0 == dim.width) {
 			dim.width = DEFAULT_WINDOW_WIDTH;
@@ -555,7 +554,6 @@ public class TextEditor extends JFrame implements ActionListener,
 			dim.height = DEFAULT_WINDOW_HEIGHT;
 		}
 
-		System.out.println(dim.width);
 		setPreferredSize(
 			new Dimension(
 				(int) Prefs.get(WINDOW_WIDTH, dim.width),
