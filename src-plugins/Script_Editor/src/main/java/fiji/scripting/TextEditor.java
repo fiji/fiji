@@ -129,6 +129,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	public static final String WINDOW_HEIGHT = "script.editor.height";
 	public static final String WINDOW_WIDTH = "script.editor.width";
 	public static final int DEFAULT_TAB_SIZE = 4;
+	public static final int DEFAULT_WINDOW_WIDTH = 800;
+	public static final int DEFAULT_WINDOW_HEIGHT = 600;
 
 	public TextEditor(String path) {
 		super("Script Editor");
@@ -543,6 +545,15 @@ public class TextEditor extends JFrame implements ActionListener,
 	 */
 	public void loadPreferences() {
 		Dimension dim = getSize();
+	
+		// If a dimension is 0 then use the default dimension size
+		if( 0 == dim.width) {
+			dim.width = DEFAULT_WINDOW_WIDTH;
+		}
+		if( 0 == dim.height ) {
+			dim.height = DEFAULT_WINDOW_HEIGHT;
+		}
+
 		setPreferredSize(
 			new Dimension(
 				(int) Prefs.get(WINDOW_WIDTH, dim.width),
