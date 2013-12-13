@@ -55,7 +55,7 @@ public class Fusion
 	 * @param subpixelResolution - if there is no subpixel resolution, we do not need to convert to float as no interpolation is necessary, we can compute everything with RealType
 	 */
 	public static < T extends RealType< T > > ImagePlus fuse( final T targetType, final ArrayList< ImagePlus > images, final ArrayList< InvertibleBoundable > models, 
-			final int dimensionality, final boolean subpixelResolution, final int fusionType, final String outputDirectory, final boolean noOverlap )
+			final int dimensionality, final boolean subpixelResolution, final int fusionType, final String outputDirectory, final boolean noOverlap, final boolean ignoreZeroValues )
 	{
 		// first we need to estimate the boundaries of the new image
 		final float[] offset = new float[ dimensionality ];
@@ -100,14 +100,34 @@ public class Fusion
 				// init the fusion
 				PixelFusion fusion = null;
 				
-				if ( fusionType == 1 ) 
-					fusion = new AveragePixelFusion();
+				if ( fusionType == 1 )
+				{
+					if ( ignoreZeroValues )
+						fusion = new AveragePixelFusionIgnoreZero();
+					else
+						fusion = new AveragePixelFusion();
+				}
 				else if ( fusionType == 2 )
-					fusion = new MedianPixelFusion();
+				{
+					if ( ignoreZeroValues )
+						fusion = new MedianPixelFusionIgnoreZero();
+					else
+						fusion = new MedianPixelFusion();
+				}
 				else if ( fusionType == 3 )
-					fusion = new MaxPixelFusion();
-				else if ( fusionType == 4)
-					fusion = new MinPixelFusion();	
+				{
+					if ( ignoreZeroValues )
+						fusion = new MaxPixelFusionIgnoreZero();
+					else
+						fusion = new MaxPixelFusion();
+				}
+				else if ( fusionType == 4 )
+				{
+					if ( ignoreZeroValues )
+						fusion = new MinPixelFusionIgnoreZero();
+					else
+						fusion = new MinPixelFusion();	
+				}
 				
 				// extract the complete blockdata
 				if ( subpixelResolution )
@@ -122,7 +142,12 @@ public class Fusion
 					
 					// init blending with the images
 					if ( fusionType == 0 )
-						fusion = new BlendingPixelFusion( blockData );
+					{
+						if ( ignoreZeroValues )
+							fusion = new BlendingPixelFusionIgnoreZero( blockData );
+						else
+							fusion = new BlendingPixelFusion( blockData );
+					}
 					
 					if ( outputDirectory == null )
 					{
@@ -162,8 +187,13 @@ public class Fusion
 					
 					// init blending with the images
 					if ( fusionType == 0 )
-						fusion = new BlendingPixelFusion( blockData );					
-
+					{
+						if ( ignoreZeroValues )
+							fusion = new BlendingPixelFusionIgnoreZero( blockData );
+						else
+							fusion = new BlendingPixelFusion( blockData );					
+					}
+					
 					if ( outputDirectory == null )
 					{
 						if ( noOverlap )

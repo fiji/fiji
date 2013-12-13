@@ -51,6 +51,7 @@ public class Stitching_Pairwise implements PlugIn
 	public static int defaultTimeSelect = 1;
 	public static boolean defaultFuseImages = true;
 	public static int defaultFusionMethod = 0;
+	public static boolean defaultIgnoreZeroValues = false;
 	public static boolean defaultComputeOverlap = true;
 	public static boolean defaultSubpixelAccuracy = true;
 	public static int defaultCheckPeaks = 5;
@@ -176,6 +177,7 @@ public class Stitching_Pairwise implements PlugIn
 		gd2.addChoice("Fusion_method", fusionMethodList, fusionMethodList[ defaultFusionMethod ] );
 		gd2.addStringField("Fused_image name: ", imp1.getTitle() + "<->" + imp2.getTitle(), 20 );
 		gd2.addSlider("Check_peaks", 1, 100, defaultCheckPeaks );
+		gd2.addCheckbox( "Ignore zero values when fusing", defaultIgnoreZeroValues );
 		gd2.addCheckbox("Compute_overlap", defaultComputeOverlap );
 		gd2.addCheckbox("Subpixel_accuracy", defaultSubpixelAccuracy );
 		gd2.addNumericField("x", defaultxOffset, 4 );
@@ -209,8 +211,9 @@ public class Stitching_Pairwise implements PlugIn
 		else
 			params.fusionMethod = defaultFusionMethod = gd2.getNextChoiceIndex();
 		
-		params.fusedName = gd2.getNextText();
+		params.fusedName = gd2.getNextString();
 		params.checkPeaks = defaultCheckPeaks = (int)Math.round( gd2.getNextNumber() );
+		params.ignoreZeroValuesFusion = defaultIgnoreZeroValues = gd2.getNextBoolean();
 		params.computeOverlap = defaultComputeOverlap = gd2.getNextBoolean();
 		params.subpixelAccuracy = defaultSubpixelAccuracy = gd2.getNextBoolean();
 		params.xOffset = defaultxOffset = gd2.getNextNumber();
@@ -432,7 +435,7 @@ public class Stitching_Pairwise implements PlugIn
 		
 		if ( params.fusionMethod < 5 )
 		{
-			ImagePlus imp = Fusion.fuse( targetType, images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, null, false );
+			ImagePlus imp = Fusion.fuse( targetType, images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, null, false, params.ignoreZeroValuesFusion );
 			return imp;
 		}
 		else if ( params.fusionMethod == 5 ) // overlay

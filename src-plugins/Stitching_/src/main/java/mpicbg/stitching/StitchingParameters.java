@@ -20,7 +20,7 @@ public class StitchingParameters
 	public String fusedName;
 	public int checkPeaks;
 	public boolean addTilesAsRois;
-	public boolean computeOverlap, subpixelAccuracy ,downSample;
+	public boolean computeOverlap, subpixelAccuracy, ignoreZeroValuesFusion = false, downSample = false;
 	public boolean invertX, invertY;
 	public boolean ignoreZStage;
 	public double xOffset;
