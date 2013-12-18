@@ -26,10 +26,10 @@ PASSWD_FILE="$HOME/$UPDATE_SITE_USER-WebDAV.passwd"
 # -- Determine best executable to use --
 
 OS_NAME="$(uname)"
-if [ "$OS_NAME" == "Linux" ]
+if [ "$OS_NAME" = "Linux" ]
 then
 	OS_ARCH="$(uname -m)"
-	if [ "$OS_ARCH" == "x86_64" ]
+	if [ "$OS_ARCH" = "x86_64" ]
 	then
 		OS_BITS=64
 	else
