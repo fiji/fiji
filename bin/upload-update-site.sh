@@ -31,15 +31,9 @@ then
 	OS_ARCH="$(uname -m)"
 	if [ "$OS_ARCH" = "x86_64" ]
 	then
-		OS_BITS=64
+		EXE="ImageJ-linux64"
 	else
-		OS_BITS=32
-	fi
-	if [ -e "$FIJI_DIR/fiji-linux$OS_BITS" ]
-	then
-		EXE="fiji-linux$OS_BITS"
-	else
-		EXE="ImageJ-linux$OS_BITS"
+		EXE="ImageJ-linux32"
 	fi
 elif [ "$OS_NAME" == "Darwin" ]
 then
