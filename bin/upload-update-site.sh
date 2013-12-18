@@ -48,6 +48,11 @@ else
 	echo "Unsupported OS: $OS_NAME"
 	exit 6
 fi
+if [ ! -e "$FIJI_DIR/$EXE" ]
+then
+	echo "Cannot find ImageJ launcher: $EXE"
+	exit 7
+fi
 
 # -- Download and unpack Fiji if it is not already present --
 
