@@ -25,7 +25,7 @@ PASSWD_FILE="$HOME/$UPDATE_SITE_USER-WebDAV.passwd"
 
 # -- Download and unpack Fiji if it is not already present --
 
-if [ ! -d "$FIJI_DIR" ]
+if [ -d "$FIJI_DIR" ]
 then
 	FIJI_INITIALIZED=1
 fi
