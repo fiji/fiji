@@ -23,7 +23,21 @@ if [ -z "$UPDATE_SITE_USER" ]; then echo "No UPDATE_SITE_USER."; exit 5; fi
 
 PASSWD_FILE="$HOME/$UPDATE_SITE_USER-WebDAV.passwd"
 
-# -- Determine best executable to use --
+# -- Download and unpack Fiji if it is not already present --
+
+if [ ! -d "$FIJI_DIR" ]
+then
+	FIJI_INITIALIZED=1
+fi
+
+if [ -z "$FIJI_INITIALIZED" ]
+then
+	wget -nv "$FIJI_URL"
+	tar xf "$FIJI_ARCHIVE"
+	rm "$FIJI_ARCHIVE"
+fi
+
+# -- Identify ImageJ launcher executable --
 
 OS_NAME="$(uname)"
 if [ "$OS_NAME" = "Linux" ]
@@ -48,13 +62,10 @@ then
 	exit 7
 fi
 
-# -- Download and unpack Fiji if it is not already present --
+# -- Add update site credentials if needed --
 
-if [ ! -d "$FIJI_DIR" ]
+if [ -z "$FIJI_INITIALIZED" ]
 then
-	wget -nv "$FIJI_URL"
-	tar xf "$FIJI_ARCHIVE"
-	rm "$FIJI_ARCHIVE"
 	"$FIJI_DIR"/$EXE --update add-update-site "$UPDATE_SITE_NAME" \
 		"$UPDATE_SITE_URL" \
 		"webdav:$UPDATE_SITE_USER:$(cat "$PASSWD_FILE")" .
