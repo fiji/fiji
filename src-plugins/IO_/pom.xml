@@ -42,6 +42,21 @@
 			<artifactId>jzlib</artifactId>
 			<version>${jzlib.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>${scifio.groupId}</groupId>
+			<artifactId>scifio</artifactId>
+			<version>${scifio.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-ij</artifactId>
+			<version>${imglib2.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2</artifactId>
+			<version>${imglib2.version}</version>
+		</dependency>
 	</dependencies>
 
 	<!-- NB: for project parent -->
