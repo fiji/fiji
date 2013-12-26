@@ -1,11 +1,9 @@
 package io;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.io.OpenDialog;
 import ij.plugin.PlugIn;
 import io.scif.img.IO;
-import io.scif.img.ImgIOException;
 
 import java.io.File;
 
@@ -33,22 +31,17 @@ public class SCIFIO_Reader extends ImagePlus implements PlugIn {
 			file = new File(directory + "/" + od.getFileName());
 		}
 
-		try {
-			@SuppressWarnings("rawtypes")
-			ImgPlus img = IO.open(file.getPath());
+		@SuppressWarnings("rawtypes")
+		ImgPlus img = IO.open(file.getPath());
 
-			final String title = file.getName();
-			setTitle(title);
-			@SuppressWarnings("unchecked")
-			final ImagePlus imp = ImageJFunctions.wrap(img, title);
-			setStack(imp.getImageStack());
+		final String title = file.getName();
+		setTitle(title);
+		@SuppressWarnings("unchecked")
+		final ImagePlus imp = ImageJFunctions.wrap(img, title);
+		setStack(imp.getImageStack());
 
-			if (arg.equals(""))
-				show();
-		} catch (ImgIOException e) {
-			e.printStackTrace();
-			IJ.error("Could not open " + file + ": " + e.getMessage());
-		}
+		if (arg.equals(""))
+			show();
 	}
 
 }
