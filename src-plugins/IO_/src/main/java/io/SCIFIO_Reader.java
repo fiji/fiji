@@ -45,7 +45,7 @@ public class SCIFIO_Reader extends ImagePlus implements PlugIn {
 			final ImagePlus imp = ImageJFunctions.wrap(img, title);
 			setStack(imp.getImageStack());
 
-			if (arg.equals("")) show();
+			if (arg ==  null || arg.equals("")) show();
 		}
 	}
 
