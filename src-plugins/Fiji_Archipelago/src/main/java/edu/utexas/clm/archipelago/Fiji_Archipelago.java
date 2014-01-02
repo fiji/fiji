@@ -27,6 +27,7 @@ import ij.plugin.PlugIn;
 
 import java.io.*;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -96,8 +97,9 @@ public class Fiji_Archipelago implements PlugIn
                 return;
         }
 
-
-        logFile = new File(System.getProperty("user.home") + "/cluster_" + id + ".log");
+        String datetimeStrStart = new SimpleDateFormat("yyMMdd'T'HHmm").format(new Date());
+        logFile = new File(System.getProperty("user.home") + "/cluster_" + id + "_" +
+                datetimeStrStart + ".log");
         filePrinter = new PrintStream(new FileOutputStream(logFile));
 
         System.setOut(filePrinter);
