@@ -124,10 +124,10 @@ public class VariationOfInformation extends Metrics
 	/**
 	 * Calculate variation of information with N^2 normalization
 	 *  
-	 * @param label
-	 * @param proposal
-	 * @param binaryThreshold
-	 * @return
+	 * @param label original labels
+	 * @param proposal proposed labels (usually a probability image to be thresholded)
+	 * @param binaryThreshold threshold value to binarize proposal
+	 * @return variation of information between original labels and the binarized proposal
 	 */
 	public double variationOfInformationN2(
 			ImageProcessor label,
@@ -156,6 +156,15 @@ public class VariationOfInformation extends Metrics
 		
 	}
 
+	/**
+	 * Calculate the variation of information between two clusters using 
+	 * the foreground restriction, i.e. pruning out the zero component in 
+	 * the labeling (un-assigned "out" space)
+	 * 
+	 * @param cluster1 labels of cluster 1 (ground truth)
+	 * @param cluster2 labels of cluster 2 (proposal)
+	 * @return variation of information value
+	 */
 	public double variationOfInformationForegroundRestricted(
 			ShortProcessor cluster1,
 			ShortProcessor cluster2)
