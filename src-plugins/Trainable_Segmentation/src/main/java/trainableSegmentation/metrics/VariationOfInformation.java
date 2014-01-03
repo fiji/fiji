@@ -39,11 +39,7 @@ import ij.process.ShortProcessor;
  * to compare clusters or segmentations.
  */
 public class VariationOfInformation extends Metrics
-{
-
-	/** boolean flag to set the level of detail on the standard output messages */
-	private boolean verbose = true;
-	
+{	
 	/**
 	 * Initialize variation of information metric
 	 * @param originalLabels original labels (single 2D image or stack)
@@ -575,13 +571,5 @@ public class VariationOfInformation extends Metrics
 		// F-score
 		return 2.0 * prec * rec / (prec + rec);
 	}
-	
-    /**
-     * Set verbose mode
-     * @param verbose true to display more information in the standard output
-     */
-    public void setVerboseMode(boolean verbose) 
-    {		
-    	this.verbose = verbose;
-	}
+
 }

@@ -86,9 +86,6 @@ public class WarpingError extends Metrics {
 	/** flags to select which error should be taken into account and which not */
 	int flags = DEFAULT_FLAGS;
 	
-	/** boolean flag to set the level of detail on the standard output messages */
-	private boolean verbose = true;
-	
 	/**
 	 * Initialize warping error metric
 	 * @param originalLabels original labels (single 2D image or stack)
@@ -2538,15 +2535,6 @@ public class WarpingError extends Metrics {
 		WarpingError we = new WarpingError(label, proposal);
 		we.setVerboseMode( false );
 		return we.getMinimumSplitsAndMergersErrorValue(minThreshold, maxThreshold, stepThreshold, clusterByError, radius );
-	}
-
-    /**
-     * Set verbose mode
-     * @param verbose true to display more information in the standard output
-     */
-    public void setVerboseMode(boolean verbose) 
-    {		
-    	this.verbose = verbose;
 	}
 
 	/**

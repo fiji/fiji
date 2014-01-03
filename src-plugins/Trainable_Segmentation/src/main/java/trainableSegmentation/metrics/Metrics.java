@@ -20,6 +20,7 @@ package trainableSegmentation.metrics;
  * Authors: Ignacio Arganda-Carreras (iarganda@mit.edu)
  */
 
+import ij.IJ;
 import ij.ImagePlus;
 
 /**
@@ -33,6 +34,10 @@ public abstract class Metrics
 	/** proposed new labels (single 2D image or stack of the same as as the original labels) */
 	ImagePlus proposedLabels;
 	
+	/** boolean flag to set the level of detail on the standard output messages */
+	protected boolean verbose = true;
+
+	
 	public Metrics(ImagePlus originalLabels, ImagePlus proposedLabels)
 	{
 		this.originalLabels = originalLabels;
@@ -40,5 +45,51 @@ public abstract class Metrics
 	}
 	
 	public abstract double getMetricValue(double binaryThreshold);
+	
+    /**
+     * Set verbose mode
+     * @param verbose true to display more information in the standard output
+     */
+    public void setVerboseMode(boolean verbose) 
+    {		
+    	this.verbose = verbose;
+	}
+	
+	/**
+	 * Get the minimum metric value over a set of thresholds 
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @return minimum value of the metric
+	 */
+	public double getMinimumMetricValue(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold )
+	{
+		double min = 1.0;
+		double bestTh = minThreshold;
+		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
+		{
+			if( verbose ) 
+				IJ.log("  Calculating metric value for threshold " + String.format("%.3f", th) + "...");
+			
+			double error = getMetricValue( th );
+			if( min > error )
+			{
+				min = error;;
+				bestTh = th;
+			}
+			if( verbose )
+				IJ.log("    Error = " + error);
+		}
+		
+		if( verbose )
+			IJ.log(" ** Minimum metric value = " + min + ", with threshold = " + bestTh + " **\n");
+	    return min;
+	}
+	
+	
 
 }

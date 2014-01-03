@@ -57,9 +57,6 @@ import ij.process.ShortProcessor;
  */
 public class RandError extends Metrics
 {
-	/** boolean flag to set the level of detail on the standard output messages */
-	private boolean verbose = true;
-
 	/**
 	 * Initialize Rand error metric
 	 * @param originalLabels original labels (single 2D image or stack)

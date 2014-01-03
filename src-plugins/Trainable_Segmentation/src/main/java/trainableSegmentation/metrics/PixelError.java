@@ -35,11 +35,7 @@ import ij.process.ImageProcessor;
  * This class implements the pixel error metric
  */
 public class PixelError extends Metrics
-{
-
-	/** boolean flag to set the level of detail on the standard output messages */
-	private boolean verbose = true;
-		
+{		
 	/**
 	 * Initialize pixel error metric
 	 * @param originalLabels original labels (single 2D image or stack)
@@ -550,7 +546,6 @@ public class PixelError extends Metrics
 	 * @param minThreshold minimum threshold value to binarize the input images
 	 * @param maxThreshold maximum threshold value to binarize the input images
 	 * @param stepThreshold threshold step value to use during binarization
-	 * @param verbose flag to print or not output information
 	 * @return maximal F-score of the pixel error
 	 */
 	public double getPixelErrorMaximalFScore(
@@ -643,14 +638,4 @@ public class PixelError extends Metrics
        System.out.println("   PixelError -maxFScore original-labels.tif proposed-labels.tif 0.0 1.0 0.1");
 
     } 
-    
-    /**
-     * Set verbose mode
-     * @param verbose true to display more information in the standard output
-     */
-    public void setVerboseMode(boolean verbose) 
-    {		
-    	this.verbose = verbose;
-	}
-	
 }
