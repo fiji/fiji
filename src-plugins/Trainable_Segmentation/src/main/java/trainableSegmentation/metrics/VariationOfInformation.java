@@ -576,4 +576,12 @@ public class VariationOfInformation extends Metrics
 		return 2.0 * prec * rec / (prec + rec);
 	}
 	
+    /**
+     * Set verbose mode
+     * @param verbose true to display more information in the standard output
+     */
+    public void setVerboseMode(boolean verbose) 
+    {		
+    	this.verbose = verbose;
+	}
 }
