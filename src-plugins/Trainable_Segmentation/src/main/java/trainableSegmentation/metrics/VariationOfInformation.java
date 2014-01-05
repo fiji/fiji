@@ -586,7 +586,7 @@ public class VariationOfInformation extends Metrics
 		for(double th = minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
 			if( verbose ) 
-				IJ.log("  Calculating variation of information F-score for threshold value " + String.format("%.3f", th) + "...");
+				IJ.log("  Calculating foreground-restricted variation of information F-score for threshold value " + String.format("%.3f", th) + "...");
 			final double fScore = getForegroundRestrictedFscore( th );
 			fscores.add( fScore );
 			if( fScore > bestFscore )
