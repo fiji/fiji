@@ -58,7 +58,7 @@ public class AdjustedRandError extends Metrics
 {
 
 	/**
-	 * Initialize ajusted Rand error metric.
+	 * Initialize adjusted Rand error metric.
 	 * 
 	 * @param originalLabels original labels (single 2D image or stack)
 	 * @param proposedLabels proposed new labels (single 2D image or stack of the same as as the original labels)
