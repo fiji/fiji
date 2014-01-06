@@ -392,6 +392,11 @@ public class FeatureStackArray
 			featureStackArray[referenceStackIndex].setEnabledFeatures(newFeatures);
 	}
 
+	/**
+	 * Set expected membrane thickness
+	 * 
+	 * @param thickness expected membrane thickness in pixels
+	 */
 	public void setMembraneSize(int thickness) 
 	{
 		this.membraneThickness = thickness;
