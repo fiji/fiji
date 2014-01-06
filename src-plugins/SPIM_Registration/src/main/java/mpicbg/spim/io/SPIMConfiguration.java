@@ -61,12 +61,8 @@ public class SPIMConfiguration
 	public SPIMExperiment spimExperiment = null;
 
 	// image factories
-	public ContainerFactory imageFactory = new ArrayContainerFactory();
-	public ContainerFactory recursiveGaussFactory = new ArrayContainerFactory();
-	public ContainerFactory imageFactoryFusion = new ArrayContainerFactory();
-	public ContainerFactory outputImageFactory = new ArrayContainerFactory();
-	public ContainerFactory entropyFactory = new ArrayContainerFactory();
-	public ContainerFactory scaleSpaceFactory = new ArrayContainerFactory();
+	public ContainerFactory inputImageFactory = new ArrayContainerFactory();
+	public ContainerFactory processImageFactory = new ArrayContainerFactory();
 
 	// for cached image arrays
 	public String tempDir = null;
@@ -787,12 +783,8 @@ public class SPIMConfiguration
     	IOFunctions.println("referenceTimePoint: " + referenceTimePoint);
 
     	// image factories
-    	imageFactory.printProperties();
-    	recursiveGaussFactory.printProperties();
-    	imageFactoryFusion.printProperties();
-    	outputImageFactory.printProperties();
-    	entropyFactory.printProperties();
-    	scaleSpaceFactory.printProperties();
+    	inputImageFactory.printProperties();
+    	processImageFactory.printProperties();
 
     	// for cached image arrays
     	IOFunctions.println("tempDir: " + tempDir);

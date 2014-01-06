@@ -320,7 +320,7 @@ public class ViewStructure
 		else
 		{
 			IOFunctions.println( "Opening first image to determine z-stretching." );
-			final Image<FloatType> image = LOCI.openLOCIFloatType( conf.file[ timePointIndex ][ 0 ][ 0 ][ 0 ].getPath(), conf.imageFactory );
+			final Image<FloatType> image = LOCI.openLOCIFloatType( conf.file[ timePointIndex ][ 0 ][ 0 ][ 0 ].getPath(), conf.inputImageFactory );
 
 			if ( image == null )
 			{

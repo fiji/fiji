@@ -63,7 +63,7 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 		IJ.log( "nump = " + numParalellStacks );
 
 		fusedImages = new Image[ angleIndicies.length ];
-		final ImageFactory<FloatType> fusedImageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
+		final ImageFactory<FloatType> fusedImageFactory = new ImageFactory<FloatType>( new FloatType(), conf.processImageFactory );
 
 		final long size = (4l * imgW * imgH * imgD)/(1000l*1000l);
 
@@ -75,7 +75,7 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 			fusedImages[ i ] = fusedImageFactory.createImage( new int[]{ imgW, imgH, imgD }, "Fused image" );
 
 			if ( fusedImages[i] == null && viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-				IOFunctions.printErr("MappingFusionSequentialDifferentOutput.constructor: Cannot create output image: " + conf.outputImageFactory.getErrorMessage());
+				IOFunctions.printErr("MappingFusionSequentialDifferentOutput.constructor: Cannot create output image: " + conf.processImageFactory.getErrorMessage());
 		}
 	}
 
@@ -147,7 +147,7 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 									continue;
 								}
 	
-								final Image<FloatType> img = view.getImage( conf.imageFactoryFusion, false );
+								final Image<FloatType> img = view.getImage( conf.inputImageFactory, false );
 								final Interpolator<FloatType> interpolator = img.createInterpolator( conf.interpolatorFactorOutput );
 	
 								final Point3f tmpCoordinates = new Point3f();

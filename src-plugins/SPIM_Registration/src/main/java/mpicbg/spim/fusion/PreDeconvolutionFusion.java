@@ -44,7 +44,7 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
 		
-		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
+		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), conf.processImageFactory );
 		numViews = viewStructure.getNumViews();
 				
 		if ( conf.deconvolutionJustShowOverlap )
@@ -77,7 +77,7 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 				if ( images[ view ] == null || weights[ view ] == null )
 				{
 					if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-						IOFunctions.println("PreDeconvolutionFusion.constructor: Cannot create output image: " + conf.outputImageFactory.getErrorMessage() );
+						IOFunctions.println("PreDeconvolutionFusion.constructor: Cannot create output image: " + conf.processImageFactory.getErrorMessage() );
 	
 					return;
 				}

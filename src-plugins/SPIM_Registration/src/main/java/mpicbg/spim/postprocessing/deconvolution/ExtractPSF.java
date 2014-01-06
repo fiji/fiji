@@ -415,7 +415,7 @@ public class ExtractPSF
 		final OutOfBoundsStrategyFactory<FloatType> outside = new OutOfBoundsStrategyPeriodicFactory<FloatType>();
 		final InterpolatorFactory<FloatType> interpolatorFactory = new LinearInterpolatorFactory<FloatType>( outside );
 		
-		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), view.getViewStructure().getSPIMConfiguration().imageFactory );
+		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), view.getViewStructure().getSPIMConfiguration().processImageFactory );
 		final Image<FloatType> img = view.getImage();
 		final Image<FloatType> psf = imageFactory.createImage( size );
 		
@@ -592,7 +592,7 @@ public class ExtractPSF
     		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
     			IOFunctions.println( "Loading PSF file '" + fileName.get( i ) + "' for " + view.getName() );
 
-			final Image< FloatType > psfImage = LOCI.openLOCIFloatType( fileName.get( i ), viewStructure.getSPIMConfiguration().imageFactory );
+			final Image< FloatType > psfImage = LOCI.openLOCIFloatType( fileName.get( i ), viewStructure.getSPIMConfiguration().inputImageFactory );
 			
 			if ( psfImage == null )
 			{

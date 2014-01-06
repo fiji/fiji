@@ -31,13 +31,13 @@ public class FusionControl
 		final ArrayList<CombinedPixelWeightenerFactory<?>> combinedWeightenerFactories = new ArrayList<CombinedPixelWeightenerFactory<?>>();
 		
 		if (conf.useEntropy)
-			isolatedWeightenerFactories.add( new EntropyFastFactory( conf.entropyFactory ) );
+			isolatedWeightenerFactories.add( new EntropyFastFactory( conf.processImageFactory ) );
 
 		if (conf.useGaussContentBased)
-			isolatedWeightenerFactories.add( new GaussContentFactory( conf.entropyFactory ) );
+			isolatedWeightenerFactories.add( new GaussContentFactory( conf.processImageFactory ) );
 
 		if (conf.useIntegralContentBased)
-			isolatedWeightenerFactories.add( new AverageContentFactory( conf.entropyFactory ) );
+			isolatedWeightenerFactories.add( new AverageContentFactory( conf.processImageFactory ) );
 
 		if (conf.useLinearBlening)
 		{

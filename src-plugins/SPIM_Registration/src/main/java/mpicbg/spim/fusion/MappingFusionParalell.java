@@ -35,13 +35,13 @@ public class MappingFusionParalell extends SPIMImageFusion
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
 
-		final ImageFactory<FloatType> fusedImageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
+		final ImageFactory<FloatType> fusedImageFactory = new ImageFactory<FloatType>( new FloatType(), conf.processImageFactory );
 		fusedImage = fusedImageFactory.createImage( new int[]{ imgW, imgH, imgD }, "Fused image");
 
 		if (fusedImage == null)
 		{
 			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-				IOFunctions.println("MappingFusionParalell.constructor: Cannot create output image: " + conf.outputImageFactory.getErrorMessage());
+				IOFunctions.println("MappingFusionParalell.constructor: Cannot create output image: " + conf.processImageFactory.getErrorMessage());
 
 			return;
 		}

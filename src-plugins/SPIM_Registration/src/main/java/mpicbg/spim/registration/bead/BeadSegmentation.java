@@ -252,7 +252,7 @@ public class BeadSegmentation
 	public Image<FloatType> getFoundBeads( final ViewDataBeads view )
 	{
 		// display found beads
-		ImageFactory<FloatType> factory = new ImageFactory<FloatType>( new FloatType(), view.getViewStructure().getSPIMConfiguration().imageFactory );
+		ImageFactory<FloatType> factory = new ImageFactory<FloatType>( new FloatType(), view.getViewStructure().getSPIMConfiguration().inputImageFactory );
 		Image<FloatType> img = factory.createImage( view.getImageSize() );
 		
 		LocalizableByDimCursor3D<FloatType> cursor = (LocalizableByDimCursor3D<FloatType>) img.createLocalizableByDimCursor();		

@@ -95,6 +95,8 @@ public class BayesMVDeconvolution implements Deconvolver
 				f.set( avg );
 		}
 		
+		IOFunctions.println( "Deconvolved image container: " + psi.getImageFactory().getClass().getSimpleName() );
+		
 		//this.stack = new ImageStack( this.psi.getDimension( 0 ), this.psi.getDimension( 1 ) );
 		
 		// run the deconvolution

@@ -36,7 +36,7 @@ public class MappingFusionSequential extends SPIMImageFusion
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
 
-		final ImageFactory<FloatType> fusedImageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
+		final ImageFactory<FloatType> fusedImageFactory = new ImageFactory<FloatType>( new FloatType(), conf.processImageFactory );
 
 		fusedImage = fusedImageFactory.createImage( new int[]{ imgW, imgH, imgD }, "Fused image");
 		weights = fusedImageFactory.createImage( new int[]{ imgW, imgH, imgD }, "Weights image");
@@ -45,7 +45,7 @@ public class MappingFusionSequential extends SPIMImageFusion
 		if ( fusedImage == null )
 		{
 			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-				IOFunctions.println("MappingFusionSequentialImages.constructor: Cannot create output image: " + conf.outputImageFactory.getErrorMessage());
+				IOFunctions.println("MappingFusionSequentialImages.constructor: Cannot create output image: " + conf.processImageFactory.getErrorMessage());
 
 			if ( weights != null )
 				weights.close();
@@ -56,7 +56,7 @@ public class MappingFusionSequential extends SPIMImageFusion
 		if ( weights == null )
 		{
 			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-				IOFunctions.println("MappingFusionSequentialImages.constructor: Cannot create weights image: " + conf.outputImageFactory.getErrorMessage());
+				IOFunctions.println("MappingFusionSequentialImages.constructor: Cannot create weights image: " + conf.processImageFactory.getErrorMessage());
 
 			fusedImage.close();
 
@@ -164,7 +164,7 @@ public class MappingFusionSequential extends SPIMImageFusion
 				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Loading view: " + view.getName() );
 
-				view.getImage( conf.imageFactoryFusion, false );
+				view.getImage( conf.inputImageFactory, false );
 			}
 
 			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN && isolatedWeightenerFactories.size() > 0 )

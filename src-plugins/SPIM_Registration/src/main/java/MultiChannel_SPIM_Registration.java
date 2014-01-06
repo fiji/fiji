@@ -162,7 +162,7 @@ public class MultiChannel_SPIM_Registration extends SPIMRegistrationAbstract
 		conf.cropSizeX = cropSizeXStatic;
 		conf.cropSizeY = cropSizeYStatic;
 		conf.cropSizeZ = cropSizeZStatic;
-		conf.outputImageFactory = new CellContainerFactory( 256 );		
+		//conf.outputImageFactory = new CellContainerFactory( 256 );		
 		
 		// check the directory string
 		conf.inputdirectory = conf.inputdirectory.replace('\\', '/');
