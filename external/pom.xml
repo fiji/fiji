@@ -19,6 +19,11 @@
 	<description></description>
 
 	<dependencies>
+		<dependency>
+			<groupId>ca.mcgill</groupId>
+			<artifactId>Sholl_Analysis</artifactId>
+			<version>${Sholl_Analysis.version}</version>
+		</dependency>
 	</dependencies>
 
 	<!-- NB: for project parent -->

@@ -21,6 +21,7 @@
 	<description></description>
 
 	<properties>
+		<Sholl_Analysis.version>3.0.0-SNAPSHOT</Sholl_Analysis.version>
 		<autocomplete.version>2.0.2</autocomplete.version>
 		<batik.version>1.8</batik.version>
 		<beanshell.version>2.0b4</beanshell.version>
