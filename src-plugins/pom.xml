@@ -105,7 +105,6 @@
 		<module>Time_Stamper</module>
 		<module>ToAST_</module>
 		<module>TopoJ_</module>
-		<module>TrackMate_</module>
 		<module>Trainable_Segmentation</module>
 		<module>TransformJ_</module>
 		<module>TurboReg_</module>

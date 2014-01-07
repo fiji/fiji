@@ -178,7 +178,6 @@ hs_err*.log
 /plugins/Time_Stamper-[0-9]*.jar
 /plugins/ToAST_-[0-9]*.jar
 /plugins/TopoJ_-[0-9]*.jar
-/plugins/TrackMate_-[0-9]*.jar
 /plugins/Trainable_Segmentation-[0-9]*.jar
 /plugins/TransformJ_-[0-9]*.jar
 /plugins/TurboReg_-[0-9]*.jar
@@ -241,6 +240,7 @@ hs_err*.log
 /jars/tools-[0-9]*.jar
 /jars/udunits-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
+/plugins/TrackMate_-[0-9]*.jar
 /plugins/loci_plugins-[0-9]*.jar
 
 # For maven-download.sh
