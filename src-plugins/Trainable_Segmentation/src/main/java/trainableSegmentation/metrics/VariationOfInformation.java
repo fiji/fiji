@@ -158,7 +158,7 @@ public class VariationOfInformation extends Metrics
 			double maxThreshold,
 			double stepThreshold )
 	{
-		double min = 1.0;
+		double min = Double.MAX_VALUE;
 		double bestTh = minThreshold;
 		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
