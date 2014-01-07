@@ -1031,12 +1031,12 @@ public class Multi_View_Deconvolution implements PlugIn
 		conf.cropSizeZ = Multi_View_Fusion.cropSizeZStatic;
 		
 		if ( containerInput == 1 )
-			conf.inputImageFactory = new CellContainerFactory( 256 );
+			conf.inputImageFactory = new CellContainerFactory( 128 );
 		else
 			conf.inputImageFactory = new ArrayContainerFactory();
 
 		if ( containerProcess == 1 )
-			conf.processImageFactory = new CellContainerFactory( 256 );
+			conf.processImageFactory = new CellContainerFactory( 128 );
 		else
 			conf.processImageFactory = new ArrayContainerFactory();
 		

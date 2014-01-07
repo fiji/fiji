@@ -72,7 +72,7 @@ public class MappingFusionParalell extends SPIMImageFusion
 		// load images
 		for ( final ViewDataBeads view : views )
 			view.getImage( false );
-
+		
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN && isolatedWeightenerFactories.size() > 0 )
 		{
 			String methods = "(" + isolatedWeightenerFactories.get(0).getDescriptiveName();

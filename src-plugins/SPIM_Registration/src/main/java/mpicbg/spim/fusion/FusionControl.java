@@ -48,6 +48,8 @@ public class FusionControl
 				combinedWeightenerFactories.add( new BlendingSimpleFactory( 0, 0.3f ) );
 		}
 		
+		IOFunctions.println( "Fused image container: " + conf.processImageFactory.getClass().getSimpleName() );
+
 		if ( conf.isDeconvolution && conf.deconvolutionLoadSequentially )
 			fusion = new PreDeconvolutionFusionSequential( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
 		else if ( conf.isDeconvolution )

@@ -122,7 +122,6 @@ public class Multi_View_Fusion implements PlugIn
 
 		gd.addMessage( "" );
 		gd.addChoice( "ImgLib_container_(input files)", Multi_View_Deconvolution.imglibContainer, Multi_View_Deconvolution.imglibContainer[ Multi_View_Deconvolution.defaultContainerInput ] );
-		gd.addChoice( "ImgLib_container_(fused image)", Multi_View_Deconvolution.imglibContainer, Multi_View_Deconvolution.imglibContainer[ Multi_View_Deconvolution.defaultContainerProcess ] );
 
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
@@ -222,7 +221,6 @@ public class Multi_View_Fusion implements PlugIn
 		Bead_Registration.timepoints = gd.getNextString();
 		Bead_Registration.angles = gd.getNextString();
 		Multi_View_Deconvolution.defaultContainerInput = gd.getNextChoiceIndex();
-		Multi_View_Deconvolution.defaultContainerProcess = gd.getNextChoiceIndex();
 		
 		int numViews = 0;
 		
@@ -275,11 +273,6 @@ public class Multi_View_Fusion implements PlugIn
 			conf.inputImageFactory = new CellContainerFactory( 256 );
 		else
 			conf.inputImageFactory = new ArrayContainerFactory();
-
-		if ( Multi_View_Deconvolution.defaultContainerProcess == 1 )
-			conf.processImageFactory = new CellContainerFactory( 256 );
-		else
-			conf.processImageFactory = new ArrayContainerFactory();
 
 		conf.timepointPattern = Bead_Registration.timepoints;
 		conf.anglePattern = Bead_Registration.angles;
