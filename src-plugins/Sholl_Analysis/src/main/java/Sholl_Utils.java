@@ -1,4 +1,4 @@
-/* Copyright 2012 Tiago Ferreira, 2005 Tom Maddock
+/* Copyright 2013 Tiago Ferreira, 2005 Tom Maddock
  *
  * This file is part of the ImageJ plugin "Bitmap Sholl Analysis".
  * This program is free software: you can redistribute it and/or modify

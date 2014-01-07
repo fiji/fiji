@@ -1,4 +1,4 @@
-/* Copyright 2012 Tiago Ferreira, 2005 Tom Maddock
+/* Copyright 2013 Tiago Ferreira, 2005 Tom Maddock
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -2051,6 +2051,30 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         if (index>0)
             filename = filename.substring(0, index);
         return filename;
+    }
+    
+    /**
+     * Returns the skewness and kurtosis values for an array of univariate data. 
+     * Skewness: Negative values indicate data that is skewed left (left tail is longer than
+     *           right tail); positive values indicate data skewed right (longer right tail),
+     *           defined according to http://en.wikipedia.org/wiki/Skewness#Sample_skewness
+     * Kurtosis: Positive values indicate "peaked" distributions; a negative value indicates a
+     *           "flat" distribution. A normal distribution has a kurtosis of 0. Here, defined
+     *           according to http://en.wikipedia.org/wiki/Kurtosis#Sample_kurtosis
+     */
+    private final double[] getSkewnessKurtosis(final double values[], final double mean) {
+    	final int npoints = values.length;
+    	double numS = 0;
+    	double numK = 0;
+    	double denm = 0;
+    	for (int i=0; i<npoints; i++) {
+    		denm += (values[i]-mean) * (values[i]-mean);
+    		numS += denm * (values[i]-mean);
+    		numK += numS * (values[i]-mean);
+    	}
+    	final double skewness = (1/npoints * numS) / Math.pow((1/npoints * denm), 3.0/2.0);
+    	final double kurtosis = ((1/npoints * numK) / Math.pow((1/npoints * denm), 2)) - 3;
+    	return new double[] { skewness, kurtosis };
     }
 
 }
