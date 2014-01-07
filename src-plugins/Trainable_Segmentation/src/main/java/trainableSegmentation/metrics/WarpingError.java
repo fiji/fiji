@@ -621,22 +621,23 @@ public class WarpingError extends Metrics {
 			ImageStack is = new ImageStack( originalLabels.getWidth(), originalLabels.getHeight() );
 			for(int i = 0; i < wrs.length; i ++)
 			{
+				final ImageProcessor ip = wrs[i].warpedSource.getProcessor();
 				int[] mismatchesLabels = classifyMismatches2d( wrs[ i ].warpedSource, wrs[ i ].mismatches, radius );
 				for( int k = 0; k < mismatchesLabels.length; k++)
-				{
+				{					
 					if ( mismatchesLabels[ k ] != WarpingError.MERGE && mismatchesLabels[ k ] != WarpingError.SPLIT )
 					{
 						// flip split and merger mistakes
 						final Point3f p = wrs[ i ].mismatches.get( k );
-						if ( wrs[i].warpedSource.getProcessor().getPixelValue( (int)p.x, (int)p.y) == 0)
-							wrs[i].warpedSource.getProcessor().putPixelValue( (int)p.x, (int)p.y, 1.0);
+						if ( ip.getf( (int)p.x, (int)p.y) == 0)
+							ip.setf( (int)p.x, (int)p.y, 1f);
 						else
-							wrs[i].warpedSource.getProcessor().putPixelValue( (int)p.x, (int)p.y, 0.0);
+							ip.setf( (int)p.x, (int)p.y, 0f);
 						
 					}
 				}
 				
-				is.addSlice("warped source slice " + (i+1), wrs[i].warpedSource.getProcessor() );				
+				is.addSlice("warped source slice " + (i+1), ip );				
 			}
 			
 			ImagePlus warpedSource = new ImagePlus ("warped source", is);
