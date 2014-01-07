@@ -23,6 +23,7 @@
 			<groupId>ca.mcgill</groupId>
 			<artifactId>Sholl_Analysis</artifactId>
 			<version>${Sholl_Analysis.version}</version>
+			<scope>runtime</scope>
 		</dependency>
 	</dependencies>
 
