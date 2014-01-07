@@ -1649,7 +1649,6 @@ public class WarpingError extends Metrics {
 		final ImageStack sourceSlices = source.getImageStack();
 		final ImageStack targetSlices = target.getImageStack();
 		final ImageStack maskSlices = (null != mask) ? mask.getImageStack() : null;
-
 		final ClusteredWarpingMismatches[] cwm = new ClusteredWarpingMismatches[ source.getImageStackSize() ];
 
 		// Executor service to produce concurrent threads
@@ -1831,7 +1830,7 @@ public class WarpingError extends Metrics {
 			// If all surrounding pixels are background
 			if( uniqueId.size() == 1 && uniqueId.get(0) == 0)
 			{
-				if(components.getPixel(x, y) != 0)
+				if(components.getf(x, y) != 0)
 				{
 					pointClassification[ n ] = OBJECT_DELETION;
 					//IJ.log(" all surrounding pixels are black and the point is white -> object deletion");
@@ -1845,7 +1844,7 @@ public class WarpingError extends Metrics {
 			// If all surrounding pixels belong to one object 
 			else if ( uniqueId.size() == 1 && uniqueId.get(0) != 0)
 			{
-				if(components.getPixel(x, y) != 0)
+				if(components.getf(x, y) != 0)
 				{
 					pointClassification[ n ] = HOLE_ADDITION;
 					//IJ.log(" all surrounding pixels are white and the point is white -> hole addition");
@@ -1860,7 +1859,7 @@ public class WarpingError extends Metrics {
 			else if ( uniqueId.size() == 2 )
 			{
 				// if the point is black, that's a hole addition error (flipping it to white would create a hole)
-				if (components.getPixel(x, y) == 0)
+				if (components.getf(x, y) == 0)
 				{
 					pointClassification[ n ] = HOLE_ADDITION;
 					//IJ.log(" surrounding pixels are white and black and the point is black -> hole addition");
@@ -1917,7 +1916,7 @@ public class WarpingError extends Metrics {
 			}			
 			else // If there are more than 1 object ID in the surrounding pixels 
 			{
-				if(components.getPixel(x, y) == 0)
+				if(components.getf(x, y) == 0)
 				{
 					pointClassification[ n ] = MERGE;
 					//IJ.log(" surrounding pixels have at least 2 objects and the point is black -> merge");					
@@ -1978,7 +1977,7 @@ public class WarpingError extends Metrics {
 			// If all surrounding pixels are background
 			if( uniqueId.size() == 1 && uniqueId.get(0) == 0)
 			{
-				if(components.getPixel(x, y) != 0)
+				if(components.getf(x, y) != 0)
 				{
 					pointClassification[ n ] = OBJECT_DELETION;
 					if( (flags & OBJECT_DELETION) != 0 )
@@ -1994,7 +1993,7 @@ public class WarpingError extends Metrics {
 			// If all surrounding pixels belong to one object 
 			else if ( uniqueId.size() == 1 && uniqueId.get(0) != 0)
 			{
-				if(components.getPixel(x, y) != 0)
+				if(components.getf(x, y) != 0)
 				{
 					pointClassification[ n ] = HOLE_ADDITION;
 					if( (flags & HOLE_ADDITION) != 0 )
@@ -2011,7 +2010,7 @@ public class WarpingError extends Metrics {
 			// If there are background and one single object ID in the surrounding pixels
 			else if ( uniqueId.size() == 2 )
 			{
-				if (components.getPixel(x, y) == 0)
+				if (components.getf(x, y) == 0)
 				{
 					pointClassification[ n ] = HOLE_ADDITION;
 					if( (flags & HOLE_ADDITION) != 0 )
@@ -2056,7 +2055,7 @@ public class WarpingError extends Metrics {
 			}			
 			else // If there are more than 1 object ID in the surrounding pixels 
 			{
-				if(components.getPixel(x, y) == 0)
+				if(components.getf(x, y) == 0)
 				{
 					pointClassification[ n ] = MERGE;
 					if( (flags & MERGE) != 0 )
@@ -2119,7 +2118,7 @@ public class WarpingError extends Metrics {
 					binaryMismatches[ 0 ].set(x, y, 255);
 					break;
 				case HOLE_DELETION:
-					if( warpedLabels.getProcessor().getPixel(x, y) == 0)
+					if( warpedLabels.getProcessor().getf(x, y) == 0)
 						binaryMismatches[ 1 ].set(x, y, 255);
 					else
 						binaryMismatches[ 7 ].set(x, y, 255);
@@ -2128,7 +2127,7 @@ public class WarpingError extends Metrics {
 					binaryMismatches[ 2 ].set(x, y, 255);
 					break;
 				case HOLE_ADDITION:
-					if( warpedLabels.getProcessor().getPixel(x, y) == 0)
+					if( warpedLabels.getProcessor().getf(x, y) == 0)
 						binaryMismatches[ 3 ].set(x, y, 255);
 					else
 						binaryMismatches[ 5 ].set(x, y, 255);
