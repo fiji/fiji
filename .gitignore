@@ -162,7 +162,6 @@ hs_err*.log
 /plugins/Script_Editor-[0-9]*.jar
 /plugins/Series_Labeler-[0-9]*.jar
 /plugins/SheppLogan_-[0-9]*.jar
-/plugins/Sholl_Analysis-[0-9]*.jar
 /plugins/Simple_Neurite_Tracer-[0-9]*.jar
 /plugins/Siox_Segmentation-[0-9]*.jar
 /plugins/Skeletonize3D_-[0-9]*.jar
@@ -240,6 +239,7 @@ hs_err*.log
 /jars/tools-[0-9]*.jar
 /jars/udunits-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
+/plugins/Sholl_Analysis-[0-9]*.jar
 /plugins/TrackMate_-[0-9]*.jar
 /plugins/loci_plugins-[0-9]*.jar
 
