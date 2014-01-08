@@ -977,15 +977,15 @@ public class VariationOfInformation extends Metrics
 		// H(B)
 		double hb = -sumB;
 		
-		// An information theoretic analog of Rand recall 
-		// is the asymmetrically normalized mutual information
-		// C(A|B)
-		double rec = (ha - hab) / ha;
-		
 		// An information theoretic analog of Rand precision 
+		// is the asymmetrically normalized mutual information
+		// C(A|B) (A = ground truth, B = segmentation)
+		double prec = (ha - hab) / ha;
+		
+		// An information theoretic analog of Rand recall 
 		// is defined similarly
-		// C(B|A)
-		double prec = (hb - hba) / hb;
+		// C(B|A) (A = ground truth, B = segmentation)
+		double rec = (hb - hba) / hb;
 
 		if( rec == 0 )
 		    prec = 1.0;
@@ -1094,19 +1094,19 @@ public class VariationOfInformation extends Metrics
 		// H(B)
 		double hb = -sumB;
 		
-		// An information theoretic analog of Rand recall 
-		// is the asymmetrically normalized mutual information
-		// C(A|B)
-		double rec = (ha - hab) / ha;
-		
 		// An information theoretic analog of Rand precision 
+		// is the asymmetrically normalized mutual information
+		// C(A|B) (A = ground truth, B = segmentation)
+		double prec = (ha - hab) / ha;
+
+		// An information theoretic analog of Rand recall 
 		// is defined similarly
-		// C(B|A)
-		double prec = (hb - hba) / hb;
+		// C(B|A) (A = ground truth, B = segmentation)
+		double rec = (hb - hba) / hb;
 
 		if( rec == 0 )
-		    prec = 1.0;
-				
+			prec = 1.0;
+
 		// F-score
 		return 2.0 * prec * rec / (prec + rec);
 	}
