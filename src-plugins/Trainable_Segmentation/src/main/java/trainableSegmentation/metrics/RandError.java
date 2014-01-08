@@ -25,15 +25,17 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import trainableSegmentation.utils.Utils;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Prefs;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import ij.util.ThreadUtil;
 
 /**
  * This class implements the Rand error metric.
@@ -151,7 +153,7 @@ public class RandError extends Metrics
 	 * </pre>
 	 * 
 	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
-	 * @return Rand index value and derived satatistics
+	 * @return Rand index value and derived statistics
 	 */
 	public ClassificationStatistics getRandIndexStats( double binaryThreshold )
 	{
@@ -198,6 +200,76 @@ public class RandError extends Metrics
 		}
 
 		return new ClassificationStatistics( tp, tn, fp, fn, randIndex / labelSlices.getSize() );
+	}
+	
+	
+	/**
+	 * Calculate the foreground-restriected Rand index and its derived statistics in 2D 
+	 * between some original labels and the corresponding proposed labels. Both images 
+	 * are binarized. We follow the definition of Rand index described by
+	 * William M. Rand \cite{Rand71}. Individual results are given per each slice.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846--850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
+	 * 
+	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
+	 * @return Rand index value and derived statistics per slice.
+	 */
+	public ClassificationStatistics[] getForegroundRestrictedRandIndexStatsPerSlice( final double binaryThreshold )
+	{
+		final ImageStack labelSlices = originalLabels.getImageStack();
+		final ImageStack proposalSlices = proposedLabels.getImageStack();
+
+		final ClassificationStatistics[] cs = new ClassificationStatistics[ originalLabels.getImageStackSize() ];
+
+		final AtomicInteger ai = new AtomicInteger(0);
+        final int n_cpus = Prefs.getThreads();
+        final int depth = cs.length;
+        final int dec = (int) Math.ceil((double) depth / (double) n_cpus);
+        
+        Thread[] threads = ThreadUtil.createThreadArray( n_cpus );
+        for (int ithread = 0; ithread < threads.length; ithread++) 
+        {
+        	
+            threads[ithread] = new Thread() {
+                public void run() {
+                	for (int k = ai.getAndIncrement(); k < n_cpus; k = ai.getAndIncrement()) 
+                	{
+                		int zmin = dec * k;
+                		int zmax = dec * ( k + 1 );
+                		if (zmin<0)
+                            zmin = 0;
+                        if (zmax > depth)
+                            zmax = depth;
+                        
+                        for(int i = zmin; i < zmax; i ++)
+                		{
+                			if (zmin==0) 
+                				IJ.showProgress( i+1, zmax);
+                			
+                			cs[ i ] = randIndexStats( labelSlices.getProcessor( i+1 ).convertToFloat(), 
+                					proposalSlices.getProcessor( i+1 ).convertToFloat(), binaryThreshold );
+                		}
+                    }
+                }
+            };
+        }
+        ThreadUtil.startAndJoin(threads);	
+		
+        IJ.showProgress(1.0);
+			
+		return cs;
 	}
 	
 	/**
