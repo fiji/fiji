@@ -223,7 +223,7 @@ public class RandError extends Metrics
 	 * }
 	 * </pre>
 	 * 
-	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
+	 * @param binaryThreshold threshold value to binarize proposal ([0 1])
 	 * @return Rand index value and derived statistics per slice.
 	 */
 	public ClassificationStatistics[] getForegroundRestrictedRandIndexStatsPerSlice( final double binaryThreshold )
