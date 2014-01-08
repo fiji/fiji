@@ -25,14 +25,17 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import trainableSegmentation.utils.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Prefs;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import ij.util.ThreadUtil;
 
 /**
  * This class implements the variation of information metric, used
@@ -697,7 +700,96 @@ public class VariationOfInformation extends Metrics
 
 		return fScore / labelSlices.getSize();
 	}
+	/**
+	 * Get the foreground-restricted variation of information 
+	 * statistics (entropy values, F-score, etc) per slice and
+	 * for a given threshold value.
+	 * 
+	 * @param binaryThreshold threshold value to binarize proposal ([0 1])
+	 * @return foreground-restricted information statistics per slice
+	 */
+	public InformationStatistics[] getForegroundRestrictedStatsPerSlice( final double binaryThreshold )
+	{
+		final ImageStack labelSlices = originalLabels.getImageStack();
+		final ImageStack proposalSlices = proposedLabels.getImageStack();
+
+		final InformationStatistics[] is = new InformationStatistics[ originalLabels.getImageStackSize() ];
+
+		final AtomicInteger ai = new AtomicInteger(0);
+        final int n_cpus = Prefs.getThreads();
+        final int depth = is.length;
+        final int dec = (int) Math.ceil((double) depth / (double) n_cpus);
+        
+        Thread[] threads = ThreadUtil.createThreadArray( n_cpus );
+        for (int ithread = 0; ithread < threads.length; ithread++) 
+        {
+        	
+            threads[ithread] = new Thread() {
+                public void run() {
+                	for (int k = ai.getAndIncrement(); k < n_cpus; k = ai.getAndIncrement()) 
+                	{
+                		int zmin = dec * k;
+                		int zmax = dec * ( k + 1 );
+                		if (zmin<0)
+                            zmin = 0;
+                        if (zmax > depth)
+                            zmax = depth;
+                        
+                        for(int i = zmin; i < zmax; i ++)
+                		{
+                			if (zmin==0) 
+                				IJ.showProgress( i+1, zmax);
+                			
+                			is[ i ] = foregroundRestrictedStats( labelSlices.getProcessor( i+1 ).convertToFloat(), 
+                					proposalSlices.getProcessor( i+1 ).convertToFloat(), binaryThreshold );
+                		}
+                    }
+                }
+            };
+        }
+        ThreadUtil.startAndJoin(threads);	
+		
+        IJ.showProgress(1.0);
+			
+		return is;
+	}
 	
+	
+	/**
+	 * Get the foreground-restricted variation of information 
+	 * statistics (entropy values, F-score, etc)
+	 * 
+	 * @param gt 2D image with the original labels
+	 * @param proposal 2D image with the proposed labels
+	 * @param binaryThreshold threshold value to binarize the input images
+	 * @return variation of information statistics
+	 */
+	public InformationStatistics foregroundRestrictedStats(
+			ImageProcessor gt, 
+			ImageProcessor proposal,
+			double binaryThreshold) 
+	{
+		// Binarize inputs
+		ByteProcessor binaryLabel = new ByteProcessor( gt.getWidth(), gt.getHeight() );
+		ByteProcessor binaryProposal = new ByteProcessor( gt.getWidth(), gt.getHeight() );
+
+		for(int x=0; x<gt.getWidth(); x++)
+			for(int y=0; y<gt.getHeight(); y++)
+			{
+				binaryLabel.set(   x, y,    gt.getPixelValue( x, y ) > binaryThreshold ? 255 : 0);
+				binaryProposal.set(x, y, proposal.getPixelValue( x, y ) > binaryThreshold ? 255 : 0);
+			}
+
+		// Find components
+		ShortProcessor components1 = ( ShortProcessor ) Utils.connectedComponents(
+				new ImagePlus("ground truth labels", binaryLabel), 4).allRegions.getProcessor();
+
+		ShortProcessor components2 = ( ShortProcessor ) Utils.connectedComponents(
+				new ImagePlus("proposal labels", binaryProposal), 4).allRegions.getProcessor();
+
+		return foregroundRestrictedStats( components1, components2 );
+	}
+
 	/**
 	 * Get F-score of the variation of information for a
 	 * given threshold of the proposal labels. Done in 2d, 
@@ -994,6 +1086,127 @@ public class VariationOfInformation extends Metrics
 		return 2.0 * prec * rec / (prec + rec);
 	}
 
+	/**
+	 * Calculate the variation of information statistics (entropy values, F-score, 
+	 * etc) between two clusters using the foreground restriction, i.e. pruning out  
+	 * the zero component in the labeling (un-assigned "out" space)
+	 * 
+	 * @param cluster1 labels of cluster 1 (ground truth)
+	 * @param cluster2 labels of cluster 2 (proposal)
+	 * @return variation of information statistics
+	 */
+	public InformationStatistics foregroundRestrictedStats(
+			ShortProcessor cluster1,
+			ShortProcessor cluster2)
+	{
+		final short[] pixels1 = (short[]) cluster1.getPixels();
+		final short[] pixels2 = (short[]) cluster2.getPixels();
+		
+		//(new ImagePlus("cluster 1", cluster1)).show();
+		//(new ImagePlus("cluster 2", cluster2)).show();
+		
+		double n = pixels1.length;
+		
+		
+		// reset min and max of the cluster processors 
+		// (needed in order to have correct min-max values)
+		cluster1.resetMinAndMax();
+		cluster2.resetMinAndMax();
+		
+		int nLabelsA = (int) cluster1.getMax();
+		int nLabelsB = (int) cluster2.getMax();
+		
+		// compute overlap matrix
+		double[][]pij = new double[ nLabelsA + 1] [ nLabelsB + 1];
+		for(int i=0; i<n; i++)									
+			pij[ pixels1[i] & 0xffff ] [ pixels2[i] & 0xffff ] ++;
+		
+		for( int i=0; i < (nLabelsA + 1); i++ )
+			for( int j=0; j < (nLabelsB + 1); j++ )
+				pij[ i ][ j ] /= n;
+		
+		// sum of squares of sums of rows
+		// (skip background objects in the first cluster)
+		double[] ai = new double[ pij.length ];
+		for(int i=1; i<pij.length; i++)
+			for(int j=0; j<pij[0].length; j++)
+			{
+				ai[ i ] += pij[ i ][ j ];				
+			}
+
+		// sum of squares of sums of columns
+		// (prune out the zero component in the labeling (un-assigned "out" space))
+		double[] bj = new double[ pij[0].length ];
+		for(int j=1; j<pij[0].length; j++)
+			for(int i=1; i<pij.length; i++)
+			{
+				bj[ j ] += pij[ i ][ j ];
+			}
+
+		double[] pi0 = new double[ pij.length ];
+		double aux = 0;
+		for(int i=1; i<pij.length; i++)
+		{
+			pi0[ i ] = pij[ i ][ 0 ];
+			aux += pi0[ i ];
+		}
+
+		// ai, bj and pij are the same in the Rand index calculation,
+		// here they are used in a different way to express the variation
+		// of information
+		
+		// In matlab:
+		// aux = a_i .* log(a_i);
+		// sumA = sum(aux(~isnan(aux)));
+		double sumA = 0;
+		for(int i=0; i<ai.length; i++)
+		{
+			if( ai[ i ] != 0 )
+				sumA += ai[ i ] * Math.log( ai[ i ] );
+		}
+
+		// In matlab:
+		// aux = b_j .* log(b_j);
+		// sumB = sum(aux(~isnan(aux))) - sum(p_i0)*log(n);
+		double sumB = 0;
+		for(int j=0; j<bj.length; j++)
+			if( bj[ j ] != 0 )
+				sumB += bj[ j ] * Math.log( bj[ j ] );
+		sumB -= aux * Math.log( n );
+
+
+		// In matlab:
+		// aux = p_ij .* log(p_ij);
+		// s = sum(aux(~isnan(aux)));
+		// if isempty( s )
+		//    s = 0;
+		// end
+		// sumAB = s - sum(p_i0)*log(n);
+		double sumAB = 0;
+		for(int i=1; i<pij.length; i++)
+			for(int j=1; j<pij[0].length; j++)
+			{
+				if( pij[ i ][ j ] != 0 )
+					sumAB += pij[ i ][ j ] * Math.log( pij[ i ][ j ] );
+			}
+
+		sumAB -= aux * Math.log( n );
+		
+		// H(A|B)
+		double hab = sumB - sumAB;
+		// H(B|A)
+		double hba = sumA - sumAB;
+		// H(A)
+		double ha = -sumA;
+		// H(B)
+		double hb = -sumB;
+		
+		// variation of information value
+		double vi = sumA + sumB - 2.0 * sumAB;
+		
+		return new InformationStatistics( ha, hb, hab, hba, vi );
+	}
+		
 	/**
 	 * Calculate the F-score of the variation of information between two clusters
 	 * A and B ( harmonic mean of C(A|B) and C(B|A) )
