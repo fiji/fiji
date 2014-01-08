@@ -25,11 +25,14 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Prefs;
 import ij.process.ImageProcessor;
+import ij.util.ThreadUtil;
 
 /**
  * This class implements the pixel error metric
@@ -305,6 +308,61 @@ public class PixelError extends Metrics
 
 		return new ClassificationStatistics( tp, tn, fp, fn, pixelError / labelSlices.getSize() );
 	}
+	
+	/**
+	 * Calculate the pixel error and its derived statistics in 2D between 
+	 * some original labels and the corresponding proposed labels. Both images 
+	 * are binarized and the results are presented per slice. 
+	 *  
+	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
+	 * @return pixel error value and derived statistics per input slice
+	 */
+	public ClassificationStatistics[] getPrecisionRecallStatsPerSlice( final double binaryThreshold )
+	{
+		final ImageStack labelSlices = originalLabels.getImageStack();
+		final ImageStack proposalSlices = proposedLabels.getImageStack();
+
+		final ClassificationStatistics[] cs = new ClassificationStatistics[ originalLabels.getImageStackSize() ];
+
+		final AtomicInteger ai = new AtomicInteger(0);
+        final int n_cpus = Prefs.getThreads();
+        final int depth = cs.length;
+        final int dec = (int) Math.ceil((double) depth / (double) n_cpus);
+        
+        Thread[] threads = ThreadUtil.createThreadArray( n_cpus );
+        for (int ithread = 0; ithread < threads.length; ithread++) 
+        {
+        	
+            threads[ithread] = new Thread() {
+                public void run() {
+                	for (int k = ai.getAndIncrement(); k < n_cpus; k = ai.getAndIncrement()) 
+                	{
+                		int zmin = dec * k;
+                		int zmax = dec * ( k + 1 );
+                		if (zmin<0)
+                            zmin = 0;
+                        if (zmax > depth)
+                            zmax = depth;
+                        
+                        for(int i = zmin; i < zmax; i ++)
+                		{
+                			if (zmin==0) 
+                				IJ.showProgress( i+1, zmax);
+                			
+                			cs[ i ] = precisionRecallStats( labelSlices.getProcessor( i+1 ).convertToFloat(), 
+                					proposalSlices.getProcessor( i+1 ).convertToFloat(), binaryThreshold );
+                		}
+                    }
+                }
+            };
+        }
+        ThreadUtil.startAndJoin(threads);	
+		
+        IJ.showProgress(1.0);
+			
+		return cs;
+	}
+
 
 	/**
 	 * Calculate the pixel error and its derived statistics in 2D between 
