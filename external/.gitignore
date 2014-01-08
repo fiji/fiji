@@ -1,0 +1,7 @@
+## Maven ##
+/target/
+
+## Externals' clones ##
+/ASA/
+/Stitching/
+/TrackMate/

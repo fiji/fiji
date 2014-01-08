@@ -1,0 +1,3 @@
+This is a place holder .jar that has all of Fiji's external plugins as
+dependencies, i.e. all of the core Fiji plugins whose source code is maintained
+outside of https://github.com/fiji/fiji.

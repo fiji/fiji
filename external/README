@@ -1,0 +1,4 @@
+Fiji is a distribution of ImageJ with plugins; the source code of more and more
+Fiji components is maintained outside of Fiji's core repository.
+
+This meta-project's purpose is to install those components during the build.
