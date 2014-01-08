@@ -22,6 +22,7 @@
 
 	<properties>
 		<Sholl_Analysis.version>3.0.0-SNAPSHOT</Sholl_Analysis.version>
+		<Stitching.version>2.0.0-SNAPSHOT</Stitching.version>
 		<TrackMate.version>2.1.1-SNAPSHOT</TrackMate.version>
 		<autocomplete.version>2.0.2</autocomplete.version>
 		<batik.version>1.8</batik.version>
