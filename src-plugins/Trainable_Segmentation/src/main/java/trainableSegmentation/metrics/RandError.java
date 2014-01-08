@@ -102,7 +102,7 @@ public class RandError extends Metrics
 		double randError = 0;
 
 		// Executor service to produce concurrent threads
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		final ExecutorService exe = Executors.newFixedThreadPool(Prefs.getThreads());
 
 		final ArrayList< Future<Double> > futures = new ArrayList< Future<Double> >();
 
@@ -167,7 +167,7 @@ public class RandError extends Metrics
 		double fn = 0;
 
 		// Executor service to produce concurrent threads
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		final ExecutorService exe = Executors.newFixedThreadPool(Prefs.getThreads());
 
 		final ArrayList< Future<ClassificationStatistics> > futures = new ArrayList< Future<ClassificationStatistics> >();
 
