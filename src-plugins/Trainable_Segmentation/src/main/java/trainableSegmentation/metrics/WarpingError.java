@@ -706,6 +706,109 @@ public class WarpingError extends Metrics {
 		}		
 		return cs;
 	}	
+	
+	/**
+	 * Calculate the precision-recall values based on pixel error between 
+	 * some warped 2D original labels and the corresponding proposed labels
+	 * (taking into account only the split and merger pixels). Results are
+	 * presented per slice.
+	 * 
+	 * @param th threshold value to binarize the input images
+	 * @param radius radius in pixels of the local area to look when deciding how to classify some mismatch cases (small radius speed up the method a lot, -1 to use whole image
+	 * @param bordersArePositive set to true if border pixels are positive samples
+	 * @return pixel error value and derived statistics for each slice
+	 */
+	public ClassificationStatistics [] getPrecisionRecallStatsSplitsAndMergersPerSlice(
+			double th,
+			final int radius,
+			boolean bordersArePositive)
+	{
+		
+		if( verbose )
+			IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.3f", th) + "...");
+
+		//long start = System.currentTimeMillis();
+
+		// Warp original labels into proposal
+		final WarpingResults[] wrs = simplePointWarp2dMT( originalLabels, proposedLabels, mask, th );
+
+		//long endWarping = System.currentTimeMillis();
+		//IJ.log("   Warping image took " + (endWarping - start) + " ms");
+
+		// Remove mistakes that are neither splits not mergers 
+		// Create output warped source
+		ImageStack is = new ImageStack( originalLabels.getWidth(), originalLabels.getHeight() );
+		for( int slice = 1; slice <= wrs.length; slice++ )			
+			is.addSlice("warped source slice " + slice, wrs[ slice-1 ].warpedSource.getProcessor() );
+		final ImagePlus warpedSource = new ImagePlus ("warped source", is);
+
+		final AtomicInteger ai = new AtomicInteger(0);
+		final int n_cpus = Prefs.getThreads();
+		final int depth = is.getSize();
+		final int dec = (int) Math.ceil((double) depth / (double) n_cpus);
+
+		Thread[] threads = ThreadUtil.createThreadArray( n_cpus );
+		for (int ithread = 0; ithread < threads.length; ithread++) 
+		{
+
+			threads[ithread] = new Thread() {
+				public void run() {
+					for (int k = ai.getAndIncrement(); k < n_cpus; k = ai.getAndIncrement()) 
+					{
+						int zmin = dec * k;
+						int zmax = dec * ( k + 1 );
+						if (zmin<0)
+							zmin = 0;
+						if (zmax > depth)
+							zmax = depth;
+
+						revertSplitAndMergers( wrs, warpedSource, radius, zmin, zmax );	                	
+					}
+				}
+			};
+		}
+		ThreadUtil.startAndJoin(threads);
+
+		//long endRevert = System.currentTimeMillis();
+		//IJ.log("   Reverting mistakes took " + (endRevert-endWarping) + " ms" );
+
+
+
+		// We calculate the precision-recall value between the warped original labels and the 
+		// proposed labels 
+		ImagePlus proposal = proposedLabels;
+
+		if( bordersArePositive )
+		{
+			// invert the images to have white borders (so borders are consider positive samples)
+			//IJ.run( warpedSource, "Invert", "stack" );
+			for(int slice=1; slice <= warpedSource.getImageStackSize(); slice++)
+			{
+				final float[] pix = (float[]) warpedSource.getImageStack().getProcessor( slice ).getPixels();
+				for(int kk = 0; kk < pix.length; kk++)
+					pix[ kk ] = pix[ kk ] == 0f ? 1f : 0f;						
+			}
+
+
+			proposal = proposedLabels.duplicate();
+			IJ.run( proposal, "Invert", "stack" );
+
+		}
+
+		//long endInvert = System.currentTimeMillis();
+		//if( bordersArePositive ) 
+		//	IJ.log("   Inverting warped source took " + (endInvert - endRevert) + " ms" );
+		
+
+		PixelError pixelError = new PixelError( warpedSource, proposal );			
+		ClassificationStatistics[] stats = pixelError.getPrecisionRecallStatsPerSlice( th );
+		
+		//long endFscore = System.currentTimeMillis();
+		//IJ.log("   F-score of pixel error took " + (endFscore - endInvert) + " ms" );			
+		
+		return stats;
+	}	
+	
 
 	/**
 	 * Revert splits and mergers mistakes on a warped source 
