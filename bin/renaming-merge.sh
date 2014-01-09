@@ -18,19 +18,22 @@ git diff-index --cached --quiet HEAD -- ||
 die "There are uncommitted changes!"
 
 # Fetch the remtoe
+test -z "$1" ||
 git fetch "$1" ||
 die "Error fetching $1"
 
 # Determine which commit to merge
-TO_MERGE="$(git rev-parse "$1/$2")" ||
-die "No branch $1/$2"
+BRANCH_TO_MERGE=$2
+test -z "$1" || BRANCH_TO_MERGE="$1/$2"
+TO_MERGE="$(git rev-parse "$BRANCH_TO_MERGE")" ||
+die "No branch $BRANCH_TO_MERGE"
 
 # Figure out the last common commit between the remote and the current branch
 if ! MERGE_BASE="$(git merge-base $TO_MERGE HEAD)"
 then
 	# We haven't merged this remote branch at all!
 	cat >&2 << EOF
-The branch $1/$2 was never merged into the current branch. If you want to
+The branch $BRANCH_TO_MERGE was never merged into the current branch. If you want to
 merge it, please specify the directory into which you want it merged,
 otherwise please just hit Ctrl+C:
 
@@ -40,22 +43,22 @@ EOF
 	test -n "$SUBDIRECTORY" ||
 	exit 1
 
-	git merge -m "Renaming merge of '$1/$2' into $SUBDIRECTORY" \
-		-s ours "$1/$2" &&
+	git merge -m "Renaming merge of '$BRANCH_TO_MERGE' into $SUBDIRECTORY" \
+		-s ours "$BRANCH_TO_MERGE" &&
 	git read-tree --prefix="$SUBDIRECTORY" HEAD^2 &&
 	git stash -k &&
 	git commit --amend -s ||
-	die "Could not merge $1/$2"
+	die "Could not merge $BRANCH_TO_MERGE"
 
 	exit 0
 fi
 
 # Determine the latest time we merged
-LATEST_MERGE="$(git rev-list --parents HEAD..."$1/$2" |
+LATEST_MERGE="$(git rev-list --parents HEAD..."$BRANCH_TO_MERGE" |
 	sed -n "s/^\([^ ]*\) \([^ ]*\) $MERGE_BASE$/\1/p" |
 	head -n 1)" &&
 test -n "$LATEST_MERGE" ||
-die "Could not find the latest merge with $1/$2"
+die "Could not find the latest merge with $BRANCH_TO_MERGE"
 
 # Figure out what subdirectory we merged into; there might be a couple of false
 # positives, so let's have a majority vote
@@ -79,7 +82,7 @@ die "Could not detect the rename"
 # the specified subdirectory
 FAKE_INDEX="$(git rev-parse --show-cdup).git/RENAME_INDEX" &&
 FAKE_COMMIT=$LATEST_MERGE^2 &&
-for COMMIT in $LATEST_MERGE^2 "$1/$2"
+for COMMIT in $LATEST_MERGE^2 "$BRANCH_TO_MERGE"
 do
 	rm -f "$FAKE_INDEX" &&
 	GIT_INDEX_FILE="$FAKE_INDEX" git read-tree --prefix="$SUBDIRECTORY" "$COMMIT" &&
@@ -90,7 +93,7 @@ do
 done
 
 # Perform the merge
-git merge -m "Renaming merge of '$1/$2' into $SUBDIRECTORY" -s ours "$1/$2" &&
+git merge -m "Renaming merge of '$BRANCH_TO_MERGE' into $SUBDIRECTORY" -s ours "$BRANCH_TO_MERGE" &&
 git cherry-pick -n $FAKE_COMMIT &&
 git commit --amend -s -C HEAD ||
 die "Could not perform renaming merge"
