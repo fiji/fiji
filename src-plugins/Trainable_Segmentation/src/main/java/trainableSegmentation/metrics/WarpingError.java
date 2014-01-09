@@ -1538,7 +1538,7 @@ public class WarpingError extends Metrics {
 			mismatches = new ArrayList[sourceSlices.getSize()];
 
 		// Executor service to produce concurrent threads
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		final ExecutorService exe = Executors.newFixedThreadPool(Prefs.getThreads());
 
 		final ArrayList< Future<WarpingResults> > futures = new ArrayList< Future<WarpingResults> >();
 
@@ -1659,7 +1659,7 @@ public class WarpingError extends Metrics {
 		final WarpingResults[] wrs = new WarpingResults[ source.getImageStackSize() ];
 
 		// Executor service to produce concurrent threads
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		final ExecutorService exe = Executors.newFixedThreadPool(Prefs.getThreads());
 
 		final ArrayList< Future<WarpingResults> > futures = new ArrayList< Future<WarpingResults> >();
 
@@ -1716,7 +1716,7 @@ public class WarpingError extends Metrics {
 		final WarpingResults[] wrs = new WarpingResults[ originalLabels.getImageStackSize() ];
 
 		// Executor service to produce concurrent threads
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		final ExecutorService exe = Executors.newFixedThreadPool(Prefs.getThreads());
 
 		final ArrayList< Future<WarpingResults> > futures = new ArrayList< Future<WarpingResults > >();
 
@@ -1832,7 +1832,7 @@ public class WarpingError extends Metrics {
 		final ClusteredWarpingMismatches[] cwm = new ClusteredWarpingMismatches[ source.getImageStackSize() ];
 
 		// Executor service to produce concurrent threads
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		final ExecutorService exe = Executors.newFixedThreadPool(Prefs.getThreads());
 
 		final ArrayList< Future<ClusteredWarpingMismatches> > futures = new ArrayList< Future<ClusteredWarpingMismatches> >();
 
