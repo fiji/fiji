@@ -66,6 +66,8 @@ public class Debug {
 			directory = directory.substring(0,  directory.length() - relativePath.length());
 			if (directory.endsWith("/classes/"))
 				directory = directory.substring(0, directory.length() - "/classes/".length());
+			else if (directory.endsWith("/test-classes/"))
+				directory = directory.substring(0, directory.length() - "/test-classes/".length());
 			else if (directory.startsWith("file:") && directory.endsWith("!/"))
 				directory = new File(directory.substring(5, directory.length() - 2)).getParent();
 			System.setProperty("plugins.dir", directory);
