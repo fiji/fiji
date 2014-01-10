@@ -62,15 +62,6 @@ then
 	exit 7
 fi
 
-# -- Add update site credentials if needed --
-
-if [ -z "$FIJI_INITIALIZED" ]
-then
-	"$FIJI_DIR"/$EXE --update add-update-site "$UPDATE_SITE_NAME" \
-		"$UPDATE_SITE_URL" \
-		"webdav:$UPDATE_SITE_USER:$(cat "$PASSWD_FILE")" .
-fi
-
 cd "$FIJI_DIR"
 
 # -- First, make sure that Fiji is up-to-date --
@@ -99,5 +90,12 @@ done
 
 # -- Upload files to the update site! --
 
+if [ -n "$FIJI_INITIALIZED" ]
+then
+	./$EXE --update remove-update-site "$UPDATE_SITE_NAME"
+fi
+./$EXE --update add-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL" \
+	"webdav:$UPDATE_SITE_USER:$(cat "$PASSWD_FILE")" .
 ./$EXE --update upload \
 	--update-site "$UPDATE_SITE_NAME" --force-shadow $FILES_TO_UPLOAD
+./$EXE --update edit-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL"
