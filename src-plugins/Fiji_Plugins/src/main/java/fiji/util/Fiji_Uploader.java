@@ -10,7 +10,7 @@ import fiji.IJ1LogService;
 import fiji.IJ1StatusService;
 import ij.io.OpenDialog;
 import ij.plugin.PlugIn;
-import imagej.core.commands.upload.SampleImageUploader;
+import imagej.plugins.commands.upload.SampleImageUploader;
 
 import java.io.File;
 
