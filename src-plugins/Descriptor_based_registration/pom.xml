@@ -73,7 +73,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>SPIM_Registration</artifactId>
-			<version>${fiji.version}</version>
+			<version>${SPIM_Registration.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>

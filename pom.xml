@@ -23,6 +23,7 @@
 	<properties>
 		<SPIM_Registration.version>2.0.0-SNAPSHOT</SPIM_Registration.version>
 		<Sholl_Analysis.version>3.0.0-SNAPSHOT</Sholl_Analysis.version>
+		<SPIM_Registration.version>2.0.0-SNAPSHOT</SPIM_Registration.version>
 		<Stitching.version>2.0.0-SNAPSHOT</Stitching.version>
 		<TrackMate.version>2.1.1-SNAPSHOT</TrackMate.version>
 		<autocomplete.version>2.0.2</autocomplete.version>
