@@ -84,7 +84,6 @@ hs_err*.log
 /jars/imagescience-[0-9]*.jar
 /jars/imageware-[0-9]*.jar
 /jars/javac-[0-9]*.jar
-/jars/jep-[0-9]*.jar
 /jars/mij-[0-9]*.jar
 /jars/pal-optimization-[0-9]*.jar
 /jars/scala-compiler-[0-9]*.jar
@@ -224,6 +223,7 @@ hs_err*.log
 /jars/javassist-[0-9]*.jar
 /jars/jcommon-[0-9]*.jar
 /jars/jdom-[0-9]*.jar
+/jars/jep-[0-9]*.jar
 /jars/jfreechart-[0-9]*.jar
 /jars/jgrapht-[0-9]*.jar
 /jars/jgraphx-[0-9]*.jar
