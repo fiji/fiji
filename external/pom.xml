@@ -27,6 +27,12 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
+			<artifactId>SPIM_Registration</artifactId>
+			<version>${SPIM_Registration.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
 			<artifactId>Stitching_</artifactId>
 			<version>${Stitching.version}</version>
 			<scope>runtime</scope>

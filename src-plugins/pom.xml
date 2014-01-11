@@ -84,7 +84,6 @@
 		<module>Reconstruct_Reader</module>
 		<module>Refresh_Javas</module>
 		<module>SPIM_Opener</module>
-		<module>SPIM_Registration</module>
 		<module>Samples_</module>
 		<module>Scala_Interpreter</module>
 		<module>Script_Editor</module>

@@ -159,7 +159,6 @@ hs_err*.log
 /plugins/Reconstruct_Reader-[0-9]*.jar
 /plugins/Refresh_Javas-[0-9]*.jar
 /plugins/SPIM_Opener-[0-9]*.jar
-/plugins/SPIM_Registration-[0-9]*.jar
 /plugins/Samples_-[0-9]*.jar
 /plugins/Scala_Interpreter-[0-9]*.jar
 /plugins/Script_Editor-[0-9]*.jar
@@ -173,7 +172,6 @@ hs_err*.log
 /plugins/StackReg_-[0-9]*.jar
 /plugins/Stack_Manipulation-[0-9]*.jar
 /plugins/Statistical_Region_Merging-[0-9]*.jar
-/plugins/Stitching_-[0-9]*.jar
 /plugins/Sync_Win-[0-9]*.jar
 /plugins/Thread_Killer-[0-9]*.jar
 /plugins/Threshold_Colour-[0-9]*.jar
@@ -243,6 +241,8 @@ hs_err*.log
 /jars/udunits-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
 /plugins/Sholl_Analysis-[0-9]*.jar
+/plugins/SPIM_Registration-[0-9]*.jar
+/plugins/Stitching_-[0-9]*.jar
 /plugins/TrackMate_-[0-9]*.jar
 /plugins/loci_plugins-[0-9]*.jar
 
