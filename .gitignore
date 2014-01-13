@@ -308,6 +308,7 @@ hs_err*.log
 /jars/ij-options-[0-9]*.jar
 /jars/ij-platforms-[0-9]*.jar
 /jars/ij-scripting-beanshell-[0-9]*.jar
+/jars/ij-scripting-javascript-[0-9]*.jar
 /jars/ij-scripting-clojure-[0-9]*.jar
 /jars/ij-scripting-java-[0-9]*.jar
 /jars/ij-scripting-jruby-[0-9]*.jar
