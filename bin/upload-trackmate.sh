@@ -29,6 +29,7 @@ esac
 curl -O http://update.imagej.net/bootstrap.js
 jrunscript bootstrap.js update-force-pristine
 
+# Generate a fake pom.xml for imagej-maven-plugin to use
 cat > pom.xml << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -37,17 +38,9 @@ cat > pom.xml << EOF
 		http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>sc.fiji</groupId>
-	<artifactId>dummy</artifactId>
-	<version>0.0.0-SNAPSHOT</version>
-
-	<dependencies>
-		<dependency>
-			<groupId>$groupId</groupId>
-			<artifactId>$artifactId</artifactId>
-			<version>$version</version>
-		</dependency>
-	</dependencies>
+	<groupId>$groupId</groupId>
+	<artifactId>$artifactId</artifactId>
+	<version>$version</version>
 
 	<!-- NB: for project parent -->
 	<repositories>
@@ -63,15 +56,11 @@ cat > pom.xml << EOF
 
 </project>
 EOF
-mkdir -p target
-touch target/dummy-0.0.0-SNAPSHOT.jar
 
-# install plugin and dependencies using MiniMaven
-./$launcher --mini-maven -Dimagej.app.directory="$(pwd)" install
-rm jars/dummy-0.0.0-SNAPSHOT.jar
-
-# work-around: re-install miglayout-swing.jar
-./$launcher --update update jars/miglayout-3.7.3.1-swing.jar
+# install plugin and dependencies using the imagej-maven-plugin
+rm plugins/$artifactId-[0-9]*.jar
+mvn -Ddelete.other.versions=true -Dimagej.app.directory=$(pwd) \
+	net.imagej:imagej-maven-plugin:0.3.1:copy-jars
 
 # upload complete update site
 ./$launcher --update remove-update-site $update_site
