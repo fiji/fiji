@@ -10,6 +10,7 @@ import java.awt.Button;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Frame;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Panel;
@@ -78,6 +79,8 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	@Override
 	public void addStringField(String label, String defaultString, int columns) {
 		super.addStringField(label, defaultString, columns);
+		if (isHeadless()) return;
+
 		TextField text = (TextField)stringField.lastElement();
 		text.setDropTarget(null);
 		new DropTarget(text, new TextDropTarget(text));
@@ -89,6 +92,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 
 	public void addDirectoryOrFileField(String label, String defaultPath, int columns) {
 		addStringField(label, defaultPath, columns);
+		if (isHeadless()) return;
 
 		TextField text = (TextField)stringField.lastElement();
 		GridBagLayout layout = (GridBagLayout)getLayout();
@@ -114,6 +118,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 
 	public void addDirectoryField(String label, String defaultPath, int columns) {
 		addStringField(label, defaultPath, columns);
+		if (isHeadless()) return;
 
 		TextField text = (TextField)stringField.lastElement();
 		GridBagLayout layout = (GridBagLayout)getLayout();
@@ -139,6 +144,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 
 	public void addFileField(String label, String defaultPath, int columns) {
 		addStringField(label, defaultPath, columns);
+		if (isHeadless()) return;
 
 		TextField text = (TextField)stringField.lastElement();
 		GridBagLayout layout = (GridBagLayout)getLayout();
@@ -164,6 +170,8 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	 * @param listener listener to handle the action when pressing the button
 	 */
 	public void addButton(String label, ActionListener listener) {
+		if (isHeadless()) return;
+
 		Button button = new Button(label);
 
 		button.addActionListener(listener);
@@ -173,12 +181,16 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	}
 	
 	public void addComponent(Component component) {
+		if (isHeadless()) return;
+
 		GridBagLayout layout = (GridBagLayout)getLayout();
 		layout.setConstraints(component, getConstraints());
 		add(component);
 	}
 
 	public void addComponent(Component component, int fill, double weightx) {
+		if (isHeadless()) return;
+
 		GridBagLayout layout = (GridBagLayout)getLayout();
 		GridBagConstraints constraints = getConstraints();
 		constraints.fill = fill;
@@ -194,6 +206,8 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	 * @return true if the image was found and added, otherwise false
 	 */
 	public boolean addImage(final String path) {
+		if (isHeadless()) return true;
+
 		return addImage(getClass().getResource(path));
 	}
 	
@@ -204,6 +218,8 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	 * @return true if the image was found and added, otherwise false
 	 */
 	public boolean addImage(final URL imgURL) {
+		if (isHeadless()) return true;
+
 		final ImageIcon image = createImageIcon(imgURL);
 		
 		if (image==null) {
@@ -225,6 +241,8 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	 * label.update(label.getGraphics());
 	 */
 	public JLabel addImage(final ImageIcon image) {
+		if (isHeadless()) return null;
+
 		final Panel panel = new Panel();
 		panel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		final JLabel label = new JLabel(image);
@@ -237,6 +255,8 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 
 	/** Returns an ImageIcon, or null if the path was invalid. */
 	public static ImageIcon createImageIcon(final URL imgURL) {
+		if (isHeadless()) return null;
+
 	    if (imgURL != null)
 	        return new ImageIcon(imgURL);
 	    else
@@ -251,6 +271,10 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 		GridBagConstraints constraints = layout.getConstraints(panel);
 		remove(panel);
 		return constraints;
+	}
+
+	private static boolean isHeadless() {
+		return GraphicsEnvironment.isHeadless();
 	}
 
 	static class FileListener implements ActionListener {
