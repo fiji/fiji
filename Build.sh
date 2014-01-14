@@ -230,30 +230,18 @@ esac
 # pseudo-Maven (thanks to SciJava's maven-helper)
 
 ARGV0="$CWD/$0"
-SCIJAVA_COMMON="$CWD/modules/scijava-common"
-MAVEN_HELPER="$SCIJAVA_COMMON/bin/maven-helper.sh"
+MAVEN_HELPER="$CWD/bin/maven-helper.sh"
+MAVEN_HELPER_URL="https://raw.github.com/scijava/scijava-scripts/master/maven-helper.sh"
 force_update=
 maven_helper () {
 	uptodate "$ARGV0" "$MAVEN_HELPER" || {
 		force_update=t
-		if test -d "$SCIJAVA_COMMON/.git"
+		if ! curl "$MAVEN_HELPER_URL" > "$MAVEN_HELPER"
 		then
-			(cd "$SCIJAVA_COMMON" &&
-			 test arefs/heads/master != "a$(git rev-parse --symbolic-full-name HEAD)" ||
-			 git pull -k) >&2
-		else
-			git clone https://github.com/scijava/scijava-common \
-				"$SCIJAVA_COMMON" >&2
-		fi || {
-			echo "Could not update SciJava-common" >&2
-			exit 1
-		}
-		if test ! -f "$MAVEN_HELPER"
-		then
+			rm "$MAVEN_HELPER"
 			echo "Could not find $MAVEN_HELPER!" >&2
 			exit 1
 		fi
-		touch "$MAVEN_HELPER"
 	}
 	test $# = 0 ||
 	sh -$- "$MAVEN_HELPER" "$@"
