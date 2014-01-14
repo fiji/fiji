@@ -24,7 +24,6 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -42,7 +41,7 @@ import javax.swing.JLabel;
  * an image chooser, a button, and makes string (and file) fields
  * drop targets.
  */
-public class GenericDialogPlus extends GenericDialog implements KeyListener {
+public class GenericDialogPlus extends GenericDialog {
 	private static final long serialVersionUID = 1L;
 
 	protected int[] windowIDs;
@@ -220,13 +219,9 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 
 		final ImageIcon image = createImageIcon(imgURL);
 		
-		if (image==null) {
-			return false;
-		}
-		else{
-			addImage(image);
-			return true;
-		}
+		if (image == null) return false;
+		addImage(image);
+		return true;
 	}
 
 	/**
@@ -255,10 +250,8 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	public static ImageIcon createImageIcon(final URL imgURL) {
 		if (isHeadless()) return null;
 
-	    if (imgURL != null)
-	        return new ImageIcon(imgURL);
-	    else
-	        return null;
+		if (imgURL != null) return new ImageIcon(imgURL);
+		return null;
 	}
 	
 	// Work around too many private restrictions (add a new panel and remove it right away)
