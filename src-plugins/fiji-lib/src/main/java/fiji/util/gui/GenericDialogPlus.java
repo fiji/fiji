@@ -1,6 +1,5 @@
 package fiji.util.gui;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
@@ -34,7 +33,6 @@ import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 /**
  * The GenericDialogPlus class enhances the GenericDialog by
@@ -407,23 +405,4 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	@Override
 	public void keyTyped(KeyEvent e) {}
 
-	public static void main(String[] args) {
-		GenericDialogPlus gd = new GenericDialogPlus("GenericDialogPlus Test");
-		gd.addFileField("A_file", System.getProperty("ij.dir") + "/jars/ij.jar");
-		gd.addDirectoryField("A_directory", System.getProperty("ij.dir") + "/plugins");
-		gd.addButton("Click me!", new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				IJ.showMessage("You clicked me!");
-			}
-		});
-		JLabel label = new JLabel("Hello, Ignacio! You're the BEST!");
-		JPanel jp = new JPanel();
-		jp.add(label);
-		gd.addComponent(jp);
-		gd.addMessage("(blush)");
-		gd.showDialog();
-		if (!gd.wasCanceled())
-			IJ.showMessage("You chose the file " + gd.getNextString()
-				+ "\nand the directory " + gd.getNextString());
-	}
 }
