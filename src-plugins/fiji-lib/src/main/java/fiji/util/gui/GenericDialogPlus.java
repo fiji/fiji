@@ -3,9 +3,7 @@ package fiji.util.gui;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-
 import ij.gui.GenericDialog;
-
 import ij.io.OpenDialog;
 
 import java.awt.Button;
@@ -17,24 +15,19 @@ import java.awt.GridBagLayout;
 import java.awt.Panel;
 import java.awt.TextField;
 import java.awt.Toolkit;
-
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
-
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDropEvent;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
-
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-
 import java.util.List;
 
 import javax.swing.ImageIcon;
