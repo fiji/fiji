@@ -1,19 +1,25 @@
 #!/bin/sh
 
+# Downloads a plugin's newest snapshot version and uploads it to the
+# specified update site.
 #
-# upload-trackmate.sh
-#
+# It expects to find maven-helper.sh in bin/, too
 
-# Uploads TrackMate to the TrackMate-dev update site.
+die () {
+	echo "$*" >&2
+	exit 1
+}
 
-update_site="TrackMate-dev"
-webdav_user="Jenkins-TrackMate"
+test $# = 4 ||
+die "Usage: $0 <groupId> <artifactId> <update-site> <webdav-user>"
+
+groupId="$1"
+artifactId="$2"
+update_site="$3"
+webdav_user="$4"
 url="http://sites.imagej.net/$update_site/"
 
-groupId=sc.fiji
-artifactId=TrackMate_
-
-maven_helper=modules/scijava-common/bin/maven-helper.sh
+maven_helper=bin/maven-helper.sh
 version="$(sh $maven_helper latest-version $groupId:$artifactId:SNAPSHOT)"
 
 # determine correct launcher to launch MiniMaven and the Updater
