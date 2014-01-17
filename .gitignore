@@ -342,3 +342,4 @@ hs_err*.log
 
 # Miscellaneous #
 /jars/Updater_Fix-[0-9]*.jar
+/jars/meta-fiji-external-plugins-[0-9]*.jar
