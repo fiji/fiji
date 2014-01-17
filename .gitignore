@@ -333,7 +333,6 @@ hs_err*.log
 /jars/markdownj-[0-9]*.jar
 /jars/miglayout-[0-9]*.jar
 /jars/object-inspector-[0-9]*.jar
-/jars/sezpoz-[0-9]*.jar
 /plugins/readme.txt
 
 # Java3D #

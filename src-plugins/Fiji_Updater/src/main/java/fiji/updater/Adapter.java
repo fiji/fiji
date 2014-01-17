@@ -33,7 +33,7 @@ import javax.swing.JOptionPane;
 public class Adapter {
 	public final static String JARS_PREFIX = "http://update.imagej.net/jars/";
 	public final static String[] JARS = {
-		"ij-ui-swing-updater", "ij-updater-core", "ij-core", "eventbus", "sezpoz"
+		"ij-ui-swing-updater", "ij-updater-core", "ij-core", "eventbus"
 	};
 	public final static String[] VERSIONS = {
 		"-2.0.0-beta5", "-2.0.0-beta5", "-2.0.0-beta5", "-1.4", "-1.9"
