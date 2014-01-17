@@ -48,15 +48,11 @@ cat > pom.xml << EOF
 	<artifactId>$artifactId</artifactId>
 	<version>$version</version>
 
-	<!-- NB: for project parent -->
 	<repositories>
+		<!-- NB: for project parent -->
 		<repository>
-			<id>imagej.releases</id>
-			<url>http://maven.imagej.net/content/repositories/releases</url>
-		</repository>
-		<repository>
-			<id>imagej.snapshots</id>
-			<url>http://maven.imagej.net/content/repositories/snapshots</url>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
 

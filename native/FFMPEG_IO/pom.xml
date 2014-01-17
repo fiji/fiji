@@ -27,9 +27,10 @@
 	</modules>
 
 	<repositories>
+		<!-- NB: for project parent, in case of partial checkout, in case of partial checkout -->
 		<repository>
-			<id>imagej.releases</id>
-			<url>http://maven.imagej.net/content/repositories/releases</url>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
 
