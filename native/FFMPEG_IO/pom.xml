@@ -18,7 +18,7 @@
 	<description>A JNA wrapper around FFMPEG</description>
 
 	<properties>
-	    <ffmpeg.rootdir>${basedir}</ffmpeg.rootdir>
+		<ffmpeg.rootdir>${basedir}</ffmpeg.rootdir>
 	</properties>
 
 	<modules>
