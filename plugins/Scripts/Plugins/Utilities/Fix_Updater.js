@@ -12,14 +12,12 @@ importClass(Packages.java.net.URLClassLoader);
 
 baseURL = 'http://update.imagej.net/jars/';
 jars = [
-	'ij-ui-swing-updater-2.0.0-beta-7.1.jar-20130716162630',
+	'ij-ui-swing-updater-2.0.0-beta-7.6.jar-20131230181631',
 	'miglayout-3.7.3.1-swing.jar-20120404210913',
-	'ij-updater-core-2.0.0-SNAPSHOT.jar-20130716173252',
-	'ij-core-2.0.0-beta-7.1.jar-20130716162630',
-	'scijava-common-1.5.0.jar-20130716162630',
-	'sezpoz-1.9-imagej.jar-20130508011618',
-	'eventbus-1.4.jar-20120404210913',
-	'tools-1.4.2.jar-20120802184342'
+	'ij-updater-core-2.0.0-SNAPSHOT.jar-20140113205837',
+	'ij-core-2.0.0-SNAPSHOT.jar-20140106174944',
+	'scijava-common-2.7.0.jar-20131230181631',
+	'eventbus-1.4.jar-20120404210913'
 ];
 
 urls = [];
