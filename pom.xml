@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>1.122</version>
+		<version>1.126</version>
 		<relativePath />
 	</parent>
 
@@ -71,13 +71,6 @@
 
 	<build>
 		<plugins>
-			<plugin>
-				<artifactId>maven-source-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>buildnumber-maven-plugin</artifactId>
-			</plugin>
 			<plugin>
 				<groupId>net.imagej</groupId>
 				<artifactId>imagej-maven-plugin</artifactId>
