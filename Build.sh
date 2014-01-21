@@ -362,6 +362,12 @@ else
 			cp "$LAUNCHER" "$name$exe"
 			continue
 			;;
+		misc/headless.jar)
+			sh -$- "$CWD/bin/ImageJ.sh" \
+				"$CWD/bin/write-headless-jar.bsh" \
+				"$CWD/misc/headless.jar"
+			continue
+			;;
 		clean)
 			eval sh -$- \"$CWD/bin/ImageJ.sh\" --mini-maven \
                                 "$OPTIONS" clean
