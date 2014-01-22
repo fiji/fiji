@@ -50,7 +50,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>legacy-imglib1</artifactId>
-			<version>${fiji.version}</version>
+			<version>${legacy-imglib1.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>

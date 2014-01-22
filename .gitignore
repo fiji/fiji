@@ -235,6 +235,7 @@ hs_err*.log
 /jars/jsch-[0-9]*.jar
 /jars/junit-[0-9]*.jar
 /jars/jzlib-[0-9]*.jar
+/jars/legacy-imglib1-[0-9]*.jar
 /jars/mines-jtk-[0-9]*.jar
 /jars/pentaho-package-manager-[0-9]*.jar
 /jars/postgresql-[0-9]*.jar
@@ -267,7 +268,6 @@ hs_err*.log
 /jars/imglib2-realtransform-[0-9]*.jar
 /jars/imglib2-scripting-[0-9]*.jar
 /jars/imglib2-ui-[0-9]*.jar
-/jars/legacy-imglib1-[0-9]*.jar
 
 # Bio-Formats #
 /jars/bio-formats

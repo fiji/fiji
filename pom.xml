@@ -54,6 +54,7 @@
 		<jsch.version>0.1.49</jsch.version>
 		<jython.version>2.5.2</jython.version>
 		<jzlib.version>1.0.7</jzlib.version>
+		<legacy-imglib1.version>2.0.0-SNAPSHOT</legacy-imglib1.version>
 		<level_sets.version>1.0.1-SNAPSHOT</level_sets.version>
 		<mpicbg.version>0.6.1-SNAPSHOT</mpicbg.version>
 		<rsyntaxtextarea.version>2.0.4.1</rsyntaxtextarea.version>
