@@ -13,7 +13,33 @@ import net.imglib2.view.Views;
 
 /**
  * This algorithm calculates Kendall's Tau-b rank correlation coefficient
- *
+ * <p>
+ * According to
+ * http://en.wikipedia.org/wiki/Kendall_tau_rank_correlation_coefficient, Tau-b
+ * (appropriate if multiple pairs share the same first, or second, value), the
+ * rank correlation of a set of pairs <tt>(x_1, y_1), ..., (x_n, y_n)</tt>:
+ * 
+ * <pre>
+ * Tau_B = (n_c - n_d) / sqrt( (n_0 - n_1) (n_0 - n_2) )
+ * </pre>
+ * 
+ * where
+ * 
+ * <pre>
+ * n_0 = n (n - 1) / 2
+ * n_1 = sum_i t_i (t_i - 1) / 2
+ * n_2 = sum_j u_j (u_j - 1) / 2
+ * n_c = #{ i, j; i != j && (x_i - x_j) * (y_i - y_j) > 0 },
+ * &nbsp; i.e. the number of pairs of pairs agreeing on the order of x and y, respectively
+ * n_d = #{ i, j: i != j && (x_i - x_j) * (y_i - y_j) < 0 },
+ * &nbsp; i.e. the number of pairs of pairs where x and y are ordered opposite of each other
+ * t_i = number of tied values in the i-th group of ties for the first quantity
+ * u_j = number of tied values in the j-th group of ties for the second quantity
+ * </pre>
+ * 
+ * </p>
+ * 
+ * @author Johannes Schindelin
  * @param <T>
  */
 public class KendallTauRankCorrelation<T extends RealType< T >> extends Algorithm<T> {
