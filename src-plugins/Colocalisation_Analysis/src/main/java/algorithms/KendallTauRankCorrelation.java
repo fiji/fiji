@@ -3,6 +3,7 @@ package algorithms;
 import ij.IJ;
 import results.ResultHandler;
 import gadgets.DataContainer;
+import net.imglib2.PairIterator;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
@@ -34,22 +35,52 @@ public class KendallTauRankCorrelation<T extends RealType< T >> extends Algorith
 		TwinCursor<T> cursor = new TwinCursor<T>(img1.randomAccess(),
 				img2.randomAccess(), Views.iterable(mask).localizingCursor());
 
-		if (!cursor.hasNext()) {
-			return;
+		tau = calculateNaive(cursor);
+	}
+
+	private double calculateNaive(final TwinCursor<T> cursor) {
+		return calculateNaive(new PairIterator<T>() {
+
+			@Override
+			public boolean hasNext() {
+				return cursor.hasNext();
+			}
+
+			@Override
+			public void fwd() {
+				cursor.fwd();
+			}
+
+			@Override
+			public T getFirst() {
+				return cursor.getChannel1();
+			}
+
+			@Override
+			public T getSecond() {
+				return cursor.getChannel2();
+			}
+
+		});
+	}
+
+	public static<T extends RealType<T>> double calculateNaive(final PairIterator<T> iterator) {
+		if (!iterator.hasNext()) {
+			return Double.NaN;
 		}
 
 		// See http://en.wikipedia.org/wiki/Kendall_tau_rank_correlation_coefficient
 		int n = 0, max1 = 0, max2 = 0, max = 255;
 		int[][] histogram = new int[max + 1][max + 1];
-		while (cursor.hasNext()) {
-			cursor.fwd();
-			T type1 = cursor.getChannel1();
-			T type2 = cursor.getChannel2();
+		while (iterator.hasNext()) {
+			iterator.fwd();
+			T type1 = iterator.getFirst();
+			T type2 = iterator.getSecond();
 			double ch1 = type1.getRealDouble();
 			double ch2 = type2.getRealDouble();
 			if (ch1 < 0 || ch2 < 0 || ch1 > max || ch2 > max) {
 				IJ.log("Error: The current Kendall Tau implementation is limited to 8-bit data");
-				return;
+				return Double.NaN;
 			}
 			n++;
 			int ch1Int = (int)Math.round(ch1);
@@ -91,7 +122,7 @@ public class KendallTauRankCorrelation<T extends RealType< T >> extends Algorith
 			n2 += ch2 * (long)(ch2 - 1) / 2;
 		}
 
-		tau = (nc - nd) / Math.sqrt((n0 - n1) * (double)(n0 - n2));
+		return (nc - nd) / Math.sqrt((n0 - n1) * (double)(n0 - n2));
 	}
 
 	@Override
