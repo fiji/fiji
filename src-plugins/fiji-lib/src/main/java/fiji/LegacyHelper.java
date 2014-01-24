@@ -23,6 +23,7 @@ class LegacyHelper {
 			IJ.run(plugin);
 		else
 			IJ.run(plugin, parameters);
+		IJ.redirectErrorMessages(false);
 	}
 
 	/**
@@ -63,6 +64,7 @@ class LegacyHelper {
 				directory = new File(directory.substring(5, directory.length() - 2)).getParent();
 			System.setProperty("plugins.dir", directory);
 		}
+		IJ.redirectErrorMessages();
 		new ImageJ();
 	}
 
