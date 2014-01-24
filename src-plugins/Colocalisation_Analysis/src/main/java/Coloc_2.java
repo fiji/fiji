@@ -44,6 +44,7 @@ import algorithms.AutoThresholdRegression;
 import algorithms.CostesSignificanceTest;
 import algorithms.Histogram2D;
 import algorithms.InputCheck;
+import algorithms.KendallTauRankCorrelation;
 import algorithms.LiHistogram2D;
 import algorithms.LiICQ;
 import algorithms.MandersColocalization;
@@ -139,6 +140,7 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 	protected LiICQ<T> liICQ;
 	protected SpearmanRankCorrelation<T> SpearmanRankCorrelation;
 	protected MandersColocalization<T> mandersCorrelation;
+	protected KendallTauRankCorrelation<T> kendallTau;
 	protected Histogram2D<T> histogram2D;
 	protected CostesSignificanceTest<T> costesSignificance;
 	// indicates if images should be printed in result
@@ -206,6 +208,7 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 		boolean useLiICQ = Prefs.get(PREF_KEY+"useLiICQ", true);
 		boolean useSpearmanRank = Prefs.get(PREF_KEY+"useSpearmanRank", true);
 		boolean useManders = Prefs.get(PREF_KEY+"useManders", true);
+		boolean useKendallTau = Prefs.get(PREF_KEY+"useKendallTau", true);
 		boolean useScatterplot = Prefs.get(PREF_KEY+"useScatterplot", true);
 		boolean useCostes = Prefs.get(PREF_KEY+"useCostes", true);
 		int psf = (int) Prefs.get(PREF_KEY+"psf", 3);
@@ -234,6 +237,7 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 		gd.addCheckbox("Li_ICQ", useLiICQ);
 		gd.addCheckbox("Spearman's_Rank_Correlation", useSpearmanRank);
 		gd.addCheckbox("Manders'_Correlation", useManders);
+		gd.addCheckbox("Kendall's_Tau_Rank_Correlation", useKendallTau);
 		gd.addCheckbox("2D_Instensity_Histogram", useScatterplot);
 		gd.addCheckbox("Costes'_Significance_Test", useCostes);
 		final Checkbox costesCb = (Checkbox) gd.getCheckboxes().lastElement();
@@ -321,6 +325,7 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 		useLiICQ = gd.getNextBoolean();
 		useSpearmanRank = gd.getNextBoolean();
 		useManders = gd.getNextBoolean();
+		useKendallTau = gd.getNextBoolean();
 		useScatterplot = gd.getNextBoolean();
 		useCostes = gd.getNextBoolean();
 		psf = (int) gd.getNextNumber();
@@ -335,6 +340,7 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 		Prefs.set(PREF_KEY+"useLiICQ", useLiICQ);
 		Prefs.set(PREF_KEY+"useSpearmanRank", useSpearmanRank);
 		Prefs.set(PREF_KEY+"useManders", useManders);
+		Prefs.set(PREF_KEY+"useKendallTau", useKendallTau);
 		Prefs.set(PREF_KEY+"useScatterplot", useScatterplot);
 		Prefs.set(PREF_KEY+"useCostes", useCostes);
 		Prefs.set(PREF_KEY+"psf", psf);
@@ -353,6 +359,8 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 		    SpearmanRankCorrelation = new SpearmanRankCorrelation<T>();
 		if (useManders)
 			mandersCorrelation = new MandersColocalization<T>();
+		if (useKendallTau)
+			kendallTau = new KendallTauRankCorrelation<T>();
 		if (useScatterplot)
 			histogram2D = new Histogram2D<T>("2D intensity histogram");
 		if (useCostes) {
@@ -417,6 +425,7 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 		addIfValid(liICQ, userSelectedJobs);
 		addIfValid(SpearmanRankCorrelation, userSelectedJobs);
 		addIfValid(mandersCorrelation, userSelectedJobs);
+		addIfValid(kendallTau, userSelectedJobs);
 		addIfValid(histogram2D, userSelectedJobs);
 		addIfValid(costesSignificance, userSelectedJobs);
 
