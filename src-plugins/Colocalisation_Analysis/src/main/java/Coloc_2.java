@@ -689,7 +689,7 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 			}
 			// write out to correct position
 			maskCursor.setPosition( pos );
-			maskCursor.get().set( cursor.getChannel1() );
+			maskCursor.get().set( cursor.getFirst() );
 		}
 
 		return maskImage;

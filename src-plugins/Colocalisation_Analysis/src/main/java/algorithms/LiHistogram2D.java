@@ -80,8 +80,8 @@ public class LiHistogram2D<T extends RealType< T >> extends Histogram2D<T> {
 		// iterate over images
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			double ch1 = cursor.getChannel1().getRealDouble();
-			double ch2 = cursor.getChannel2().getRealDouble();
+			double ch1 = cursor.getFirst().getRealDouble();
+			double ch2 = cursor.getSecond().getRealDouble();
 
 			double productOfDifferenceOfMeans = (ch1Mean - ch1) * (ch2Mean - ch2);
 

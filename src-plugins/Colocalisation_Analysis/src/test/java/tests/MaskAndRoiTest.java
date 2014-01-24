@@ -75,7 +75,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 				pos[i] = pos[i] - roiOffset[i];
 			}
 			outputCursor.setPosition(pos);
-			outputCursor.get().set( cursor.getChannel1() );
+			outputCursor.get().set( cursor.getFirst() );
 		}
 
 		/* go through the clipped ROI and compare the date to offset values
@@ -274,7 +274,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 				Views.iterable(mask).localizingCursor());
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			assertTrue( cursor.getChannel1().getInteger() != 0 );
+			assertTrue( cursor.getFirst().getInteger() != 0 );
 		}
 
 		/* second test - using inverted image */
@@ -288,7 +288,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 				Views.iterable(invMask).localizingCursor());
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			assertEquals( 0, cursor.getChannel1().getInteger() );
+			assertEquals( 0, cursor.getFirst().getInteger() );
 		}
 	}
 

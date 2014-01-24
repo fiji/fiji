@@ -58,8 +58,8 @@ public class LiICQ<T extends RealType< T >> extends Algorithm<T> {
 		// iterate over image
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			T type1 = cursor.getChannel1();
-			T type2 = cursor.getChannel2();
+			T type1 = cursor.getFirst();
+			T type2 = cursor.getSecond();
 			double ch1 = type1.getRealDouble();
 			double ch2 = type2.getRealDouble();
 

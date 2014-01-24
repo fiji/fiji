@@ -37,8 +37,8 @@ public abstract class Accumulator<T extends RealType< T >> {
 		while (cursor.hasNext()) {
 			cursor.fwd();
 
-			T type1 = cursor.getChannel1();
-			T type2 = cursor.getChannel2();
+			T type1 = cursor.getFirst();
+			T type2 = cursor.getSecond();
 
 			if (!accept(type1, type2))
 				continue;

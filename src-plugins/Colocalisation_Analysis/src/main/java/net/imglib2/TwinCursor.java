@@ -50,12 +50,12 @@ public class TwinCursor<T extends Type<T>> implements Cursor<T> {
 			gotNext = true;
 		}
 
-		final public T getChannel1() {
+		final public T getFirst() {
 			getNext();
 			return channel1.get();
 		}
 
-		final public T getChannel2() {
+		final public T getSecond() {
 			getNext();
 			return channel2.get();
 		}

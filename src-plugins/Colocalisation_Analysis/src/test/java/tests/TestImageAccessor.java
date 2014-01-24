@@ -358,8 +358,8 @@ public class TestImageAccessor {
 		// iterate over both images
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			T bgData = cursor.getChannel1();
-			double fgData = cursor.getChannel2().getRealDouble() * scaling;
+			T bgData = cursor.getFirst();
+			double fgData = cursor.getSecond().getRealDouble() * scaling;
 			if (fgData > 0.01) {
 				/* if the foreground data is above zero, copy
 				 * it to the background.

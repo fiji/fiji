@@ -194,8 +194,8 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 		long[] pos = new long[ plotImage.numDimensions() ];
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			double ch1 = cursor.getChannel1().getRealDouble();
-			double ch2 = cursor.getChannel2().getRealDouble();
+			double ch1 = cursor.getFirst().getRealDouble();
+			double ch2 = cursor.getSecond().getRealDouble();
 			/* Scale values for both channels to fit in the range.
 			 * Moreover mirror the y value on the x axis.
 			 */

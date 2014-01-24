@@ -79,7 +79,7 @@ public class ImageStatistics {
 				img.randomAccess(),
 				Views.iterable(mask).localizingCursor());
 		while (cursor.hasNext()) {
-			sum.add(cursor.getChannel1().getRealDouble());
+			sum.add(cursor.getFirst().getRealDouble());
 			++numPixels;
 		}
 
@@ -143,7 +143,7 @@ public class ImageStatistics {
 				img.randomAccess(),
 				Views.iterable(mask).cursor());
 		while (cursor.hasNext())
-			sum.add( cursor.getChannel1().getRealDouble() );
+			sum.add( cursor.getFirst().getRealDouble() );
 
 		return sum.getSum();
 	}
@@ -194,12 +194,12 @@ public class ImageStatistics {
 		// forward one step to get the first value
 		cursor.fwd();
 		// copy first element as current minimum
-		final T min = cursor.getChannel1().copy();
+		final T min = cursor.getFirst().copy();
 
 		while ( cursor.hasNext() ) {
 			cursor.fwd();
 
-			final T currValue = cursor.getChannel1();
+			final T currValue = cursor.getFirst();
 
 			if ( currValue.compareTo( min ) < 0 )
 				min.set( currValue );
@@ -252,12 +252,12 @@ public class ImageStatistics {
 				Views.iterable(mask).localizingCursor());
 		// forward one step to get the first value
 		cursor.fwd();
-		final T max = cursor.getChannel1().copy();
+		final T max = cursor.getFirst().copy();
 
 		while ( cursor.hasNext() ) {
 			cursor.fwd();
 
-			final T currValue = cursor.getChannel1();
+			final T currValue = cursor.getFirst();
 
 			if ( currValue.compareTo( max ) > 0 )
 				max.set( currValue );
