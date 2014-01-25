@@ -50,6 +50,11 @@ public class KendallTauTest {
 			}
 
 			@Override
+			public void reset() {
+				i = -1;
+			}
+
+			@Override
 			public void fwd() {
 				i++;
 			}

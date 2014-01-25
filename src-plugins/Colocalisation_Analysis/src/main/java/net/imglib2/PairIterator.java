@@ -17,6 +17,11 @@ public interface PairIterator<T> {
 	boolean hasNext();
 
 	/**
+	 * Resets the iterator to just before the first element.
+	 */
+	void reset();
+
+	/**
 	 * Go to the next pair.
 	 */
 	void fwd();
