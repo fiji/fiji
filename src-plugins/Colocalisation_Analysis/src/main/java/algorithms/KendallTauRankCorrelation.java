@@ -64,32 +64,6 @@ public class KendallTauRankCorrelation<T extends RealType< T >> extends Algorith
 		tau = calculateNaive(cursor);
 	}
 
-	private double calculateNaive(final TwinCursor<T> cursor) {
-		return calculateNaive(new PairIterator<T>() {
-
-			@Override
-			public boolean hasNext() {
-				return cursor.hasNext();
-			}
-
-			@Override
-			public void fwd() {
-				cursor.fwd();
-			}
-
-			@Override
-			public T getFirst() {
-				return cursor.getChannel1();
-			}
-
-			@Override
-			public T getSecond() {
-				return cursor.getChannel2();
-			}
-
-		});
-	}
-
 	public static<T extends RealType<T>> double calculateNaive(final PairIterator<T> iterator) {
 		if (!iterator.hasNext()) {
 			return Double.NaN;
