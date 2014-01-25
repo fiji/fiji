@@ -46,6 +46,14 @@ import fiji.IJ1Patcher;
  */
 public class BarePluginsIT {
 
+	private static boolean verbose;
+
+	static {
+		final String env = System.getenv("VERBOSE_FIJI_COMPAT_IT");
+		verbose = env != null &&
+			env.matches("(?i)true||\\+?[1-9][0-9]*");
+	}
+
 	@Test
 	public void testBarePlugins() throws Exception {
 		final String testClasses = ClassUtils.getLocation(BarePluginsIT.class).getPath();
@@ -150,7 +158,7 @@ public class BarePluginsIT {
 		final PrintStream stdout = System.out;
 		final ByteArrayOutputStream teeBuffer = new ByteArrayOutputStream() {
 			public void reset() {
-				try {
+				if (verbose) try {
 					stdout.write(toByteArray());
 				} catch (IOException e) {
 					e.printStackTrace();
