@@ -64,7 +64,7 @@ public class KendallTauRankCorrelation<T extends RealType< T >> extends Algorith
 		TwinCursor<T> cursor = new TwinCursor<T>(img1.randomAccess(),
 				img2.randomAccess(), Views.iterable(mask).localizingCursor());
 
-		tau = calculateNaive(cursor);
+		tau = calculateMergeSort(cursor);
 	}
 
 	public static<T extends RealType<T>> double calculateNaive(final PairIterator<T> iterator) {

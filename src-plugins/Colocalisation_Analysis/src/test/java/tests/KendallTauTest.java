@@ -72,6 +72,6 @@ public class KendallTauTest {
 			}
 		};
 
-		assertEquals(KendallTauRankCorrelation.calculateNaive(iter), expected, 1e-10);
+		assertEquals(expected, KendallTauRankCorrelation.calculateMergeSort(iter), 1e-10);
 	}
 }
