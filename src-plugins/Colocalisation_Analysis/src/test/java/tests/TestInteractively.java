@@ -18,6 +18,7 @@ public class TestInteractively {
 			+ "li_icq "
 			+ "spearman's_rank_correlation "
 			+ "manders'_correlation "
+			+ "kendall's_tau_rank_correlation "
 			+ "2d_instensity_histogram "
 			+ "costes'_significance_test "
 			+ "psf=3 "
