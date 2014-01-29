@@ -18,6 +18,10 @@
 	<name>Aggregator project for the external Fiji plugins</name>
 	<description></description>
 
+	<properties>
+		<imagej.app.directory>${rootdir}</imagej.app.directory>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>ca.mcgill</groupId>

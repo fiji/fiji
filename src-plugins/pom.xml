@@ -19,6 +19,10 @@
 	<name>Aggregator project for the Fiji plugins</name>
 	<description></description>
 
+	<properties>
+		<imagej.app.directory>${rootdir}</imagej.app.directory>
+	</properties>
+
 	<modules>
 		<module>3D_Blob_Segmentation</module>
 		<module>3D_Objects_Counter</module>

@@ -33,7 +33,6 @@
 		<commons-math.version>3.2</commons-math.version>
 		<edu.mines.version>20100113</edu.mines.version>
 		<fiji.version>2.0.0-SNAPSHOT</fiji.version>
-		<imagej.app.directory>${rootdir}</imagej.app.directory>
 		<image5d.version>1.2.5</image5d.version>
 		<imagescience.version>2.4.2-SNAPSHOT</imagescience.version>
 		<itextpdf.version>5.1.1</itextpdf.version>
