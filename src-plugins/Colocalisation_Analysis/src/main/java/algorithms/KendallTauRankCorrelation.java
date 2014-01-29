@@ -96,7 +96,7 @@ public class KendallTauRankCorrelation<T extends RealType< T >> extends Algorith
 				max2 = ch2Int;
 			}
 		}
-		long n0 = n * (n - 1) / 2, n1 = 0, n2 = 0, nc = 0, nd = 0;
+		long n0 = n * (long)(n - 1) / 2, n1 = 0, n2 = 0, nc = 0, nd = 0;
 		for (int i1 = 0; i1 <= max1; i1++) {
 			IJ.log("" + i1 + "/" + max1);
 			int ch1 = 0;
@@ -199,7 +199,7 @@ public class KendallTauRankCorrelation<T extends RealType< T >> extends Algorith
 
 		// The trick is to count the ties of x (n1) and the joint ties of x and y (n3) now, while
 		// index is sorted with regards to x.
-		long n0 = n * (n - 1) / 2;
+		long n0 = n * (long)(n - 1) / 2;
 		long n1 = 0, n3 = 0;
 
 		for (int i = 1; i < n; i++) {
