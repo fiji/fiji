@@ -70,7 +70,6 @@ cd "$FIJI_DIR"
 
 # -- Download JAR files and install into local Fiji --
 
-FILES_TO_UPLOAD=""
 for jar in $JAR_FILES
 do
 	echo
@@ -84,8 +83,6 @@ do
 	wget -nv "$REMOTE_URL"
 	rm -rf $RM_PATHS
 	mv "$FILENAME" "$jar.jar"
-
-	FILES_TO_UPLOAD="$FILES_TO_UPLOAD $jar.jar"
 done
 
 # -- Upload files to the update site! --
@@ -96,6 +93,5 @@ then
 fi
 ./$EXE --update add-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL" \
 	"webdav:$UPDATE_SITE_USER:$(cat "$PASSWD_FILE")" .
-./$EXE --update upload \
-	--update-site "$UPDATE_SITE_NAME" --force-shadow $FILES_TO_UPLOAD
+./$EXE --update upload-complete-site --force-shadow "$UPDATE_SITE_NAME"
 ./$EXE --update edit-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL"
