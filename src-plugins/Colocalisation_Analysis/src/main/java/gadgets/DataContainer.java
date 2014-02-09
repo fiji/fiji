@@ -109,7 +109,7 @@ public class DataContainer<T extends RealType< T >> {
 		this.ch1 = ch1;
 		this.ch2 = ch2;
 		sourceImage1Name = name1;
-		sourceImage2Name = name1;
+		sourceImage2Name = name2;
 
 		final int numDims = src1.numDimensions();
 		maskBBOffset = new long[numDims];
