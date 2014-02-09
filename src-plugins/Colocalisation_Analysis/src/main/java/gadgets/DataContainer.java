@@ -64,7 +64,7 @@ public class DataContainer<T extends RealType< T >> {
 		sourceImage1 = src1;
 		sourceImage2 = src2;
 		sourceImage1Name = name1;
-		sourceImage2Name = name1;
+		sourceImage2Name = name2;
 		// create a mask that is everywhere valid
 		final long[] dims = new long[src1.numDimensions()];
 		src1.dimensions(dims);
