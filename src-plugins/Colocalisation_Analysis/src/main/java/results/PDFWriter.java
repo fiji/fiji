@@ -113,6 +113,8 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 	}
 
 	public void handleValue(String name, double value, int decimals) {
+		//send (output parameter name, value)  to IJ.log for scraping batch results
+		IJ.log(name + ", "+ IJ.d2s(value, decimals));
 		listOfPDFTexts.add(new Paragraph(name + ": " + IJ.d2s(value, decimals)));
 	}
 
@@ -168,6 +170,9 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 			String nameCh1 = container.getSourceImage1Name();
 			String nameCh2 = container.getSourceImage2Name();
 
+			////send names of the 2 images to IJ.log for scraping batch results
+			IJ.log("ImageNames" + ", " + nameCh1 + ", " + nameCh2);
+
 			String name =  "coloc_" + nameCh1 + "_" + nameCh2;
 			/* If a mask is in use, add a counter
 			 * information to the name.
@@ -195,6 +200,10 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 			for (com.itextpdf.text.Image img : listOfPDFImages) {
 				addImage(img);
 			}
+
+			//send name of analysis job to IJ.log for scraping batch results
+			IJ.log("ColocAnalysisJobName" + ", " + name);
+
 			//iterate over all produced text objects
 			for (Paragraph p : listOfPDFTexts) {
 				document.add(p);
