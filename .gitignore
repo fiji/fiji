@@ -109,7 +109,6 @@ hs_err*.log
 /plugins/CPU_Meter-[0-9]*.jar
 /plugins/Calculator_Plus-[0-9]*.jar
 /plugins/Clojure_Interpreter-[0-9]*.jar
-/plugins/Colocalisation_Analysis-[0-9]*.jar
 /plugins/Color_Histogram-[0-9]*.jar
 /plugins/Color_Inspector_3D-[0-9]*.jar
 /plugins/Colour_Deconvolution-[0-9]*.jar
@@ -242,6 +241,7 @@ hs_err*.log
 /jars/tools-[0-9]*.jar
 /jars/udunits-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
+/plugins/Colocalisation_Analysis-[0-9]*.jar
 /plugins/Sholl_Analysis-[0-9]*.jar
 /plugins/SPIM_Registration-[0-9]*.jar
 /plugins/Stitching_-[0-9]*.jar

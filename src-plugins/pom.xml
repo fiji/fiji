@@ -40,7 +40,6 @@
 		<module>CPU_Meter</module>
 		<module>Calculator_Plus</module>
 		<module>Clojure_Interpreter</module>
-		<module>Colocalisation_Analysis</module>
 		<module>Color_Histogram</module>
 		<module>Color_Inspector_3D</module>
 		<module>Colour_Deconvolution</module>
