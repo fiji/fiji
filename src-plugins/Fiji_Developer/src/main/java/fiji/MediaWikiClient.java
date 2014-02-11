@@ -96,6 +96,7 @@ public class MediaWikiClient {
 				"wpName", user,
 				"wpPassword", password,
 				"wpDomain", domain,
+				"wpLoginAttempt", "Log in",
 				"wpLoginToken", loginToken
 			};
 
@@ -321,6 +322,7 @@ public class MediaWikiClient {
 		else if (postVars != null) {
 			conn.setDoOutput(true);
 			conn.setRequestMethod("POST");
+			conn.setInstanceFollowRedirects(false);
 			conn.connect();
 
 			PrintStream ps =
@@ -335,7 +337,7 @@ public class MediaWikiClient {
 		}
 
 		int httpCode = conn.getResponseCode();
-		if (httpCode != 200)
+		if (httpCode != 200 && httpCode != 302)
 			throw new IOException("HTTP code: " + httpCode);
 
 		InputStream in = conn.getInputStream();
@@ -349,9 +351,8 @@ public class MediaWikiClient {
 		}
 		in.close();
 
+		getCookies(conn.getHeaderFields().get("Set-Cookie"));
 		if (getSessionKey) {
-			getCookies(conn.getHeaderFields()
-					.get("Set-Cookie"));
 
 			domain = null;
 			int off = response.indexOf("<select name=\"wpDomain\"");
@@ -393,6 +394,12 @@ public class MediaWikiClient {
 				sessionKey = matcher.group(1);
 				String value = matcher.group(2);
 				cookies.put(sessionKey, value);
+			} else {
+				int equal = s.indexOf('=');
+				int semicolon = s.indexOf(';');
+				if (equal > 0 && semicolon > equal) {
+					cookies.put(s.substring(0, equal), s.substring(equal + 1, semicolon));
+				}
 			}
 		}
 	}
