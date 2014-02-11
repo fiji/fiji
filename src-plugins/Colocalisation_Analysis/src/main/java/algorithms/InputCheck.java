@@ -60,8 +60,8 @@ public class InputCheck<T extends RealType< T >> extends Algorithm<T> {
 
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			double ch1 = cursor.getChannel1().getRealDouble();
-			double ch2 = cursor.getChannel2().getRealDouble();
+			double ch1 = cursor.getFirst().getRealDouble();
+			double ch2 = cursor.getSecond().getRealDouble();
 
 			// is the current pixels combination a zero pixel?
 			if (Math.abs(ch1 + ch2) < 0.00001)

@@ -12,7 +12,7 @@ import net.imglib2.type.logic.BitType;
  *
  * @author Johannes Schindelin and Tom Kazimiers
  */
-public class TwinCursor<T extends Type<T>> implements Cursor<T> {
+public class TwinCursor<T extends Type<T>> implements Cursor<T>, PairIterator<T> {
 		final protected PredicateCursor<BitType> mask;
 		final protected RandomAccess<T> channel1;
 		final protected RandomAccess<T> channel2;
@@ -50,12 +50,12 @@ public class TwinCursor<T extends Type<T>> implements Cursor<T> {
 			gotNext = true;
 		}
 
-		final public T getChannel1() {
+		final public T getFirst() {
 			getNext();
 			return channel1.get();
 		}
 
-		final public T getChannel2() {
+		final public T getSecond() {
 			getNext();
 			return channel2.get();
 		}

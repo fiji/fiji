@@ -194,8 +194,8 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 		long[] pos = new long[ plotImage.numDimensions() ];
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			double ch1 = cursor.getChannel1().getRealDouble();
-			double ch2 = cursor.getChannel2().getRealDouble();
+			double ch1 = cursor.getFirst().getRealDouble();
+			double ch2 = cursor.getSecond().getRealDouble();
 			/* Scale values for both channels to fit in the range.
 			 * Moreover mirror the y value on the x axis.
 			 */
@@ -270,10 +270,14 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	 */
 	protected double getXBinWidth(DataContainer<T> container) {
 		double ch1Max = getMaxCh1(container);
-		// make sure we don't make the bins wider than one
-		ch1Max = ch1Max < xBins ? xBins : ch1Max + 1;
-		// return the width of one bin in the grid
-		return (double) xBins / (double) ch1Max;
+		if (ch1Max < yBins) {
+			// bin widths must not exceed 1
+			return 1;
+		}
+		// we need (ch1Max * width + 0.5) < yBins, but just so, i.e.
+		// ch1Max * width + 0.5 == yBins - eps
+		// width = (yBins - 0.5 - eps) / ch1Max
+		return (yBins - 0.50001) / ch1Max;
 	}
 
 	/**
@@ -283,10 +287,11 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	 */
 	protected double getYBinWidth(DataContainer<T> container) {
 		double ch2Max = getMaxCh2(container);
-		// make sure we don't make the bins higher than one
-		ch2Max = ch2Max < yBins ? yBins : ch2Max + 1;
-		// return the width of one bin in the grid
-		return (double) yBins / (double) ch2Max;
+		if (ch2Max < yBins) {
+			// bin widths must not exceed 1
+			return 1;
+		}
+		return (yBins - 0.50001) / ch2Max;
 	}
 
 	/**

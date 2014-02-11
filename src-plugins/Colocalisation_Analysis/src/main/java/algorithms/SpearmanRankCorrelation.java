@@ -81,8 +81,8 @@ public class SpearmanRankCorrelation<T extends RealType< T >> extends Algorithm<
 		
 		for (int i = 0; i < n; i++) {
 			cursor.fwd();
-			T type1 = cursor.getChannel1();
-			T type2 = cursor.getChannel2();
+			T type1 = cursor.getFirst();
+			T type2 = cursor.getSecond();
 			data[i][0] = type1.getRealDouble();
 			data[i][1] = type2.getRealDouble();
 		}

@@ -62,9 +62,9 @@ public class AutoThresholdRegression<T extends RealType< T >> extends Algorithm<
 
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			T type1 = cursor.getChannel1();
+			T type1 = cursor.getFirst();
 			double ch1 = type1.getRealDouble();
-			T type2 = cursor.getChannel2();
+			T type2 = cursor.getSecond();
 			double ch2 = type2.getRealDouble();
 
 			combinedSum = ch1 + ch2;
