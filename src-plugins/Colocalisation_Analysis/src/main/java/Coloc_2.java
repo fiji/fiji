@@ -128,6 +128,10 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 	// the images to work on
 	protected Img<T> img1, img2;
 
+	// names of the images working on
+	protected String Ch1Name = "";
+	protected String Ch2Name = "";
+
 	// the channels of the images to use
 	protected int img1Channel = 1, img2Channel = 1;
 
@@ -262,6 +266,10 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 		ImagePlus imp1 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
 		ImagePlus imp2 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
 
+		// get image names for output
+		Ch1Name = imp1.getTitle();
+		Ch2Name = imp2.getTitle();
+
 		// make sure both images have the same bit-depth
 		if (imp1.getBitDepth() != imp2.getBitDepth()) {
 			IJ.showMessage("Both images must have the same bit-depth.");
@@ -390,15 +398,15 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 		DataContainer<T> container;
 		if (mask != null) {
 			container = new DataContainer<T>(img1, img2,
-					img1Channel, img2Channel, "Channel 1", "Channel 2", mask, roi.offset, roi.size);
+					img1Channel, img2Channel, Ch1Name, Ch2Name, mask, roi.offset, roi.size);
 		} else if (roi != null) {
 				// we have no mask, but a regular ROI in use
 				container = new DataContainer<T>(img1, img2,
-						img1Channel, img2Channel, "Channel 1", "Channel 2", roi.offset, roi.size);
+						img1Channel, img2Channel, Ch1Name, Ch2Name, roi.offset, roi.size);
 		} else {
 			// no mask and no ROI is present
 			container = new DataContainer<T>(img1, img2,
-					img1Channel, img2Channel, "Channel 1", "Channel 2");
+					img1Channel, img2Channel, Ch1Name, Ch2Name);
 		}
 
 		// create a results handler
