@@ -29,9 +29,9 @@ import ij.plugin.BrowserLauncher;
 
 import java.net.URL;
 import java.net.HttpURLConnection;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -96,6 +96,7 @@ public class MediaWikiClient {
 				"wpName", user,
 				"wpPassword", password,
 				"wpDomain", domain,
+				"wpLoginAttempt", "Log in",
 				"wpLoginToken", loginToken
 			};
 
@@ -304,7 +305,7 @@ public class MediaWikiClient {
 					i + 2 < fileVars.length;
 					i += 3) {
 				ps.print("--" + boundary + "\r\n");
-				postFile(ps, conn, (String)fileVars[i],
+				postFile(ps, (String)fileVars[i],
 						(String)fileVars[i + 1],
 						(byte[])fileVars[i + 2]);
 			}
@@ -321,6 +322,7 @@ public class MediaWikiClient {
 		else if (postVars != null) {
 			conn.setDoOutput(true);
 			conn.setRequestMethod("POST");
+			conn.setInstanceFollowRedirects(false);
 			conn.connect();
 
 			PrintStream ps =
@@ -335,7 +337,7 @@ public class MediaWikiClient {
 		}
 
 		int httpCode = conn.getResponseCode();
-		if (httpCode != 200)
+		if (httpCode != 200 && httpCode != 302)
 			throw new IOException("HTTP code: " + httpCode);
 
 		InputStream in = conn.getInputStream();
@@ -349,9 +351,8 @@ public class MediaWikiClient {
 		}
 		in.close();
 
+		getCookies(conn.getHeaderFields().get("Set-Cookie"));
 		if (getSessionKey) {
-			getCookies(conn.getHeaderFields()
-					.get("Set-Cookie"));
 
 			domain = null;
 			int off = response.indexOf("<select name=\"wpDomain\"");
@@ -366,9 +367,8 @@ public class MediaWikiClient {
 		return response;
 	}
 
-	void postFile(PrintStream ps, HttpURLConnection conn,
-			String variableName, String fileName, byte[] contents) {
-		String contentType = conn.guessContentTypeFromName(fileName);
+	void postFile(PrintStream ps, String variableName, String fileName, byte[] contents) {
+		String contentType = URLConnection.guessContentTypeFromName(fileName);
 		if (contentType == null)
 			contentType = "application/octet-stream";
 
@@ -394,6 +394,12 @@ public class MediaWikiClient {
 				sessionKey = matcher.group(1);
 				String value = matcher.group(2);
 				cookies.put(sessionKey, value);
+			} else {
+				int equal = s.indexOf('=');
+				int semicolon = s.indexOf(';');
+				if (equal > 0 && semicolon > equal) {
+					cookies.put(s.substring(0, equal), s.substring(equal + 1, semicolon));
+				}
 			}
 		}
 	}
