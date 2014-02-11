@@ -29,9 +29,9 @@ import ij.plugin.BrowserLauncher;
 
 import java.net.URL;
 import java.net.HttpURLConnection;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -304,7 +304,7 @@ public class MediaWikiClient {
 					i + 2 < fileVars.length;
 					i += 3) {
 				ps.print("--" + boundary + "\r\n");
-				postFile(ps, conn, (String)fileVars[i],
+				postFile(ps, (String)fileVars[i],
 						(String)fileVars[i + 1],
 						(byte[])fileVars[i + 2]);
 			}
@@ -366,9 +366,8 @@ public class MediaWikiClient {
 		return response;
 	}
 
-	void postFile(PrintStream ps, HttpURLConnection conn,
-			String variableName, String fileName, byte[] contents) {
-		String contentType = conn.guessContentTypeFromName(fileName);
+	void postFile(PrintStream ps, String variableName, String fileName, byte[] contents) {
+		String contentType = URLConnection.guessContentTypeFromName(fileName);
 		if (contentType == null)
 			contentType = "application/octet-stream";
 
