@@ -243,7 +243,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			chooser.setDialogTitle("Choose directory to store Transform files");
 			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 			chooser.setAcceptAllFileFilterUsed(true);
-			if (chooser.showOpenDialog(gd) != JFileChooser.APPROVE_OPTION)
+			if (chooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION)
 		    	return;
 			
 			save_dir = chooser.getSelectedFile().toString();
@@ -262,7 +262,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			chooser.setDialogTitle("Choose reference image");
 			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			chooser.setAcceptAllFileFilterUsed(true);
-			if (chooser.showOpenDialog(gd) != JFileChooser.APPROVE_OPTION)
+			if (chooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION)
 				return;
 			referenceName = chooser.getSelectedFile().getName();
 		}
