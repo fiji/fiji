@@ -29,18 +29,20 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3f;
 
 import trainableSegmentation.utils.Utils;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Prefs;
 import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.util.ThreadUtil;
 
 
 /**
@@ -598,7 +600,7 @@ public class WarpingError extends Metrics {
 			double minThreshold,
 			double maxThreshold,
 			double stepThreshold,
-			int radius,
+			final int radius,
 			boolean bordersArePositive,
 			boolean visualize)
 	{
@@ -612,40 +614,61 @@ public class WarpingError extends Metrics {
 		ArrayList< ClassificationStatistics > cs = new ArrayList<ClassificationStatistics>();
 				
 		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
-		{
+		{			
 			if( verbose )
 				IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.3f", th) + "...");
-			
-			WarpingResults[] wrs = simplePointWarp2dMT(originalLabels, proposedLabels, mask, th);
 
+			//long start = System.currentTimeMillis();
+
+			// Warp original labels into proposal
+			final WarpingResults[] wrs = simplePointWarp2dMT(originalLabels, proposedLabels, mask, th);
+
+			//long endWarping = System.currentTimeMillis();
+			//IJ.log("   Warping image took " + (endWarping - start) + " ms");
+
+			// Remove mistakes that are neither splits not mergers 
+			// Create output warped source
 			ImageStack is = new ImageStack( originalLabels.getWidth(), originalLabels.getHeight() );
-			for(int i = 0; i < wrs.length; i ++)
-			{
-				final ImageProcessor ip = wrs[i].warpedSource.getProcessor();
-				int[] mismatchesLabels = classifyMismatches2d( wrs[ i ].warpedSource, wrs[ i ].mismatches, radius );
-				for( int k = 0; k < mismatchesLabels.length; k++)
-				{					
-					if ( mismatchesLabels[ k ] != WarpingError.MERGE && mismatchesLabels[ k ] != WarpingError.SPLIT )
-					{
-						// flip split and merger mistakes
-						final Point3f p = wrs[ i ].mismatches.get( k );
-						if ( ip.getf( (int)p.x, (int)p.y) == 0)
-							ip.setf( (int)p.x, (int)p.y, 1f);
-						else
-							ip.setf( (int)p.x, (int)p.y, 0f);
-						
-					}
-				}
-				
-				is.addSlice("warped source slice " + (i+1), ip );				
-			}
+			for( int slice = 1; slice <= wrs.length; slice++ )			
+				is.addSlice("warped source slice " + slice, wrs[ slice-1 ].warpedSource.getProcessor() );
+			final ImagePlus warpedSource = new ImagePlus ("warped source", is);
 			
-			ImagePlus warpedSource = new ImagePlus ("warped source", is);
-					
+			final AtomicInteger ai = new AtomicInteger(0);
+	        final int n_cpus = Prefs.getThreads();
+	        final int depth = is.getSize();
+	        final int dec = (int) Math.ceil((double) depth / (double) n_cpus);
+	        
+	        Thread[] threads = ThreadUtil.createThreadArray( n_cpus );
+	        for (int ithread = 0; ithread < threads.length; ithread++) 
+	        {
+	        		        	
+	            threads[ithread] = new Thread() {
+	                public void run() {
+	                	for (int k = ai.getAndIncrement(); k < n_cpus; k = ai.getAndIncrement()) 
+	                	{
+	                		int zmin = dec * k;
+	                		int zmax = dec * ( k + 1 );
+	                		if (zmin<0)
+	                            zmin = 0;
+	                        if (zmax > depth)
+	                            zmax = depth;
+	                        
+	                        revertSplitAndMergers( wrs, warpedSource, radius, zmin, zmax );	                	
+	                    }
+	                }
+	            };
+	        }
+	        ThreadUtil.startAndJoin(threads);
+									
+			//long endRevert = System.currentTimeMillis();
+			//IJ.log("   Reverting mistakes took " + (endRevert-endWarping) + " ms" );
+			
+			
+
 			// We calculate the precision-recall value between the warped original labels and the 
 			// proposed labels 
 			ImagePlus proposal = proposedLabels;
-			
+
 			if( bordersArePositive )
 			{
 				// invert the images to have white borders (so borders are consider positive samples)
@@ -654,28 +677,185 @@ public class WarpingError extends Metrics {
 				{
 					final float[] pix = (float[]) warpedSource.getImageStack().getProcessor( slice ).getPixels();
 					for(int kk = 0; kk < pix.length; kk++)
-						 pix[ kk ] = pix[ kk ] == 0f ? 1f : 0f;						
+						pix[ kk ] = pix[ kk ] == 0f ? 1f : 0f;						
 				}
-				
-				
+
+
 				proposal = proposedLabels.duplicate();
 				IJ.run( proposal, "Invert", "stack" );
+
 			}
-			
+
+			//long endInvert = System.currentTimeMillis();
+			//if( bordersArePositive ) 
+			//	IJ.log("   Inverting warped source took " + (endInvert - endRevert) + " ms" );
+
 			if( visualize )
 			{
 				proposal.show();
 				warpedSource.show();
 			}
-			
-			PixelError pixelError = new PixelError( warpedSource, proposal);			
+
+			PixelError pixelError = new PixelError( warpedSource, proposal );			
 			ClassificationStatistics stats = pixelError.getPrecisionRecallStats( th );
 			if( verbose )
 				IJ.log("   F-score = " + stats.fScore );
+			//long endFscore = System.currentTimeMillis();
+			//IJ.log("   F-score of pixel error took " + (endFscore - endInvert) + " ms" );			
 			cs.add( stats );
 		}		
 		return cs;
 	}	
+	
+	/**
+	 * Calculate the precision-recall values based on pixel error between 
+	 * some warped 2D original labels and the corresponding proposed labels
+	 * (taking into account only the split and merger pixels). Results are
+	 * presented per slice.
+	 * 
+	 * @param th threshold value to binarize the input images
+	 * @param radius radius in pixels of the local area to look when deciding how to classify some mismatch cases (small radius speed up the method a lot, -1 to use whole image
+	 * @param bordersArePositive set to true if border pixels are positive samples
+	 * @return pixel error value and derived statistics for each slice
+	 */
+	public ClassificationStatistics [] getPrecisionRecallStatsSplitsAndMergersPerSlice(
+			double th,
+			final int radius,
+			boolean bordersArePositive)
+	{
+		
+		if( verbose )
+			IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.3f", th) + "...");
+
+		//long start = System.currentTimeMillis();
+
+		// Warp original labels into proposal
+		final WarpingResults[] wrs = simplePointWarp2dMT( originalLabels, proposedLabels, mask, th );
+
+		//long endWarping = System.currentTimeMillis();
+		//IJ.log("   Warping image took " + (endWarping - start) + " ms");
+
+		// Remove mistakes that are neither splits not mergers 
+		// Create output warped source
+		ImageStack is = new ImageStack( originalLabels.getWidth(), originalLabels.getHeight() );
+		for( int slice = 1; slice <= wrs.length; slice++ )			
+			is.addSlice("warped source slice " + slice, wrs[ slice-1 ].warpedSource.getProcessor() );
+		final ImagePlus warpedSource = new ImagePlus ("warped source", is);
+
+		final AtomicInteger ai = new AtomicInteger(0);
+		final int n_cpus = Prefs.getThreads();
+		final int depth = is.getSize();
+		final int dec = (int) Math.ceil((double) depth / (double) n_cpus);
+
+		Thread[] threads = ThreadUtil.createThreadArray( n_cpus );
+		for (int ithread = 0; ithread < threads.length; ithread++) 
+		{
+
+			threads[ithread] = new Thread() {
+				public void run() {
+					for (int k = ai.getAndIncrement(); k < n_cpus; k = ai.getAndIncrement()) 
+					{
+						int zmin = dec * k;
+						int zmax = dec * ( k + 1 );
+						if (zmin<0)
+							zmin = 0;
+						if (zmax > depth)
+							zmax = depth;
+
+						revertSplitAndMergers( wrs, warpedSource, radius, zmin, zmax );	                	
+					}
+				}
+			};
+		}
+		ThreadUtil.startAndJoin(threads);
+
+		//long endRevert = System.currentTimeMillis();
+		//IJ.log("   Reverting mistakes took " + (endRevert-endWarping) + " ms" );
+
+
+
+		// We calculate the precision-recall value between the warped original labels and the 
+		// proposed labels 
+		ImagePlus proposal = proposedLabels;
+
+		if( bordersArePositive )
+		{
+			// invert the images to have white borders (so borders are consider positive samples)
+			//IJ.run( warpedSource, "Invert", "stack" );
+			for(int slice=1; slice <= warpedSource.getImageStackSize(); slice++)
+			{
+				final float[] pix = (float[]) warpedSource.getImageStack().getProcessor( slice ).getPixels();
+				for(int kk = 0; kk < pix.length; kk++)
+					pix[ kk ] = pix[ kk ] == 0f ? 1f : 0f;						
+			}
+
+
+			proposal = proposedLabels.duplicate();
+			IJ.run( proposal, "Invert", "stack" );
+
+		}
+
+		//long endInvert = System.currentTimeMillis();
+		//if( bordersArePositive ) 
+		//	IJ.log("   Inverting warped source took " + (endInvert - endRevert) + " ms" );
+		
+
+		PixelError pixelError = new PixelError( warpedSource, proposal );			
+		ClassificationStatistics[] stats = pixelError.getPrecisionRecallStatsPerSlice( th );
+		
+		//long endFscore = System.currentTimeMillis();
+		//IJ.log("   F-score of pixel error took " + (endFscore - endInvert) + " ms" );			
+		
+		return stats;
+	}	
+	
+
+	/**
+	 * Revert splits and mergers mistakes on a warped source 
+	 * 
+	 * @param wrs original warping results
+	 * @param warpedSource output warping source (with reverted mistakes)
+	 * @param radius radius in pixels of the local area to look when deciding how to classify some mismatch cases
+	 * @param zmin minimum slice to process (zmin >= 0)
+	 * @param zmax maximum slice to process (zmax < depth)
+	 */
+	void revertSplitAndMergers(
+			final WarpingResults[] wrs,
+			final ImagePlus warpedSource,
+			final int radius,
+			final int zmin, 
+			final int zmax )
+	{
+		for(int i = zmin; i < zmax; i ++)
+		{
+			if (zmin==0) 
+				IJ.showProgress(i+1, zmax);
+			
+			final ImageProcessor ip = warpedSource.getImageStack().getProcessor( i + 1 );
+
+			// Classify mistakes by type
+			int[] mismatchesLabels = classifyMismatches2d( wrs[ i ].warpedSource, wrs[ i ].mismatches, radius );
+
+			// Revert all mistakes but splits and mergers
+			for( int k = 0; k < mismatchesLabels.length; k++)
+			{					
+				if ( mismatchesLabels[ k ] != WarpingError.MERGE && mismatchesLabels[ k ] != WarpingError.SPLIT )
+				{						
+					// flip split and merger mistakes
+					final Point3f p = wrs[ i ].mismatches.get( k );
+					final int x = (int) p.x;
+					final int y = (int) p.y;
+					
+					if ( ip.getf( x, y ) == 0)
+						ip.setf( x, y, 1f);
+					else
+						ip.setf( x, y, 0f);
+
+				}
+			}
+		}
+	}
+	
 	
 	/**
 	 * Get the best F-score of the pixel error between proposed and original labels
@@ -1358,7 +1538,7 @@ public class WarpingError extends Metrics {
 			mismatches = new ArrayList[sourceSlices.getSize()];
 
 		// Executor service to produce concurrent threads
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		final ExecutorService exe = Executors.newFixedThreadPool(Prefs.getThreads());
 
 		final ArrayList< Future<WarpingResults> > futures = new ArrayList< Future<WarpingResults> >();
 
@@ -1479,7 +1659,7 @@ public class WarpingError extends Metrics {
 		final WarpingResults[] wrs = new WarpingResults[ source.getImageStackSize() ];
 
 		// Executor service to produce concurrent threads
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		final ExecutorService exe = Executors.newFixedThreadPool(Prefs.getThreads());
 
 		final ArrayList< Future<WarpingResults> > futures = new ArrayList< Future<WarpingResults> >();
 
@@ -1536,7 +1716,7 @@ public class WarpingError extends Metrics {
 		final WarpingResults[] wrs = new WarpingResults[ originalLabels.getImageStackSize() ];
 
 		// Executor service to produce concurrent threads
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		final ExecutorService exe = Executors.newFixedThreadPool(Prefs.getThreads());
 
 		final ArrayList< Future<WarpingResults> > futures = new ArrayList< Future<WarpingResults > >();
 
@@ -1649,11 +1829,10 @@ public class WarpingError extends Metrics {
 		final ImageStack sourceSlices = source.getImageStack();
 		final ImageStack targetSlices = target.getImageStack();
 		final ImageStack maskSlices = (null != mask) ? mask.getImageStack() : null;
-
 		final ClusteredWarpingMismatches[] cwm = new ClusteredWarpingMismatches[ source.getImageStackSize() ];
 
 		// Executor service to produce concurrent threads
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		final ExecutorService exe = Executors.newFixedThreadPool(Prefs.getThreads());
 
 		final ArrayList< Future<ClusteredWarpingMismatches> > futures = new ArrayList< Future<ClusteredWarpingMismatches> >();
 
@@ -1831,7 +2010,7 @@ public class WarpingError extends Metrics {
 			// If all surrounding pixels are background
 			if( uniqueId.size() == 1 && uniqueId.get(0) == 0)
 			{
-				if(components.getPixel(x, y) != 0)
+				if(components.getf(x, y) != 0)
 				{
 					pointClassification[ n ] = OBJECT_DELETION;
 					//IJ.log(" all surrounding pixels are black and the point is white -> object deletion");
@@ -1845,7 +2024,7 @@ public class WarpingError extends Metrics {
 			// If all surrounding pixels belong to one object 
 			else if ( uniqueId.size() == 1 && uniqueId.get(0) != 0)
 			{
-				if(components.getPixel(x, y) != 0)
+				if(components.getf(x, y) != 0)
 				{
 					pointClassification[ n ] = HOLE_ADDITION;
 					//IJ.log(" all surrounding pixels are white and the point is white -> hole addition");
@@ -1860,7 +2039,7 @@ public class WarpingError extends Metrics {
 			else if ( uniqueId.size() == 2 )
 			{
 				// if the point is black, that's a hole addition error (flipping it to white would create a hole)
-				if (components.getPixel(x, y) == 0)
+				if (components.getf(x, y) == 0)
 				{
 					pointClassification[ n ] = HOLE_ADDITION;
 					//IJ.log(" surrounding pixels are white and black and the point is black -> hole addition");
@@ -1917,7 +2096,7 @@ public class WarpingError extends Metrics {
 			}			
 			else // If there are more than 1 object ID in the surrounding pixels 
 			{
-				if(components.getPixel(x, y) == 0)
+				if(components.getf(x, y) == 0)
 				{
 					pointClassification[ n ] = MERGE;
 					//IJ.log(" surrounding pixels have at least 2 objects and the point is black -> merge");					
@@ -1978,7 +2157,7 @@ public class WarpingError extends Metrics {
 			// If all surrounding pixels are background
 			if( uniqueId.size() == 1 && uniqueId.get(0) == 0)
 			{
-				if(components.getPixel(x, y) != 0)
+				if(components.getf(x, y) != 0)
 				{
 					pointClassification[ n ] = OBJECT_DELETION;
 					if( (flags & OBJECT_DELETION) != 0 )
@@ -1994,7 +2173,7 @@ public class WarpingError extends Metrics {
 			// If all surrounding pixels belong to one object 
 			else if ( uniqueId.size() == 1 && uniqueId.get(0) != 0)
 			{
-				if(components.getPixel(x, y) != 0)
+				if(components.getf(x, y) != 0)
 				{
 					pointClassification[ n ] = HOLE_ADDITION;
 					if( (flags & HOLE_ADDITION) != 0 )
@@ -2011,7 +2190,7 @@ public class WarpingError extends Metrics {
 			// If there are background and one single object ID in the surrounding pixels
 			else if ( uniqueId.size() == 2 )
 			{
-				if (components.getPixel(x, y) == 0)
+				if (components.getf(x, y) == 0)
 				{
 					pointClassification[ n ] = HOLE_ADDITION;
 					if( (flags & HOLE_ADDITION) != 0 )
@@ -2056,7 +2235,7 @@ public class WarpingError extends Metrics {
 			}			
 			else // If there are more than 1 object ID in the surrounding pixels 
 			{
-				if(components.getPixel(x, y) == 0)
+				if(components.getf(x, y) == 0)
 				{
 					pointClassification[ n ] = MERGE;
 					if( (flags & MERGE) != 0 )
@@ -2119,7 +2298,7 @@ public class WarpingError extends Metrics {
 					binaryMismatches[ 0 ].set(x, y, 255);
 					break;
 				case HOLE_DELETION:
-					if( warpedLabels.getProcessor().getPixel(x, y) == 0)
+					if( warpedLabels.getProcessor().getf(x, y) == 0)
 						binaryMismatches[ 1 ].set(x, y, 255);
 					else
 						binaryMismatches[ 7 ].set(x, y, 255);
@@ -2128,7 +2307,7 @@ public class WarpingError extends Metrics {
 					binaryMismatches[ 2 ].set(x, y, 255);
 					break;
 				case HOLE_ADDITION:
-					if( warpedLabels.getProcessor().getPixel(x, y) == 0)
+					if( warpedLabels.getProcessor().getf(x, y) == 0)
 						binaryMismatches[ 3 ].set(x, y, 255);
 					else
 						binaryMismatches[ 5 ].set(x, y, 255);
