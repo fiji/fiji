@@ -366,8 +366,7 @@ public class Refresh_Javas extends RefreshScripts {
 			return true;
 
 		if (buffer != null)
-			new TextWindow("Could not compile " + path,
-					buffer.toString(), 640, 480);
+			IJ.handleException(new Exception("Could not compile " + path + ":\n" + buffer));
 		return false;
 	}
 
