@@ -343,7 +343,7 @@ done
 
 # handle targets
 
-if test $# = 0
+if test $# = 0 || test "run" = "$*"
 then
 	eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install
 	update_launcher
