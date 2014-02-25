@@ -55,10 +55,10 @@ import ij.gui.Roi;
 import ij.gui.TextRoi;
 import ij.gui.Toolbar;
 import ij.measure.Calibration;
+import ij.plugin.Text;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.plugin.frame.ColorPicker;
-import ij.plugin.frame.Fonts;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -1539,7 +1539,12 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			fontStyleButton.setBounds(0, 0, 120, 25);
 			fontStyleButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent actionEvent) {
-					new ExtendedFonts();
+					new Thread() {
+						@Override
+						public void run() {
+							new ExtendedFonts().run("");
+						}
+					}.start();
 
 				}
 			});
@@ -1574,14 +1579,14 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * imageJ fonts GUI that we reuse for font settings
 	 * and update the preview accordingly.
 	 */
-	@SuppressWarnings("serial")
-	protected class ExtendedFonts extends Fonts{
+	protected class ExtendedFonts extends Text {
 		@Override
-		public void itemStateChanged(ItemEvent e) {
-			super.itemStateChanged(e);
+		public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+			boolean result = super.dialogItemChanged(gd, e);
 			font = new Font(TextRoi.getFont(), TextRoi.getStyle(), TextRoi.getSize());
 			antiAliasedText = TextRoi.isAntialiased();
 			updatePreview();
+			return result;
 		}
 
 	}
