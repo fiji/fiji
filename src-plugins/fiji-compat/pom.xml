@@ -40,7 +40,7 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>ij-legacy</artifactId>
-			<version>${imagej.version}</version>
+			<version>2.0.0-beta-7.7.1</version>
 		</dependency>
 
 		<!-- NB: Artifacts which we would like included with Fiji regardless
