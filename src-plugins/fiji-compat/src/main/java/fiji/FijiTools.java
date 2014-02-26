@@ -2,7 +2,6 @@ package fiji;
 
 import ij.IJ;
 import ij.Menus;
-import imagej.legacy.LegacyExtensions;
 
 import java.awt.Frame;
 import java.awt.Menu;
@@ -179,7 +178,7 @@ public class FijiTools {
 
 	@Deprecated
 	public static boolean handleNoSuchMethodError(NoSuchMethodError error) {
-		return LegacyExtensions.handleNoSuchMethodError(error);
+		return false;
 	}
 
 	/**
