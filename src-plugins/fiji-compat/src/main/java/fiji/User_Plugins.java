@@ -2,8 +2,6 @@ package fiji;
 
 import ij.Menus;
 import ij.plugin.PlugIn;
-import imagej.legacy.CodeHacker;
-import imagej.legacy.LegacyInjector;
 
 import java.awt.Menu;
 import java.awt.MenuBar;

@@ -1,11 +1,10 @@
 package fiji;
 
-import imagej.legacy.DefaultLegacyService;
-import imagej.legacy.LegacyExtensions;
-import imagej.legacy.LegacyExtensions.LegacyEditorPlugin;
 import imagej.util.AppUtils;
-
-import java.io.File;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtNewConstructor;
+import javassist.CtNewMethod;
 
 /**
  * Patch ij.jar using Javassist, handle headless mode, too.
@@ -21,35 +20,39 @@ public class IJ1Patcher implements Runnable {
 		if (alreadyPatched || "false".equals(System.getProperty("patch.ij1"))) return;
 		alreadyPatched = true;
 		try {
-			LegacyExtensions.setAppName("(Fiji Is Just) ImageJ");
-			LegacyExtensions.setIcon(new File(AppUtils.getBaseDirectory(), "images/icon.png"));
-			LegacyExtensions.setLegacyEditor(new LegacyEditorPlugin() {
+			Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+			final ClassPool pool = ClassPool.getDefault();
 
-				@Override
-				public boolean open(File path) {
-					return FijiTools.openFijiEditor(path);
-				}
+			CtClass clazz = pool.makeClass("fiji.$TransientFijiEditor");
+			clazz.addInterface(pool.get("imagej.legacy.LegacyExtensions$LegacyEditorPlugin"));
+			clazz.addConstructor(CtNewConstructor.make(new CtClass[0], new CtClass[0], clazz));
+			clazz.addMethod(CtNewMethod.make("public boolean open(java.io.File path) {"
+					+ "  return fiji.FijiTools.openFijiEditor(path);"
+					+ "}", clazz));
+			clazz.addMethod(CtNewMethod.make("public boolean create(java.lang.String title, java.lang.String body) {"
+					+ "  return fiji.FijiTools.openFijiEditor(title, body);"
+					+ "}",  clazz));
+			clazz.toClass();
 
-				@Override
-				public boolean create(String title, String body) {
-					return FijiTools.openFijiEditor(title, body);
-				}
-			});
-			// make sure to run some Fiji-specific stuff after Help>Refresh Menus, e.g. installing all scripts into the menu
-			LegacyExtensions.runAfterRefreshMenus(new MenuRefresher());
-
-			try {
-				// make sure that ImageJ2's LegacyInjector runs
-				DefaultLegacyService.preinit();
-			} catch (final NoClassDefFoundError e) {
-				e.printStackTrace();
-				// ImageJ2 not installed
-				System.err.println("Did not find DefaultLegacyService class: " + e);
-			}
+			clazz = pool.makeClass("fiji.$TransientFijiPatcher");
+			clazz.addInterface(pool.get("java.lang.Runnable"));
+			clazz.addMethod(CtNewMethod.make("public void run() {"
+					+ "  imagej.legacy.LegacyExtensions.setAppName(\"(Fiji Is Just) ImageJ\");"
+					+ "  imagej.legacy.LegacyExtensions.setIcon(new java.io.File(\"" + AppUtils.getBaseDirectory() + "/images/icon.png\"));"
+					+ "  imagej.legacy.LegacyExtensions.setLegacyEditor(new fiji.$TransientFijiEditor());"
+					+ "  /* make sure to run some Fiji-specific stuff after Help>Refresh Menus, e.g. installing all scripts into the menu */"
+					+ "  imagej.legacy.LegacyExtensions.runAfterRefreshMenus(new fiji.MenuRefresher());"
+					+ "  /* make sure that ImageJ2's LegacyInjector runs */"
+					+ "  imagej.legacy.DefaultLegacyService.preinit();"
+					+ "}"
+					, clazz));
+			Runnable run = (Runnable)clazz.toClass().newInstance();
+			run.run();
+			return;
 		} catch (NoClassDefFoundError e) {
-			// Deliberately ignored - in some cases
-			// javassist or ImageJ2 can not be found, and we should
-			// continue anyway.
+			// ignore: probably have newer ImageJ2 in class path
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 }
