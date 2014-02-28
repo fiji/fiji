@@ -45,7 +45,7 @@
 		<jep.version>2.4.1-fiji1-SNAPSHOT</jep.version>
 		<jfreechart.version>1.0.14</jfreechart.version>
 		<jgrapht.version>0.8.3</jgrapht.version>
-		<jgraphx.version>2.3.0.5</jgraphx.version>
+		<jgraphx.version>1.10.4.1</jgraphx.version>
 		<jna.version>3.2.7</jna.version>
 		<jpedal.groupId>org.jpedal</jpedal.groupId>
 		<jpedal.version>2.80b11</jpedal.version>
