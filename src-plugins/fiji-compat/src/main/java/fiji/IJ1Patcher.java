@@ -1,5 +1,9 @@
 package fiji;
 
+import java.awt.GraphicsEnvironment;
+
+import imagej.patcher.LegacyEnvironment;
+import imagej.patcher.LegacyInjector;
 import imagej.util.AppUtils;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -14,11 +18,24 @@ import javassist.CtNewMethod;
 
 public class IJ1Patcher implements Runnable {
 	private static boolean alreadyPatched;
+	static boolean ij1PatcherFound;
 
 	@Override
 	public void run() {
 		if (alreadyPatched || "false".equals(System.getProperty("patch.ij1"))) return;
+		try {
+			LegacyInjector.preinit();
+			new LegacyEnvironment(getClass().getClassLoader(), GraphicsEnvironment.isHeadless());
+			ij1PatcherFound = true;
+		} catch (NoClassDefFoundError e) {
+			fallBackToPreviousPatcher();
+		} catch (ClassNotFoundException e) {
+			fallBackToPreviousPatcher();
+		}
 		alreadyPatched = true;
+	}
+
+	private void fallBackToPreviousPatcher() {
 		try {
 			Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
 			final ClassPool pool = ClassPool.getDefault();

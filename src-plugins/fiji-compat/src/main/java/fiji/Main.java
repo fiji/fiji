@@ -2,8 +2,10 @@ package fiji;
 
 import fiji.gui.FileDialogDecorator;
 import fiji.gui.JFileChooserDecorator;
+import fiji.patches.FijiInitializer;
 import ij.IJ;
 import ij.ImageJ;
+import imagej.patcher.LegacyEnvironment;
 
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -135,6 +137,25 @@ public class Main {
 	public static void postmain() { }
 
 	public static void main(String[] args) {
+		if (IJ1Patcher.ij1PatcherFound) try {
+			System.setProperty("ij1.patcher.initializer", FijiInitializer.class.getName());
+			LegacyEnvironment.getPatchedImageJ1().main(args);
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			System.exit(1);
+		} else {
+			legacyMain(args);
+		}
+	}
+
+	/**
+	 * The legacy way to start Fiji.
+	 * 
+	 * @param args the main args
+	 * 
+	 * @deprecated see {@link LegacyEnvironment}
+	 */
+	public static void legacyMain(String[] args) {
 		premain();
 		// prepend macro call to scanUserPlugins()
 		String[] newArgs = new String[args.length + 2];
