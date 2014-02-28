@@ -13,6 +13,11 @@ import java.lang.reflect.Field;
 
 import org.scijava.Context;
 
+/**
+ * Main entry point into Fiji.
+ * 
+ * @author Johannes Schindelin
+ */
 public class Main {
 	protected Image icon;
 	protected boolean debug;
@@ -90,15 +95,22 @@ public class Main {
 		}
 	}
 
+	/**
+	 * Runs before {@code ImageJ.main()} is called.
+	 * 
+	 * @deprecated use a {@code LegacyInitializer} instead.
+	 */
 	public static void premain() {
 		FileDialogDecorator.registerAutomaticDecorator();
 		JFileChooserDecorator.registerAutomaticDecorator();
 		setAWTAppClassName(Main.class);
 	}
 
-	/*
-	 * This method will be called after ImageJ was set up, but before the
+	/**
+	 * This method is called after ImageJ was set up, but before the
 	 * command line arguments are parsed.
+	 * 
+	 * @deprecated this task is performed by {@link fiji.patches.FijiInitializer} now.
 	 */
 	public static void setup() {
 		FijiTools.runPlugInGently("fiji.util.RedirectErrAndOut", null);
@@ -134,6 +146,7 @@ public class Main {
 		}
 	}
 
+	@Deprecated
 	public static void postmain() { }
 
 	public static void main(String[] args) {
