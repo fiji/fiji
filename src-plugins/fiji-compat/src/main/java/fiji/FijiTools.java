@@ -2,6 +2,7 @@ package fiji;
 
 import ij.IJ;
 import ij.Menus;
+import ij.plugin.PlugIn;
 
 import java.awt.Frame;
 import java.awt.Menu;
@@ -335,6 +336,52 @@ public class FijiTools {
 
 	public static Menu getMenu(String menuPath) {
 		return (Menu)getMenuItem(Menus.getMenuBar(), menuPath, true);
+	}
+
+	/**
+	 * Runs a plug-in with an optional argument.
+	 * 
+	 * @param className the plugin class
+	 * @param arg the argument (use "" if you do not want to pass anything)
+	 */
+	public static void runPlugInGently(String className, String arg) {
+		try {
+			Class<?> clazz = IJ.getClassLoader()
+				.loadClass(className);
+			if (clazz != null) {
+				PlugIn plugin = (PlugIn)clazz.newInstance();
+				plugin.run(arg);
+			}
+		}
+		catch (ClassNotFoundException e) { }
+		catch (InstantiationException e) { }
+		catch (IllegalAccessException e) { }
+	}
+
+	public static void runUpdater() {
+		System.setProperty("fiji.main.checksUpdaterAtStartup", "true");
+		runPlugInGently("fiji.updater.UptodateCheck", "quick");
+	}
+
+	/**
+	 * Runs the command associated with a menu label if there is one.
+	 *
+	 * @param menuLabel the label of the menu item to run
+	 * @param arg the arg to pass to the plugin's run() (or setup()) method
+	 */
+	public static void runGently(String menuLabel, final String arg) {
+		String className = (String)Menus.getCommands().get(menuLabel);
+		if (className != null)
+			IJ.runPlugIn(className, null);
+	}
+
+	/**
+	 * Runs the command associated with a menu label if there is one.
+	 *
+	 * @param menuLabel the label of the menu item to run
+	 */
+	public static void runGently(String menuLabel) {
+		runGently(menuLabel, "");
 	}
 
 }
