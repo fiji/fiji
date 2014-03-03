@@ -17,7 +17,7 @@ import org.junit.Test;
 
 import util.BatchOpener;
 
-public class Test3DTracing {
+public class Tracing3DTest {
 
 	ImagePlus image;
 
