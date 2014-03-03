@@ -82,14 +82,17 @@ hs_err*.log
 /jars/fiji-compat-[0-9]*.jar
 /jars/fiji-lib-[0-9]*.jar
 /jars/fiji-scripting-[0-9]*.jar
+/jars/ij1-patcher-[0-9]*.jar
 /jars/imagescience-[0-9]*.jar
 /jars/imageware-[0-9]*.jar
 /jars/javac-[0-9]*.jar
+/jars/log4j-[0-9]*.jar
 /jars/mij-[0-9]*.jar
 /jars/pal-optimization-[0-9]*.jar
 /jars/scala-compiler-[0-9]*.jar
 /jars/scala-library-[0-9]*.jar
 /jars/scala-reflect-[0-9]*.jar
+/jars/slf4j-log4j12-[0-9]*.jar
 /jars/wavelets-[0-9]*.jar
 /jars/weave_jy2java-[0-9]*.jar
 /plugins/3D_Blob_Segmentation-[0-9]*.jar
@@ -198,8 +201,10 @@ hs_err*.log
 /jars/VectorString-[0-9]*.jar
 /jars/autocomplete-[0-9]*.jar
 /jars/batik-[0-9]*.jar
-/jars/ij-launcher-[0-9]*.jar
 /jars/ij-[0-9]*.jar
+/jars/ij-launcher-[0-9]*.jar
+/jars/jai-codec-[0-9]*.jar
+/jars/jai-core-[0-9]*.jar
 /jars/jython-[0-9]*.jar
 /jars/mpicbg-[0-9]*.jar
 /jars/rsyntaxtextarea-[0-9]*.jar
@@ -313,8 +318,9 @@ hs_err*.log
 /plugins/bio-formats_plugins-[0-9]*.jar
 
 # SCIFIO #
-/jars/scifio-[0-9]*.jar
+/jars/jai_imageio-[0-9]*.jar
 /jars/mapdb-[0-9]*.jar
+/jars/scifio-[0-9]*.jar
 
 # ImageJ2 #
 /jars/commons-lang3-[0-9]*.jar
