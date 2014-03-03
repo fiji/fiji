@@ -55,12 +55,12 @@ public class MenuRefresher implements PlugIn, Runnable {
 	public static void installScripts() {
 		if (System.getProperty("jnlp") != null)
 			return;
-		Main.runGently("Refresh Javas");
+		FijiTools.runGently("Refresh Javas");
 		String[] languages = { "Jython", "JRuby", "Clojure", "BSH",
 				"Javascript", "Scala" };
 		for (int i = 0; i < languages.length; i++)
-			Main.runGently("Refresh " + languages[i] + " Scripts");
-		Main.runGently("Refresh Macros");
+			FijiTools.runGently("Refresh " + languages[i] + " Scripts");
+		FijiTools.runGently("Refresh Macros");
 	}
 
 	@SuppressWarnings("unchecked")
