@@ -1,7 +1,6 @@
 package fiji.patches;
 
 import fiji.FijiTools;
-
 import imagej.legacy.plugin.LegacyEditor;
 
 import java.io.File;
@@ -15,6 +14,6 @@ public class FijiLegacyEditor implements LegacyEditor {
 	}
 
 	public boolean create(final String title, final String content) {
-		return FijiTools.openEditor(title, content);
+		return FijiTools.openFijiEditor(title, content);
 	}
 }

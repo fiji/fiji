@@ -18,6 +18,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import javax.swing.SwingUtilities;
+
 public class FijiTools {
 
 	private static Field menuEntry2jarFile;
@@ -85,13 +87,31 @@ public class FijiTools {
 		return false;
 	}
 
-	public static boolean openFijiEditor(String title, String body) {
+	public static boolean openFijiEditor(final String title, final String body) {
 		try {
 			Class<?> textEditor = ij.IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
-			Constructor<?> ctor = textEditor.getConstructor(String.class, String.class);
-			Frame frame = (Frame)ctor.newInstance(title, body);
-			if (frame == null) return false;
-			frame.setVisible(true);
+			final Constructor<?> ctor = textEditor.getConstructor(String.class, String.class);
+			final Runnable run = new Runnable() {
+				@Override
+				public void run() {
+					try {
+						Frame frame = (Frame)ctor.newInstance(title, body);
+						if (frame == null) Thread.currentThread().interrupt();
+						frame.setVisible(true);
+					} catch (Exception e) {
+						e.printStackTrace();
+						Thread.currentThread().interrupt();
+					}
+				}
+			};
+			if (SwingUtilities.isEventDispatchThread()) {
+				run.run();
+			} else try {
+				SwingUtilities.invokeAndWait(run);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return false;
+			}
 			return true;
 		} catch (Throwable t) {
 			t.printStackTrace();
@@ -147,10 +167,28 @@ public class FijiTools {
 	public static boolean openFijiEditor(final File file) {
 		try {
 			Class<?> textEditor = ij.IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
-			Constructor<?> ctor = textEditor.getConstructor(String.class);
-			Frame frame = (Frame)ctor.newInstance(file.getAbsolutePath());
-			if (frame == null) return false;
-			frame.setVisible(true);
+			final Constructor<?> ctor = textEditor.getConstructor(String.class);
+			final Runnable run = new Runnable() {
+				@Override
+				public void run() {
+					try {
+						Frame frame = (Frame)ctor.newInstance(file.getAbsolutePath());
+						if (frame == null) Thread.currentThread().interrupt();
+						frame.setVisible(true);
+					} catch (Exception e) {
+						e.printStackTrace();
+						Thread.currentThread().interrupt();
+					}
+				}
+			};
+			if (SwingUtilities.isEventDispatchThread()) {
+				run.run();
+			} else try {
+				SwingUtilities.invokeAndWait(run);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return false;
+			}
 			return true;
 		} catch (Throwable t) {
 			t.printStackTrace();
