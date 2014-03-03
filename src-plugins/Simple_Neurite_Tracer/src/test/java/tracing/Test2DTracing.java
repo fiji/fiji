@@ -26,7 +26,7 @@ public class Test2DTracing {
 
 	@Before public void setUp() {
 		image = BatchOpener.openFirstChannel("tests/sample-data/c061AG-small-section-z-max.tif" );
-		assumeNotNull("Couldn't open the 2D test image",image);
+		assumeNotNull(image);
 	}
 
 	@After

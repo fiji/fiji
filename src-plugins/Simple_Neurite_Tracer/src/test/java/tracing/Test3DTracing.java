@@ -26,7 +26,7 @@ public class Test3DTracing {
 
 	@Before public void setUp() {
 		image = BatchOpener.openFirstChannel("tests/sample-data/c061AG-small-section.tif" );
-		assumeNotNull("Couldn't open the 3D test image",image);
+		assumeNotNull(image);
 	}
 
 	@After
