@@ -304,12 +304,13 @@ EOF
 	rm "$CWD/$FIJILAUNCHER"
 }
 
-# make sure that javac and ij-minimaven are up-to-date
+# make sure that javac and minimaven are up-to-date
 
 JAVAC_VERSION="$(maven_helper latest-version sc.fiji:javac)"
-MINIMAVEN_VERSION="2.0.0-SNAPSHOT"
+MINIMAVEN_VERSION="$(maven_helper \
+	property-from-pom "$CWD/pom.xml" minimaven.version)"
 maven_update sc.fiji:javac:$JAVAC_VERSION \
-	net.imagej:ij-minimaven:$MINIMAVEN_VERSION
+	net.imagej:minimaven:$MINIMAVEN_VERSION
 
 # command-line options
 
