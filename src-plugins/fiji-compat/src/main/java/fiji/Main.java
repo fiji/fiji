@@ -2,10 +2,10 @@ package fiji;
 
 import fiji.gui.FileDialogDecorator;
 import fiji.gui.JFileChooserDecorator;
+import fiji.patches.FijiInitializer;
 import ij.IJ;
 import ij.ImageJ;
-import ij.Menus;
-import ij.plugin.PlugIn;
+import imagej.patcher.LegacyEnvironment;
 
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -13,6 +13,11 @@ import java.lang.reflect.Field;
 
 import org.scijava.Context;
 
+/**
+ * Main entry point into Fiji.
+ * 
+ * @author Johannes Schindelin
+ */
 public class Main {
 	protected Image icon;
 	protected boolean debug;
@@ -21,18 +26,21 @@ public class Main {
 		new IJ1Patcher().run();
 	}
 
+	/**
+	 * @deprecated Use {@link FijiTools#runUpdater()} instead
+	 */
 	public static void runUpdater() {
-		System.setProperty("fiji.main.checksUpdaterAtStartup", "true");
-		runPlugInGently("fiji.updater.UptodateCheck", "quick");
+		FijiTools.runUpdater();
 	}
 
 	/**
 	 * Runs the command associated with a menu label if there is one.
 	 *
 	 * @param menuLabel the label of the menu item to run
+	 * @deprecated Use {@link FijiTools#runGently(String)} instead
 	 */
 	public static void runGently(String menuLabel) {
-		runGently(menuLabel, "");
+		FijiTools.runGently(menuLabel);
 	}
 
 	/**
@@ -40,16 +48,15 @@ public class Main {
 	 *
 	 * @param menuLabel the label of the menu item to run
 	 * @param arg the arg to pass to the plugin's run() (or setup()) method
+	 * @deprecated Use {@link FijiTools#runGently(String,String)} instead
 	 */
 	public static void runGently(String menuLabel, final String arg) {
-		String className = (String)Menus.getCommands().get(menuLabel);
-		if (className != null)
-			IJ.runPlugIn(className, null);
+		FijiTools.runGently(menuLabel, arg);
 	}
 
-	/** @deprecated use {@link #runPlugInGently(String, String)} instead */
+	/** @deprecated use {@link FijiTools#runPlugInGently(String, String)} instead */
 	public static void gentlyRunPlugIn(String className, String arg) {
-		runPlugInGently(className, arg);
+		FijiTools.runPlugInGently(className, arg);
 	}
 
 	/**
@@ -57,23 +64,14 @@ public class Main {
 	 * 
 	 * @param className the plugin class
 	 * @param arg the argument (use "" if you do not want to pass anything)
+	 * @deprecated Use {@link FijiTools#runPlugInGently(String,String)} instead
 	 */
 	public static void runPlugInGently(String className, String arg) {
-		try {
-			Class<?> clazz = IJ.getClassLoader()
-				.loadClass(className);
-			if (clazz != null) {
-				PlugIn plugin = (PlugIn)clazz.newInstance();
-				plugin.run(arg);
-			}
-		}
-		catch (ClassNotFoundException e) { }
-		catch (InstantiationException e) { }
-		catch (IllegalAccessException e) { }
+		FijiTools.runPlugInGently(className, arg);
 	}
 
 	public static void installRecentCommands() {
-		runPlugInGently("fiji.util.Recent_Commands", "install");
+		FijiTools.runPlugInGently("fiji.util.Recent_Commands", "install");
 	}
 
 	private static boolean setAWTAppClassName(Class<?> appClass) {
@@ -97,18 +95,25 @@ public class Main {
 		}
 	}
 
+	/**
+	 * Runs before {@code ImageJ.main()} is called.
+	 * 
+	 * @deprecated use a {@code LegacyInitializer} instead.
+	 */
 	public static void premain() {
 		FileDialogDecorator.registerAutomaticDecorator();
 		JFileChooserDecorator.registerAutomaticDecorator();
 		setAWTAppClassName(Main.class);
 	}
 
-	/*
-	 * This method will be called after ImageJ was set up, but before the
+	/**
+	 * This method is called after ImageJ was set up, but before the
 	 * command line arguments are parsed.
+	 * 
+	 * @deprecated this task is performed by {@link fiji.patches.FijiInitializer} now.
 	 */
 	public static void setup() {
-		runPlugInGently("fiji.util.RedirectErrAndOut", null);
+		FijiTools.runPlugInGently("fiji.util.RedirectErrAndOut", null);
 		new MenuRefresher().run();
 		final Runnable getImageJContext = new Runnable() {
 			@Override
@@ -134,16 +139,36 @@ public class Main {
 					if (ijArgs != null && ijArgs.length > 3)
 						return;
 
-					runUpdater();
+					FijiTools.runUpdater();
 				}
 			}.start();
 			new IJ_Alt_Key_Listener().run();
 		}
 	}
 
+	@Deprecated
 	public static void postmain() { }
 
 	public static void main(String[] args) {
+		if (IJ1Patcher.ij1PatcherFound) try {
+			System.setProperty("ij1.patcher.initializer", FijiInitializer.class.getName());
+			LegacyEnvironment.getPatchedImageJ1().main(args);
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			System.exit(1);
+		} else {
+			legacyMain(args);
+		}
+	}
+
+	/**
+	 * The legacy way to start Fiji.
+	 * 
+	 * @param args the main args
+	 * 
+	 * @deprecated see {@link LegacyEnvironment}
+	 */
+	public static void legacyMain(String[] args) {
 		premain();
 		// prepend macro call to scanUserPlugins()
 		String[] newArgs = new String[args.length + 2];

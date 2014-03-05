@@ -17,16 +17,16 @@ import org.junit.Test;
 
 import util.BatchOpener;
 
-public class Test3DTracing {
+public class Tracing2DTest {
 
 	ImagePlus image;
 
-	double startX = 56.524; double startY = 43.258; double startZ = 18;
-	double endX = 0; double endY = 17.015; double endZ = 22.8;
+	double startX = 73.539; double startY = 48.449;
+	double endX = 1.730; double endY = 13.554;
 
 	@Before public void setUp() {
-		image = BatchOpener.openFirstChannel("tests/sample-data/c061AG-small-section.tif" );
-		assumeNotNull("Couldn't open the 3D test image",image);
+		image = BatchOpener.openFirstChannel("tests/sample-data/c061AG-small-section-z-max.tif" );
+		assumeNotNull(image);
 	}
 
 	@After
@@ -39,19 +39,18 @@ public class Test3DTracing {
 
 		double pixelWidth = 1;
 		double pixelHeight = 1;
-		double pixelDepth = 1;
+		double minimumSeparation = 1;
 		Calibration calibration = image.getCalibration();
 		if( calibration != null ) {
+			minimumSeparation = Math.min(Math.abs(calibration.pixelWidth),
+						     Math.min(Math.abs(calibration.pixelHeight),
+							      Math.abs(calibration.pixelDepth)));
 			pixelWidth = calibration.pixelWidth;
 			pixelHeight = calibration.pixelHeight;
-			pixelDepth = calibration.pixelDepth;
 		}
 
-		boolean doNormal = false;
-
 		int pointsExploredNormal = 0;
-		// This is very slow without the preprocessing, so don't do that bit by default:
-		if( doNormal ) {
+		{
 			TracerThread tracer = new TracerThread(image,
 							       0,
 							       255,
@@ -64,7 +63,7 @@ public class Test3DTracing {
 							       (int)( endY / pixelHeight ),
 							       0,
 							       true, // reciprocal
-							       false, // singleSlice
+							       true, // singleSlice
 							       null,
 							       1, // multiplier
 							       null,
@@ -75,18 +74,18 @@ public class Test3DTracing {
 			assertNotNull("Not path found",result);
 
 			double foundPathLength = result.getRealLength();
-			assertTrue( "Path length must be greater than 95 micrometres",
-				    foundPathLength > 95 );
+			assertTrue( "Path length must be greater than 100 micrometres",
+				    foundPathLength > 100 );
 
-			assertTrue( "Path length must be less than 100 micrometres",
-				    foundPathLength < 100 );
+			assertTrue( "Path length must be less than 105 micrometres",
+				    foundPathLength < 105 );
 
 			pointsExploredNormal = tracer.pointsConsideredInSearch();
 		}
 
 		int pointsExploredHessian = 0;
 		{
-			ComputeCurvatures hessian = new ComputeCurvatures(image, 0.721, null, calibration != null);
+			ComputeCurvatures hessian = new ComputeCurvatures(image, minimumSeparation, null, calibration != null);
                         hessian.run();
 
 			TracerThread tracer = new TracerThread(image,
@@ -96,14 +95,14 @@ public class Test3DTracing {
 							       100, // reportEveryMilliseconds
 							       (int)( startX / pixelWidth ),
 							       (int)( startY / pixelHeight ),
-							       (int)( startZ / pixelDepth ),
+							       0,
 							       (int)( endX / pixelWidth ),
 							       (int)( endY / pixelHeight ),
-							       (int)( endZ / pixelDepth ),
+							       0,
 							       true, // reciprocal
-							       false, // singleSlice
+							       true, // singleSlice
 							       hessian,
-							       19.69, // multiplier
+							       50, // multiplier
 							       null,
 							       true);
 
@@ -121,15 +120,10 @@ public class Test3DTracing {
 
 			pointsExploredHessian = tracer.pointsConsideredInSearch();
 
-			assertTrue( "Hessian-based analysis should explore less than 24000 points",
-				    pointsExploredHessian < 24000 );
-
-			if( doNormal ) {
-				assertTrue( "Hessian-based analysis should reduce the points explored " +
-					    "by at least a third; in fact went from " +
-					    pointsExploredNormal + " to " +pointsExploredHessian,
-					    pointsExploredHessian < pointsExploredNormal * 0.6666 );
-			}
+			assertTrue( "Hessian-based analysis should reduce the points explored " +
+				    "by at least a two fifths; in fact went from " +
+				    pointsExploredNormal + " to " +pointsExploredHessian,
+				    pointsExploredHessian < pointsExploredNormal * 0.8 );
 		}
 	}
 }

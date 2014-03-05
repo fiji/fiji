@@ -2,8 +2,6 @@ package fiji;
 
 import ij.Menus;
 import ij.plugin.PlugIn;
-import imagej.legacy.CodeHacker;
-import imagej.legacy.LegacyInjector;
 
 import java.awt.Menu;
 import java.awt.MenuBar;
@@ -96,10 +94,10 @@ public class User_Plugins implements PlugIn {
 	 * Run the command associated with a menu label if there is one
 	 *
 	 * @param menuLabel the label of the menu item to run
-	 * @deprecated Use {@link Main#runGently(String)} instead
+	 * @deprecated Use {@link FijiTools#runGently(String)} instead
 	 */
 	public static void runPlugIn(String menuLabel) {
-		Main.runGently(menuLabel);
+		FijiTools.runGently(menuLabel);
 	}
 
 	/**
