@@ -20,6 +20,8 @@ import java.util.Map;
 
 import javax.swing.SwingUtilities;
 
+import org.scijava.util.FileUtils;
+
 public class FijiTools {
 
 	private static Field menuEntry2jarFile;
@@ -196,15 +198,15 @@ public class FijiTools {
 		return false;
 	}
 
+	/**
+	 * Returns the file extension of a given file
+	 * 
+	 * @param path the path to the file
+	 * @return the file extension
+	 * @deprecated see {@link FileUtils#getExtension(String)}
+	 */
 	public static String getFileExtension(String path) {
-		int dot = path.lastIndexOf('.');
-		if (dot < 0)
-			return "";
-		int slash = path.lastIndexOf('/');
-		int backslash = path.lastIndexOf('\\');
-		if (dot < slash || dot < backslash)
-			return "";
-		return path.substring(dot + 1);
+		return FileUtils.getExtension(path);
 	}
 
 	public static boolean stackTraceContains(String needle) {
