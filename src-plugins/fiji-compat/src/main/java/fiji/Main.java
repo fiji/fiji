@@ -2,7 +2,6 @@ package fiji;
 
 import fiji.gui.FileDialogDecorator;
 import fiji.gui.JFileChooserDecorator;
-import fiji.patches.FijiInitializer;
 import ij.IJ;
 import ij.ImageJ;
 import imagej.patcher.LegacyEnvironment;
@@ -110,7 +109,7 @@ public class Main {
 	 * This method is called after ImageJ was set up, but before the
 	 * command line arguments are parsed.
 	 * 
-	 * @deprecated this task is performed by {@link fiji.patches.FijiInitializer} now.
+	 * @deprecated this task is performed by {@link fiji.DefaultFijiService} now.
 	 */
 	public static void setup() {
 		FijiTools.runPlugInGently("fiji.util.RedirectErrAndOut", null);
@@ -151,7 +150,6 @@ public class Main {
 
 	public static void main(String[] args) {
 		if (IJ1Patcher.ij1PatcherFound) try {
-			System.setProperty("ij1.patcher.initializer", FijiInitializer.class.getName());
 			LegacyEnvironment.getPatchedImageJ1().main(args);
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
