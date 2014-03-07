@@ -52,7 +52,7 @@ public class FijiTools {
 
 	public static boolean isFijiDeveloper() {
 		try {
-			return new File(getImageJDir(), "ImageJ.c").exists();
+			return new File(getImageJDir(), "pom.xml").exists();
 		} catch (Exception e) {
 			return false;
 		}
