@@ -1,13 +1,29 @@
 #!/bin/sh
 /*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji */
 
-if (bsh.args.length != 1) {
+headless = true;
+fullJar = false;
+
+i = 0;
+while (i < bsh.args.length && bsh.args[i].startsWith("--")) {
+	arg = bsh.args[i];
+	if (arg.equals("--no-headless")) {
+		headless = false;
+	}
+	else if (arg.equals("--full-jar")) {
+		fullJar = true;
+	}
+	else {
+		break;
+	}
+	i++;
+}
+
+if (bsh.args.length != i + 1) {
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
-		+ " <output-file.jar>...");
+		+ " [--no-headless] [--full-jar] <output-file.jar>...");
 	System.exit(1);
 }
 
 output = new java.io.File(bsh.args[0]);
-headless = true;
-fullJar = false;
 imagej.patcher.LegacyInjector.writeJar(output, headless, fullJar);
