@@ -79,6 +79,8 @@ General options:
         show this help
 --dry-run
 	show the command line but do not run anything
+--debugger=<port>[,suspend=(y|n)]
+	start up in debug mode, ready to be attached to
 
 Options to run programs other than ImageJ:
 --jython
@@ -108,6 +110,16 @@ EOF
 		;;
 	?,--classpath=*)
 		add_classpath "${1#--classpath=}"
+		;;
+	?,--debugger=*)
+		option="${option#--debugger=}"
+		suspend="suspend=n"
+		port="${option%%,*}"
+		test "$port" = "$option" ||
+		suspend="${option#$port,}"
+		agentlib="-agentlib:jdwp=transport=dt_socket,server=y"
+		agentlib="$agentlib,address=localhost:$port,$suspend"
+		first_java_options="$first_java_options $agentlib"
 		;;
 	?,--headless)
 		first_java_options="$first_java_options -Djava.awt.headless=true"
