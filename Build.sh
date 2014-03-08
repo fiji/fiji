@@ -312,6 +312,12 @@ MINIMAVEN_VERSION="$(maven_helper \
 maven_update sc.fiji:javac:$JAVAC_VERSION \
 	net.imagej:minimaven:$MINIMAVEN_VERSION
 
+# Avoid confusing ij-minimaven (obsolete) with minimaven (current)
+for f in "$CWD"/jars/ij-minimaven-*.jar
+do
+	test ! -f "$f" || rm "$f"
+done
+
 # command-line options
 
 OPTIONS="-Dimagej.app.directory=\"$CWD\""
