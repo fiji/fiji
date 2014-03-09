@@ -52,7 +52,7 @@
 		<jna.version>3.2.7</jna.version>
 		<jpedal.groupId>org.jpedal</jpedal.groupId>
 		<jpedal.version>2.80b11</jpedal.version>
-		<jruby.version>1.6.7.2</jruby.version>
+		<jruby.version>1.7.11</jruby.version>
 		<js.version>1.7R2</js.version>
 		<jsch.version>0.1.49</jsch.version>
 		<jython.version>2.5.2</jython.version>

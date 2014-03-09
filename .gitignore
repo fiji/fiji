@@ -234,7 +234,7 @@ hs_err*.log
 /jars/jgraphx-[0-9]*.jar
 /jars/jna-[0-9]*.jar
 /jars/jpedalSTD-[0-9]*.jar
-/jars/jruby-[0-9]*.jar
+/jars/jruby-complete-[0-9]*.jar
 /jars/js-[0-9]*.jar
 /jars/jsch-[0-9]*.jar
 /jars/junit-[0-9]*.jar
