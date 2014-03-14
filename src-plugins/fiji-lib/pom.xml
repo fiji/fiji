@@ -22,6 +22,11 @@
 			<artifactId>ij</artifactId>
 			<version>${imagej1.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>${imagej.groupId}</groupId>
+			<artifactId>ij1-patcher</artifactId>
+			<version>${ij1-patcher.version}</version>
+		</dependency>
 	</dependencies>
 
 	<repositories>
