@@ -1,20 +1,12 @@
 package fiji;
 
 import fiji.debugging.Object_Inspector;
+import imagej.patcher.LegacyEnvironment;
+import imagej.patcher.LegacyInjector;
 
 public class Debug {
 	static {
-		// if ij-legacy is in the class path, run the preinit() method
-		try {
-			final ClassLoader loader = Thread.currentThread().getContextClassLoader();
-			final Class<?> clazz = loader.loadClass("imagej.legacy.DefaultLegacyService");
-			clazz.getMethod("preinit").invoke(null);
-		} catch (Exception e) {
-			// ignore if it is not in the class path
-			if (!(e instanceof ClassNotFoundException)) {
-				e.printStackTrace();
-			}
-		}
+		LegacyInjector.preinit();
 	}
 
 	public static void show(Object object) {
