@@ -27,6 +27,13 @@
 			<artifactId>ij1-patcher</artifactId>
 			<version>${ij1-patcher.version}</version>
 		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
