@@ -1,23 +1,29 @@
 #!/bin/sh
 /*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji */
 
-import imagej.legacy.CodeHacker;
-import imagej.legacy.LegacyHeadless;
+headless = true;
+fullJar = false;
 
-import java.io.File;
+i = 0;
+while (i < bsh.args.length && bsh.args[i].startsWith("--")) {
+	arg = bsh.args[i];
+	if (arg.equals("--no-headless")) {
+		headless = false;
+	}
+	else if (arg.equals("--full-jar")) {
+		fullJar = true;
+	}
+	else {
+		break;
+	}
+	i++;
+}
 
-if (bsh.args.length != 1) {
+if (bsh.args.length != i + 1) {
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
-		+ " <output-file.jar>...");
+		+ " [--no-headless] [--full-jar] <output-file.jar>...");
 	System.exit(1);
 }
 
-hacker = new CodeHacker(Thread.currentThread().getContextClassLoader());
-new LegacyHeadless(hacker).patch();
-output = new File(bsh.args[0]);
-parent = output.getParentFile();
-if (parent != null && !parent.isDirectory() && !parent.mkdirs()) {
-	System.err.println("Could not make directory " + parent);
-	System.exit(1);
-}
-hacker.writeJar(output);
+output = new java.io.File(bsh.args[0]);
+imagej.patcher.LegacyInjector.writeJar(output, headless, fullJar);

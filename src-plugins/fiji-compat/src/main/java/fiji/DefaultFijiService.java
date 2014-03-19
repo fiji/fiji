@@ -1,29 +1,39 @@
-package fiji.patches;
+package fiji;
 
 import static fiji.FijiTools.runPlugInGently;
 import static fiji.FijiTools.runUpdater;
 import ij.IJ;
 import ij.ImageJ;
-import imagej.legacy.plugin.LegacyInitializer;
 
 import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.lang.reflect.Field;
 
-import fiji.IJ_Alt_Key_Listener;
-import fiji.Main;
-import fiji.MenuRefresher;
+import org.scijava.plugin.Plugin;
+import org.scijava.service.AbstractService;
+import org.scijava.service.Service;
+
 import fiji.gui.FileDialogDecorator;
 import fiji.gui.JFileChooserDecorator;
 
-public class FijiInitializer implements Runnable {
+/**
+ * The default initializer for the Fiji legacy application.
+ * <p>
+ * This class initializes all the Fiji-specific hacks such as decorating the
+ * FileDialog on Linux to allow easy keyboard navigation, supporting the Fiji
+ * scripting framework, etc.
+ * </p>
+ * 
+ * @author Johannes Schindelin
+ */
+@Plugin(type = Service.class)
+public class DefaultFijiService extends AbstractService implements FijiService {
 
 	@Override
-	public void run() {
+	public void initialize() {
 		FileDialogDecorator.registerAutomaticDecorator();
 		JFileChooserDecorator.registerAutomaticDecorator();
 		setAWTAppClassName(Main.class);
-		new LegacyInitializer().run();
 		runPlugInGently("fiji.util.RedirectErrAndOut", null);
 		new MenuRefresher().run();
 		final ImageJ ij = IJ.getInstance();
