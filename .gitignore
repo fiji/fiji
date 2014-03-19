@@ -255,7 +255,7 @@ hs_err*.log
 /plugins/loci_plugins-[0-9]*.jar
 
 # For maven-download.sh
-/jars/ij-minimaven-[0-9]*.jar
+/jars/minimaven-[0-9]*.jar
 /modules/scijava-common/
 
 # SciJava
