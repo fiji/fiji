@@ -251,6 +251,7 @@ hs_err*.log
 /plugins/SPIM_Registration-[0-9]*.jar
 /plugins/Stitching_-[0-9]*.jar
 /plugins/TrackMate_-[0-9]*.jar
+/plugins/Vaa3d_Writer-[0-9]*.jar
 /plugins/loci_plugins-[0-9]*.jar
 
 # For maven-download.sh

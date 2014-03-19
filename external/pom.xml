@@ -70,6 +70,12 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
+			<artifactId>Vaa3d_Writer</artifactId>
+			<version>${Vaa3d_Writer.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
 			<artifactId>Colocalisation_Analysis</artifactId>
 			<version>${Colocalisation_Analysis.version}</version>
 			<scope>runtime</scope>
