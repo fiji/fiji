@@ -39,6 +39,12 @@
 			</exclusions>
 		</dependency>
 		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>IJ_Robot</artifactId>
+			<version>${IJ_Robot.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
 			<groupId>ca.mcgill</groupId>
 			<artifactId>Sholl_Analysis</artifactId>
 			<version>${Sholl_Analysis.version}</version>

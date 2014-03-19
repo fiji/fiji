@@ -133,7 +133,6 @@ hs_err*.log
 /plugins/Graph_Cut-[0-9]*.jar
 /plugins/Gray_Morphology-[0-9]*.jar
 /plugins/Helmholtz_Analysis-[0-9]*.jar
-/plugins/IJ_Robot-[0-9]*.jar
 /plugins/IO_-[0-9]*.jar
 /plugins/Image_Expression_Parser-[0-9]*.jar
 /plugins/Interactive_3D_Surface_Plot-[0-9]*.jar
@@ -247,6 +246,7 @@ hs_err*.log
 /jars/udunits-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
 /plugins/Colocalisation_Analysis-[0-9]*.jar
+/plugins/IJ_Robot-[0-9]*.jar
 /plugins/Sholl_Analysis-[0-9]*.jar
 /plugins/SPIM_Registration-[0-9]*.jar
 /plugins/Stitching_-[0-9]*.jar

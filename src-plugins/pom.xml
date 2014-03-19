@@ -61,7 +61,6 @@
 		<module>Graph_Cut</module>
 		<module>Gray_Morphology</module>
 		<module>Helmholtz_Analysis</module>
-		<module>IJ_Robot</module>
 		<module>IO_</module>
 		<module>Image_Expression_Parser</module>
 		<module>Interactive_3D_Surface_Plot</module>

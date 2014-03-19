@@ -25,6 +25,7 @@
 		<bio-formats.version>5.0.0</bio-formats.version>
 
 		<Colocalisation_Analysis.version>2.0.0-SNAPSHOT</Colocalisation_Analysis.version>
+		<IJ_Robot.version>1.0.0</IJ_Robot.version>
 		<SPIM_Registration.version>2.0.0-SNAPSHOT</SPIM_Registration.version>
 		<Sholl_Analysis.version>3.4.0</Sholl_Analysis.version>
 		<Stitching.version>2.0.0-SNAPSHOT</Stitching.version>
