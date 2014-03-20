@@ -4,6 +4,8 @@ import fiji.debugging.Object_Inspector;
 import imagej.patcher.LegacyEnvironment;
 import imagej.patcher.LegacyInjector;
 
+import java.io.File;
+
 public class Debug {
 	static {
 		LegacyInjector.preinit();
@@ -58,6 +60,10 @@ public class Debug {
 			// show UI
 			if (!headless) ij1.main();
 			if (imagePath != null) {
+				final File file = new File(imagePath);
+				if (!file.isAbsolute()) {
+					imagePath = file.getAbsolutePath();
+				}
 				ij1.runMacro("open('" + imagePath + "');", "");
 			}
 			ij1.run(plugin, parameters);
