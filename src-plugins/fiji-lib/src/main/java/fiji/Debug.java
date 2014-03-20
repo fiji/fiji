@@ -55,6 +55,7 @@ public class Debug {
 	 */
 	public static void runFilter(String imagePath, String plugin, String parameters, final boolean headless) {
 		try {
+			System.setProperty("ij1.plugin.dirs", "/non-existing/");
 			final LegacyEnvironment ij1 = new LegacyEnvironment(null, headless);
 			ij1.addPluginClasspath(Thread.currentThread().getContextClassLoader());
 			// show UI
