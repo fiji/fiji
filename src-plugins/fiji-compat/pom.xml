@@ -38,7 +38,6 @@
 			<!-- TEMP until a newer IJ2 is released -->
 			<version>2.0.0-beta-7.7.1</version>
 		</dependency>
-		<!-- TEMP until a newer pom-scijava is released and used -->
 		<dependency>
 			<groupId>${imagej.groupId}</groupId>
 			<artifactId>ij1-patcher</artifactId>

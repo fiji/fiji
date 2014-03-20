@@ -1,20 +1,14 @@
 package fiji;
 
 import fiji.debugging.Object_Inspector;
+import imagej.patcher.LegacyEnvironment;
+import imagej.patcher.LegacyInjector;
+
+import java.io.File;
 
 public class Debug {
 	static {
-		// if ij-legacy is in the class path, run the preinit() method
-		try {
-			final ClassLoader loader = Thread.currentThread().getContextClassLoader();
-			final Class<?> clazz = loader.loadClass("imagej.legacy.DefaultLegacyService");
-			clazz.getMethod("preinit").invoke(null);
-		} catch (Exception e) {
-			// ignore if it is not in the class path
-			if (!(e instanceof ClassNotFoundException)) {
-				e.printStackTrace();
-			}
-		}
+		LegacyInjector.preinit();
 	}
 
 	public static void show(Object object) {
@@ -34,7 +28,7 @@ public class Debug {
 	 * @param pass the parameters as recorded by the Recorder, or null if dialogs should pop up
 	 */
 	public static void run(String plugin, String parameters) {
-		LegacyHelper.run(plugin, parameters);
+		runFilter(null, plugin, parameters);
 	}
 
 	/**
@@ -47,6 +41,36 @@ public class Debug {
 	 * @param pass the parameters as recorded by the Recorder, or null if dialogs should pop up
 	 */
 	public static void runFilter(String imagePath, String plugin, String parameters) {
-		LegacyHelper.runFilter(imagePath, plugin, parameters);
+		runFilter(imagePath, plugin, parameters, false);
+	}
+
+	/**
+	 * Debug helper
+	 *
+	 * Call this function from your debugger to debug your filter plugin
+	 *
+	 * @param imagePath the path to the example image to test with
+	 * @param plugin the menu item label of the plugin to run
+	 * @param pass the parameters as recorded by the Recorder, or null if dialogs should pop up
+	 */
+	public static void runFilter(String imagePath, String plugin, String parameters, final boolean headless) {
+		try {
+			System.setProperty("ij1.plugin.dirs", "/non-existing/");
+			final LegacyEnvironment ij1 = new LegacyEnvironment(null, headless);
+			ij1.addPluginClasspath(Thread.currentThread().getContextClassLoader());
+			// show UI
+			if (!headless) ij1.main();
+			if (imagePath != null) {
+				final File file = new File(imagePath);
+				if (!file.isAbsolute()) {
+					imagePath = file.getAbsolutePath();
+				}
+				ij1.runMacro("open('" + imagePath + "');", "");
+			}
+			ij1.run(plugin, parameters);
+		}
+		catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
