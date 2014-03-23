@@ -250,6 +250,7 @@ public class BarePluginsIT {
 		tee.flush();
 		stdout.flush();
 		teeBuffer.reset();
+		System.setProperty("ij1.plugin.dirs", "/non-existing/");
 		fiji.Main.main(new String[] {
 			"-ijpath", ijPath,
 			"-eval", "run(\"" + plugin + "\");",
