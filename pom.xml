@@ -172,5 +172,24 @@
 				</plugins>
 			</build>
 		</profile>
+
+		<profile>
+			<id>macosx</id>
+			<activation>
+				<os>
+					<name>Mac OS X</name>
+				</os>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-compiler-plugin</artifactId>
+						<configuration>
+							<compilerArgument>-Djava.ext.dirs=${rootdir}/java/macosx-java3d/Home/lib/ext</compilerArgument>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 	</profiles>
 </project>
