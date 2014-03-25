@@ -35,8 +35,7 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>ij-legacy</artifactId>
-			<!-- TEMP until a newer IJ2 is released -->
-			<version>2.0.0-beta-7.7.1</version>
+			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>${imagej.groupId}</groupId>
