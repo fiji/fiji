@@ -36,6 +36,18 @@
 					<groupId>gov.nih.imagej</groupId>
 					<artifactId>imagej</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.testng</groupId>
+					<artifactId>testng</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>xerces</groupId>
+					<artifactId>xercesImpl</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
