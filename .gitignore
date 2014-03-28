@@ -213,6 +213,7 @@ hs_err*.log
 /plugins/mpicbg_-[0-9]*.jar
 
 # Dependencies copied by MiniMaven #
+/jars/asm-[0-9]*.jar
 /jars/base64-[0-9]*.jar
 /jars/bcmail-jdk14-[0-9]*.jar
 /jars/bcprov-jdk14-[0-9]*.jar
@@ -240,15 +241,18 @@ hs_err*.log
 /jars/jzlib-[0-9]*.jar
 /jars/legacy-imglib1-[0-9]*.jar
 /jars/mines-jtk-[0-9]*.jar
+/jars/minlog-[0-9]*.jar
+/jars/objenesis-[0-9]*.jar
 /jars/pentaho-package-manager-[0-9]*.jar
 /jars/postgresql-[0-9]*.jar
+/jars/reflectasm-[0-9]*.jar
 /jars/tools-[0-9]*.jar
 /jars/udunits-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
 /plugins/Colocalisation_Analysis-[0-9]*.jar
 /plugins/IJ_Robot-[0-9]*.jar
-/plugins/Sholl_Analysis-[0-9]*.jar
 /plugins/SPIM_Registration-[0-9]*.jar
+/plugins/Sholl_Analysis-[0-9]*.jar
 /plugins/Stitching_-[0-9]*.jar
 /plugins/TrackMate_-[0-9]*.jar
 /plugins/Vaa3d_Writer-[0-9]*.jar
