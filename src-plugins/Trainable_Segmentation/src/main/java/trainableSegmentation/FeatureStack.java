@@ -3459,6 +3459,12 @@ public class FeatureStack
 			int classValue,
 			DenseInstance ins)
 	{		
+		if( classValue < 0 )
+		{
+			IJ.log("Error: negative class value.");
+			return;
+		}
+		
 		int n = 0;
 		
 		if( colorFeatures == false || oldColorFormat == true )
