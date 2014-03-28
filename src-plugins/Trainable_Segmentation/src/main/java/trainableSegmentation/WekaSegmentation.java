@@ -3578,44 +3578,48 @@ public class WekaSegmentation {
 		for(int i=0; i<classes.size(); i++)
 			IJ.log("  " + classes.get(i));
 		*/
+		
+		// create initial set of instances
 		final Instances trainingData =  new Instances("segment", attributes, numOfInstances);
+		// set class index
+		trainingData.setClassIndex( attributes.size() - 1 );
 
 		IJ.log("Training input:");
 
 		final boolean colorFeatures = this.trainingImage.getType() == ImagePlus.COLOR_RGB;
 		
 		// For all classes
-		for(int l = 0; l < numOfClasses; l++)
+		for(int classIndex = 0; classIndex < numOfClasses; classIndex++)
 		{
 			int nl = 0;
 			// Read all lists of examples
 			for(int sliceNum = 1; sliceNum <= trainingImage.getImageStackSize(); sliceNum ++)
-				for(int j=0; j<examples[sliceNum-1].get(l).size(); j++)
+				for(int j=0; j < examples[sliceNum-1].get( classIndex ).size(); j++)
 				{
-					Roi r = examples[sliceNum-1].get(l).get(j);
+					Roi r = examples[ sliceNum-1 ].get( classIndex ).get(j);
 
 					// For polygon rois we get the list of points
 					if( r instanceof PolygonRoi && r.getType() == Roi.FREELINE )
 					{
 						if(r.getStrokeWidth() == 1)						
-							nl += addThinFreeLineSamples(trainingData, l,
+							nl += addThinFreeLineSamples(trainingData, classIndex,
 									sliceNum, r);
 						
 						else // For thicker lines, include also neighbors						
 							nl += addThickFreeLineInstances(trainingData,
-									colorFeatures, l, sliceNum, r);						
+									colorFeatures, classIndex, sliceNum, r);						
 					}
 					else if( r instanceof Line )
 					{
 						// Get all coordinates in the line
-						nl += addLineInstances(trainingData, colorFeatures, l,
+						nl += addLineInstances(trainingData, colorFeatures, classIndex,
 								sliceNum, r);				        						
 					}
 					else // for the rest of rois we get ALL points inside the roi					
-						nl += addShapeRoiInstances(trainingData, l,	sliceNum, r);					
+						nl += addShapeRoiInstances(trainingData, classIndex, sliceNum, r);					
 				}
 
-			IJ.log("# of pixels selected as " + getClassLabels()[l] + ": " +nl);
+			IJ.log("# of pixels selected as " + getClassLabels()[classIndex] + ": " +nl);
 		}
 
 		if (trainingData.numInstances() == 0)
@@ -3668,9 +3672,12 @@ public class WekaSegmentation {
 	 * @param r shape roi
 	 * @return number of instances added
 	 */
-	private int addShapeRoiInstances(final Instances trainingData, int classIndex,
-			int sliceNum, Roi r) 
-	{
+	private int addShapeRoiInstances(
+			final Instances trainingData, 
+			int classIndex,
+			int sliceNum, 
+			Roi r) 
+	{		
 		int numInstances = 0;
 		final ShapeRoi shapeRoi = new ShapeRoi(r);
 		final Rectangle rect = shapeRoi.getBounds();
@@ -3678,19 +3685,28 @@ public class WekaSegmentation {
 		final int lastX = rect.x + rect.width;
 		final int lastY = rect.y + rect.height;
 
+		DenseInstance ins = new DenseInstance( featureStackArray.getNumOfFeatures() + 1 );
+		ins.setDataset( trainingData );
+		
 		for(int x = rect.x; x < lastX; x++)
 			for(int y = rect.y; y < lastY; y++)
 				if(shapeRoi.contains(x, y))
 				{
+					/*
 					double[] values = new double[featureStackArray.getNumOfFeatures()+1];
 					for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
 						values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x, y);
 					values[featureStackArray.getNumOfFeatures()] = (double) classIndex;
 					trainingData.add(new DenseInstance(1.0, values));
+					*/
+					
+					featureStackArray.get( sliceNum - 1 ).createInstanceInPlace( x, y, classIndex, ins );
+					trainingData.add( ins );
+					
 					// increase number of instances for this class
 					numInstances ++;
 				}
-		return numInstances;
+		return numInstances;		
 	}
 
 	/**
