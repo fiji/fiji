@@ -3418,8 +3418,10 @@ public class FeatureStack
 		
 		if( colorFeatures == false || oldColorFormat == true)
 		{
-			for (int z=1; z<=getSize(); z++, n++)		
-				values[ z-1 ] = getProcessor( z ).getf( x, y );
+			for (int z=0; z<getSize(); z++, n++)		
+				values[ z ] = this.wholeStack.getVoxel( x, y, z );
+			//for (int z=1; z<=getSize(); z++, n++)
+				//values[ z-1 ] = getProcessor( z ).getf( x, y );
 		}
 		else
 		{
@@ -3471,8 +3473,10 @@ public class FeatureStack
 		
 		if( colorFeatures == false || oldColorFormat == true )
 		{
-			for (int z=1; z<=getSize(); z++, n++)		
-				ins.setValue( z-1, getProcessor( z ).getf( x, y ) );
+			for (int z=0; z<getSize(); z++, n++)		
+				ins.setValue( z, wholeStack.getVoxel( x, y, z ) );
+			//for (int z=1; z<=getSize(); z++, n++)		
+				//ins.setValue( z-1, getProcessor( z ).getf( x, y ) );
 		}
 		else
 		{

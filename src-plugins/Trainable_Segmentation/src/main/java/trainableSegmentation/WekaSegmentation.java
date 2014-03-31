@@ -807,19 +807,27 @@ public class WekaSegmentation {
 		final int height = labelImage.getHeight();
 		final ImageProcessor img = labelImage.getProcessor();
 		int nl = 0;
+		
+		// auxiliary instance
+		final DenseInstance ins = new DenseInstance( featureStack.getSize()+1 );
+		ins.setDataset( loadedTrainingData );
+		
 		for(int x = 0 ; x < width ; x++)
 			for(int y = 0 ; y < height; y++)
 			{
 				// White pixels are added to the class
 				if(img.getPixelValue(x, y) > 0)
 				{
-
-
+					/*
 						double[] values = new double[featureStack.getSize()+1];
 						for (int z=1; z<=featureStack.getSize(); z++)
 							values[z-1] = featureStack.getProcessor(z).getPixelValue(x, y);
 						values[featureStack.getSize()] = (double) classIndex;
 						loadedTrainingData.add(new DenseInstance(1.0, values));
+					*/
+						featureStack.createInstanceInPlace( x, y, classIndex, ins );
+						
+						loadedTrainingData.add( ins );
 						// increase number of instances for this class
 						nl ++;
 				}
@@ -3769,8 +3777,12 @@ public class WekaSegmentation {
 	 * @param r Line roi
 	 * @return number of instances added
 	 */
-	private int addLineInstances(final Instances trainingData,
-			final boolean colorFeatures, int classIndex, int sliceNum, Roi r) 
+	private int addLineInstances(
+			final Instances trainingData,
+			final boolean colorFeatures, 
+			int classIndex, 
+			int sliceNum, 
+			Roi r) 
 	{
 		int numInstances = 0;
 		double dx = ((Line)r).x2d - ((Line)r).x1d;
