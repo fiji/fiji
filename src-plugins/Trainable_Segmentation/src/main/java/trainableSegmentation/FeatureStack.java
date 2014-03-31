@@ -3409,7 +3409,10 @@ public class FeatureStack
 	 * @param classValue class value to be assigned
 	 * @return corresponding instance
 	 */
-	public DenseInstance createInstance(int x, int y, int classValue)
+	public DenseInstance createInstance(
+			int x, 
+			int y, 
+			int classValue )
 	{
 		final int extra = useNeighbors ? 8 : 0;
 		
@@ -3420,8 +3423,6 @@ public class FeatureStack
 		{
 			for (int z=0; z<getSize(); z++, n++)		
 				values[ z ] = this.wholeStack.getVoxel( x, y, z );
-			//for (int z=1; z<=getSize(); z++, n++)
-				//values[ z-1 ] = getProcessor( z ).getf( x, y );
 		}
 		else
 		{
@@ -3475,8 +3476,6 @@ public class FeatureStack
 		{
 			for (int z=0; z<getSize(); z++, n++)		
 				ins.setValue( z, wholeStack.getVoxel( x, y, z ) );
-			//for (int z=1; z<=getSize(); z++, n++)		
-				//ins.setValue( z-1, getProcessor( z ).getf( x, y ) );
 		}
 		else
 		{
