@@ -2418,7 +2418,9 @@ public class FeatureStack
 	}
 
 	/**
-	 * Get slice image processor
+	 * Get slice image processor. Warning: every time this 
+	 * method is called, ImageStack creates a new processor.
+	 * 
 	 * @param index selected slice
 	 * @return slice image processor
 	 */
