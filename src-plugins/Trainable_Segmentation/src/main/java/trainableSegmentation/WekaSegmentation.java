@@ -4076,9 +4076,7 @@ public class WekaSegmentation {
                     sliceFeatures.setMembraneSize(membraneThickness);
                     sliceFeatures.updateFeaturesST();
                     filterFeatureStackByList(featureNames, sliceFeatures);
- final long start = System.currentTimeMillis();
-                    final Instances sliceData = sliceFeatures.createInstances(classNames);
-final long end1 = System.currentTimeMillis();                     
+                    final Instances sliceData = sliceFeatures.createInstances(classNames);                    
                     sliceData.setClassIndex(sliceData.numAttributes() - 1); 
 
 					IJ.log("Classifying slice " + i + " in " + numFurtherThreads + " thread(s)...");
@@ -4089,12 +4087,6 @@ final long end1 = System.currentTimeMillis();
 						IJ.log("Error while applying classifier!");
 						return;
 					}
-final long end2 = System.currentTimeMillis();
-
-if( startSlice == 1 )
-{
-	IJ.log( "Data creation took " + (end1-start) + " ms and classification took " + (end2-end1) + " ms" );
-}
 
 					classImage.setTitle("classified_" + slice.getTitle());
 					if(probabilityMaps)
