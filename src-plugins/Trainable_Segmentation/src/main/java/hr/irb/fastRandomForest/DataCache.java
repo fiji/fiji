@@ -21,10 +21,10 @@
 
 package hr.irb.fastRandomForest;
 
+import weka.core.Instances;
+
 import java.util.Arrays;
 import java.util.Random;
-import weka.core.Instances;
-import weka.core.Utils;
 
 /**
  * Stores a dataset that in FastRandomTrees use for training. The data points
@@ -83,7 +83,20 @@ public class DataCache {
   protected Random reusableRandomGenerator = null;
 
 
-
+  /** Randomizes one attribute in the vals[][]; returns a copy of the vals[] 
+   * before randomization. */
+  public float[] scrambleOneAttribute( int attIndex, Random random ) {
+    float[] toReturn = Arrays.copyOf( vals[attIndex], vals[attIndex].length );
+    for ( int i=0; i < vals[attIndex].length; i++ ) {
+      int swapWith = random.nextInt(vals[attIndex].length);
+      float temp = vals[attIndex][i];
+      vals[attIndex][i] = vals[attIndex][swapWith];
+      vals[attIndex][swapWith] = temp;
+    }
+    return toReturn;
+  }
+  
+  
   /**
    * Creates a DataCache by copying data from a weka.core.Instances object.
    */
@@ -109,7 +122,7 @@ public class DataCache {
     for (int a = 0; a < numAttributes; a++) {
       for (int i = 0; i < numInstances; i++) {
         if (origData.instance(i).isMissing(a))
-          vals[a][i] = Float.MAX_VALUE;
+          vals[a][i] = Float.MAX_VALUE;  // to make sure missing values go to the end
         else
           vals[a][i] = (float) origData.instance(i).value(a);  // deep copy
       }
@@ -128,18 +141,20 @@ public class DataCache {
 
     for (int a = 0; a < numAttributes; a++) { // ================= attr by attr
 
-      if (a == classIndex)
+      if (a == classIndex) 
         continue;
 
       if (attNumVals[a] > 0) { // ------------------------------------- nominal
 
-        // Handling nominal attributes. Putting indices of
-        // instances with missing values at the end.
+        // Handling nominal attributes: as of FastRF 0.99, they're sorted as well
+        // missing values are coded as Float.MAX_VALUE and go to the end
         
         sortedIndices[a] = new int[numInstances];
-        int count = 0;
+        //int count = 0;
 
-        for (int i = 0; i < numInstances; i++) {
+        sortedIndices[a] = FastRfUtils.sort(vals[a]); 
+        
+        /*for (int i = 0; i < numInstances; i++) {
           if ( !this.isValueMissing(a, i) ) {
             sortedIndices[a][count] = i;
             count++;
@@ -151,7 +166,7 @@ public class DataCache {
             sortedIndices[a][count] = i;
             count++;
           }
-        }
+        }*/
 
       } else { // ----------------------------------------------------- numeric
 
@@ -171,7 +186,7 @@ public class DataCache {
   
   /**
    * Makes a copy of a DataCache. Most array fields are shallow copied, with the
-   * exception of inBag and whatGoesWhere arrays, which are created anew.
+   * exception of in inBag and whatGoesWhere arrays, which are created anew.
    * 
    * @param origData
    */
@@ -219,18 +234,18 @@ public class DataCache {
             new DataCache(this); // makes shallow copy of vals matrix
 
     double[] newWeights = new double[ numInstances ]; // all 0.0 by default
-             
-    for ( int r = 0; r < bagSize; r++ ) {
-
-    	int curIdx = random.nextInt( numInstances );
-    	newWeights[curIdx] += instWeights[curIdx];
-    	if ( !result.inBag[curIdx] ) {
-    		result.numInBag++;
-    		result.inBag[curIdx] = true;
-    	}
-
-    }
     
+    for ( int r = 0; r < bagSize; r++ ) {
+      
+      int curIdx = random.nextInt( numInstances );
+      newWeights[curIdx] += instWeights[curIdx];
+      if ( !result.inBag[curIdx] ) {
+        result.numInBag++;
+        result.inBag[curIdx] = true;
+      }
+      
+    }
+
     result.instWeights = newWeights;
 
     // we also need to fill sortedIndices by peeking into the inBag array, but
@@ -241,98 +256,11 @@ public class DataCache {
 
   }
 
-  /**
-   * Creates a new dataset of the same size using random sampling
-   * with replacement according to the given weight vector. The
-   * weights of the instances in the new dataset are set to one, 
-   * but they are increased by 1 each time they are repeated.
-   * The length of the weight vector has to be the same as the
-   * number of instances in the dataset, and all weights have to
-   * be positive.
-   * 
-   * This resampling method takes the weights into account the same 
-   * way as it is done by the standard Bagging method in Weka, but 
-   * saves memory by not duplicating the repeated samples. 
-   * 
-   * @author Ignacio Arganda-Carreras (iarganda@mit.edu)
-   * @param random a random number generator
-   * @return a re-sampled version of the data (same size but with
-   * repetition)
-   */
-  public final DataCache resampleWithWeights( Random random ) 
-  {	  
-	  DataCache result =
-		  new DataCache(this); // makes shallow copy of vals matrix
-
-	  double[] newWeights = new double[ numInstances ]; // all 0.0 by default
-	  
-	  double[] weights = new double[ numInstances ];
-	  
-	  for (int i = 0; i < weights.length; i++) 
-	  {
-		  weights[i] = this.instWeights[i];
-	  }
-	  	  
-	  double[] probabilities = new double[ numInstances ];
-	  
-	  double sumProbs = 0;
-	  double sumOfWeights = Utils.sum(weights);
-	  
-	  for (int i = 0; i < numInstances; i++) 
-	  {
-		  sumProbs += random.nextDouble();
-		  probabilities[i] = sumProbs;
-	  }
-	  
-	  Utils.normalize(probabilities, sumProbs / sumOfWeights);
-
-	  // Make sure that rounding errors don't mess things up
-	  probabilities[numInstances - 1] = sumOfWeights;
-	  int k = 0; 
-	  int l = 0;
-	  sumProbs = 0;
-	  while ((k < numInstances && (l < numInstances))) 
-	  {
-		  if (weights[l] < 0) 
-		  {
-			  throw new IllegalArgumentException("Weights have to be positive.");
-		  }
-		  sumProbs += weights[l];
-		  
-		  while ((k < numInstances) &&
-				  (probabilities[k] <= sumProbs)) 
-		  { 
-			  // Increase by 1 the weight of the corresponding instance
-			  newWeights[l] ++;
-			  if ( !result.inBag[l] ) {
-				  result.numInBag++;
-				  result.inBag[l] = true;
-			  }			  
-			  k++;
-		  }
-		  l++;
-	  }
-	  
-	  
-	  result.instWeights = newWeights;
-
-	  // we also need to fill sortedIndices by peeking into the inBag array, but
-	  // this can be postponed until the tree training begins
-	  // we will use the "createInBagSortedIndices()" for this
-	  return result;
-  }
-  
   
 
   /** Invoked only when tree is trained. */
   protected void createInBagSortedIndices() {
 
-	  // If the bag size is equal to the number of instances, there is
-	  // no need to create the indices again.
-	if(this.numInBag == this.numInstances)
-		  return;
-
-	  
     int[][] newSortedIndices = new int[ numAttributes ][ ];
     
     for (int a = 0; a < numAttributes; a++) {
@@ -391,8 +319,4 @@ public class DataCache {
     return r;
     
   }
-   
-  
-  
 }
-

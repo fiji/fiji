@@ -29,13 +29,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
-
 import weka.classifiers.AbstractClassifier;
-import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.core.Instances;
 import weka.core.Utils;
 import weka.experiment.PairedStatsCorrected;
+import weka.filters.supervised.instance.StratifiedRemoveFolds;
 
 /**
  * Runs 10 iterations of 10-fold crossvalidation on the supplied arff file(s)
@@ -76,23 +75,27 @@ public class Benchmark {
     }
 
     // create classifiers to compare and set their parameters
-    AbstractClassifier[] classifiers = new AbstractClassifier[ 1 + threadNums.size() ];
-    classifiers[0] = new weka.classifiers.trees.RandomForest();
-    classifiers[0].setOptions(new String[]{"-I", args[1] /* "1" */ });
+    AbstractClassifier[] classifiers = new AbstractClassifier[ threadNums.size() * 2 ];
 
-    for ( int i = 0; i < threadNums.size(); i++ ) {
+    for ( int i = 0; i < threadNums.size() * 2; i += 2 ) {
 
+      classifiers[i] = new weka.classifiers.trees.RandomForest();
+      classifiers[i].setOptions(new String[]{"-I", args[1],
+        "-num-slots", Integer.toString(threadNums.get(i)) });
+      
       classifiers[i+1] = new hr.irb.fastRandomForest.FastRandomForest();
-      classifiers[i+1].setOptions(new String[]{"-I", args[1],
+      classifiers[i+1].setOptions(new String[]{"-I", args[1], // "-import",
         "-threads", Integer.toString(threadNums.get(i)) });
       
     }
 
-    StringBuilder s = new StringBuilder("dataset");
-    for (int i = 0; i < classifiers.length; i++)
+    StringBuilder s = new StringBuilder("dataset\tnumInstances\tnumNumericAtt\t"
+            + "numNominalAtt\tnumClasses");
+    for (int i = 0; i < classifiers.length * numRuns; i++) {
       s.append("\tcfr|run\tAUC\tAccy\tmillis");
+    }
+    s.append("\tsummary");
     System.err.println(s.toString());
-
 
 
     for (File curArff : trainFiles) {
@@ -103,6 +106,18 @@ public class Benchmark {
         data.setClassIndex(data.numAttributes() - 1);
       data.deleteWithMissingClass();
 
+      // count numeric and nominal attributes
+      int numNumeric = 0, numNominal = 0;
+      for (int i = 0; i < data.numAttributes(); i++) {
+        if ( data.classIndex()==i )
+          continue;
+        if ( data.attribute(i).isNominal() ) 
+          numNominal++;
+        if ( data.attribute(i).isNumeric() ) 
+          numNumeric++;
+      }
+      System.err.printf( "%s\t%d\t%d\t%d\t%d\t", curArff.getName(), data.numInstances(), numNumeric, numNominal, data.numClasses() );
+     
 
       /* We have adopted a generalization of AUC score to multiclass problems as
        * described in Provost and Domingos (CeDER Working Paper #IS-00-04, Stern
@@ -121,11 +136,11 @@ public class Benchmark {
 
       for (int curRun = 1; curRun <= numRuns; curRun++) {
 
-        s = new StringBuilder();
+        s = new StringBuilder(); 
 
-        for (int curCfr = 0; curCfr < classifiers.length; curCfr++) {
+        for (int curCfr = 0; curCfr < classifiers.length; curCfr++ ) {
 
-          Classifier aClassifier = classifiers[curCfr];
+          AbstractClassifier aClassifier = classifiers[curCfr];
 
           Evaluation eval = new Evaluation(data);
 
@@ -156,10 +171,13 @@ public class Benchmark {
 
         } // classifier by classifier
 
-        System.err.println(curArff.getName() + "\t" + s.toString());
+        System.err.print(s.toString());
         
       } // run by run
       
+      // the t-test for accuracy is always performed only between classifier 0 and classifier 1 
+      // meaning, the first instance of Weka RF and first instance of FastRF
+      // the following instances use a different # of threads but that doesn't affect results
       double testTrainRatio = 1 / (double) (numFolds - 1);
       PairedStatsCorrected pscAuc = new PairedStatsCorrected(0.05, testTrainRatio);
       pscAuc.add(aucScore[0], aucScore[1]);
@@ -171,12 +189,10 @@ public class Benchmark {
       pscTime.add(timeScore[0], timeScore[1]);
       pscTime.calculateDerived();
 
-      System.out.printf( Locale.US, "Dataset '%s' has %d instances, %d attributes and %d classes. Statistical significance of difference in mean of " +
+      System.err.printf( Locale.US, "| Statistical significance of difference in mean of " +
               "AUC scores is p=%6.4f (%s wins), " +
               "in accuracy is p=%6.4f (%s wins). " +
-              " Average speedup is: %4.1f times.\n",
-              curArff.getName(),
-              data.numInstances(), data.numAttributes(), data.numClasses(),
+              " Average speedup is: %4.2f times.\n",
               pscAuc.differencesProbability, getTextForSignificance( pscAuc.differencesSignificance, "WekaRF", "FastRF" ),
               pscAccy.differencesProbability, getTextForSignificance( pscAccy.differencesSignificance, "WekaRF", "FastRF" ),
               pscTime.xStats.mean / pscTime.yStats.mean
