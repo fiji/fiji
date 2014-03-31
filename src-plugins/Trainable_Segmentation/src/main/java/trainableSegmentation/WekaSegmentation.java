@@ -3542,7 +3542,7 @@ public class WekaSegmentation {
 	 */
 	public Instances createTrainingInstances()
 	{
-		final long start = System.currentTimeMillis();
+		//final long start = System.currentTimeMillis();
 		//IJ.log("create training instances: num of features = " + featureStackArray.getNumOfFeatures());
 
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
@@ -3637,8 +3637,8 @@ public class WekaSegmentation {
 		if (trainingData.numInstances() == 0)
 			return null;		
 		
-		final long end = System.currentTimeMillis();
-		IJ.log( "Creating training instances took " + (end-start) + " ms." );
+		//final long end = System.currentTimeMillis();
+		//IJ.log( "Creating training instances took " + (end-start) + " ms." );
 
 		return trainingData;
 	}
