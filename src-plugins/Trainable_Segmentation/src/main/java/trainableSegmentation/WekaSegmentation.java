@@ -70,8 +70,6 @@ import weka.classifiers.trees.RandomForest;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
-import weka.core.Utils;
-
 import weka.core.pmml.PMMLFactory;
 import weka.core.pmml.PMMLModel;
 
@@ -808,28 +806,16 @@ public class WekaSegmentation {
 		final ImageProcessor img = labelImage.getProcessor();
 		int nl = 0;
 		
-		// auxiliary instance
-		final DenseInstance ins = new DenseInstance( featureStack.getSize()+1 );
-		ins.setDataset( loadedTrainingData );
-		
 		for(int x = 0 ; x < width ; x++)
 			for(int y = 0 ; y < height; y++)
 			{
 				// White pixels are added to the class
 				if(img.getPixelValue(x, y) > 0)
 				{
-					/*
-						double[] values = new double[featureStack.getSize()+1];
-						for (int z=1; z<=featureStack.getSize(); z++)
-							values[z-1] = featureStack.getProcessor(z).getPixelValue(x, y);
-						values[featureStack.getSize()] = (double) classIndex;
-						loadedTrainingData.add(new DenseInstance(1.0, values));
-					*/
-						featureStack.createInstanceInPlace( x, y, classIndex, ins );
-						
-						loadedTrainingData.add( ins );
-						// increase number of instances for this class
-						nl ++;
+					loadedTrainingData.add( featureStack.createInstance( x, y, classIndex ) );
+
+					// increase number of instances for this class
+					nl ++;
 				}
 			}
 
@@ -3677,25 +3663,17 @@ public class WekaSegmentation {
 		final int lastX = rect.x + rect.width;
 		final int lastY = rect.y + rect.height;
 
-		DenseInstance ins = new DenseInstance( featureStackArray.getNumOfFeatures() + 1 );
-		ins.setDataset( trainingData );
+		//DenseInstance ins = new DenseInstance( featureStackArray.getNumOfFeatures() + 1 );
+		//ins.setDataset( trainingData );
 		
 		final FeatureStack fs = featureStackArray.get( sliceNum - 1 );
 		
 		for(int x = rect.x; x < lastX; x++)
 			for(int y = rect.y; y < lastY; y++)
 				if(shapeRoi.contains(x, y))
-				{
-					/*
-					double[] values = new double[featureStackArray.getNumOfFeatures()+1];
-					for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-						values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x, y);
-					values[featureStackArray.getNumOfFeatures()] = (double) classIndex;
-					trainingData.add(new DenseInstance(1.0, values));
-					*/
-					
-					fs.createInstanceInPlace( x, y, classIndex, ins );
-					trainingData.add( ins );
+				{			
+					//fs.createInstanceInPlace( x, y, classIndex, ins );														
+					trainingData.add( fs.createInstance( x, y, classIndex ) );				
 					
 					// increase number of instances for this class
 					numInstances ++;
@@ -3728,18 +3706,12 @@ public class WekaSegmentation {
 		final int lastX = x0 + rect.width;
 		final int lastY = y0 + rect.height;
 
-		//DenseInstance ins = new DenseInstance( featureStackArray.getNumOfFeatures() + 1 );
-		//ins.setDataset( trainingData );
-		
 		final FeatureStack fs = featureStackArray.get( sliceNum - 1 );
 		
 		for( int x = x0; x < lastX; x++ )
 			for( int y = y0; y < lastY; y++ )				
 			{
-				//fs.createInstanceInPlace( x, y, classIndex, ins );
-				//trainingData.add( ins );
-				
-				trainingData.add( fs.createInstance(x, y, classIndex));
+				trainingData.add( fs.createInstance(x, y, classIndex) );
 
 				// increase number of instances for this class
 				numInstances ++;
@@ -4104,8 +4076,9 @@ public class WekaSegmentation {
                     sliceFeatures.setMembraneSize(membraneThickness);
                     sliceFeatures.updateFeaturesST();
                     filterFeatureStackByList(featureNames, sliceFeatures);
- 
+ final long start = System.currentTimeMillis();
                     final Instances sliceData = sliceFeatures.createInstances(classNames);
+final long end1 = System.currentTimeMillis();                     
                     sliceData.setClassIndex(sliceData.numAttributes() - 1); 
 
 					IJ.log("Classifying slice " + i + " in " + numFurtherThreads + " thread(s)...");
@@ -4116,7 +4089,13 @@ public class WekaSegmentation {
 						IJ.log("Error while applying classifier!");
 						return;
 					}
-											
+final long end2 = System.currentTimeMillis();
+
+if( startSlice == 1 )
+{
+	IJ.log( "Data creation took " + (end1-start) + " ms and classification took " + (end2-end1) + " ms" );
+}
+
 					classImage.setTitle("classified_" + slice.getTitle());
 					if(probabilityMaps)
 						classImage.setProcessor(classImage.getProcessor().duplicate());
@@ -5226,27 +5205,23 @@ public class WekaSegmentation {
 			}
 		}, 0, 1, TimeUnit.SECONDS);
 
-		// Join threads
-		for(int i = 0; i < numThreads; i++)
-		{
-			try {
+		// Join threads		
+		try {
+			for(int i = 0; i < numThreads; i++)
 				results[i] = fu[i].get();
-			} catch (InterruptedException e) {				
-				//e.printStackTrace();
-				return null;
-			} catch (ExecutionException e) {
-				e.printStackTrace();
-				return null;
-			} finally {
-				exe.shutdown();
-				task.cancel(true);
-				monitor.shutdownNow();
-				IJ.showProgress(1);
-			}
+		} catch (InterruptedException e) {				
+			//e.printStackTrace();
+			return null;
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			exe.shutdown();
+			task.cancel(true);
+			monitor.shutdownNow();
+			IJ.showProgress(1);
 		}
-
-		exe.shutdown();
-
+		
 		// Create final array
 		double[][] classificationResult = new double[numChannels][numInstances];
 
@@ -5309,13 +5284,6 @@ public class WekaSegmentation {
 				final int height = fsa.getHeight();
 				final int sliceSize = width * height;
 				final int numClasses = dataInfo.numClasses();
-
-				// Create one "instance" (Weka feature vector) which values will
-				// be filled on each iteration
-				final int numAttributes = fsa.getNumOfFeatures();
-				final int extra = fsa.useNeighborhood() ? 8 : 0;
-				DenseInstance ins = new DenseInstance(numAttributes + extra + 1);
-				ins.setDataset(dataInfo);
 				
 				if (probabilityMaps)
 					classificationResult = new double[numClasses][numInstances];
@@ -5338,17 +5306,19 @@ public class WekaSegmentation {
 						final int localPos = absolutePos - slice * sliceSize;
 						final int x = localPos % width;
 						final int y = localPos / width;
-						fsa.get( slice ).createInstanceInPlace( x, y, 0, ins );						
+						
+						final DenseInstance ins = fsa.get( slice ).createInstance(x, y, 0);
+						ins.setDataset(dataInfo);
 						
 						if ( probabilityMaps )
 						{							
-							double[] prob = classifier.distributionForInstance( ins );
+							double[] prob = classifier.distributionForInstance( ins );							
 							for(int k = 0 ; k < numClasses; k++)
 								classificationResult[k][i] = prob[k];
 						}
 						else
 						{
-							classificationResult[0][i] = Utils.maxIndex( classifier.distributionForInstance( ins ) );
+							classificationResult[0][i] = classifier.classifyInstance( ins );							
 						}
 
 					}catch(Exception e){
