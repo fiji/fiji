@@ -3542,21 +3542,16 @@ public class WekaSegmentation {
 	 */
 	public Instances createTrainingInstances()
 	{
-		//final long start = System.currentTimeMillis();
-		//IJ.log("create training instances: num of features = " + featureStackArray.getNumOfFeatures());
 
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		for (int i=1; i<=featureStackArray.getNumOfFeatures(); i++)
 		{
 			String attString = featureStackArray.getLabel(i);
 			attributes.add(new Attribute(attString));
-			//IJ.log("Add attribute " + attString);
 		}
 
 		final ArrayList<String> classes;
 
-		//int numOfInstances = 0;
-		//int numOfUsedClasses = 0;
 		if(null == this.loadedTrainingData)
 		{
 			classes = new ArrayList<String>();
@@ -3564,12 +3559,6 @@ public class WekaSegmentation {
 			{			
 				for(int n=0; n<trainingImage.getImageStackSize(); n++)
 				{
-					//if(examples[n].get(i).size() > 0)
-					//{						
-					//	numOfUsedClasses++;
-					//}											
-					//numOfInstances += examples[n].get(i).size();
-					
 					if(classes.contains(getClassLabels()[i]) == false)
 						classes.add(getClassLabels()[i]);
 				}
@@ -3580,13 +3569,7 @@ public class WekaSegmentation {
 			classes = this.loadedClassNames;
 		}
 
-
 		attributes.add(new Attribute("class", classes));
-		/*
-		IJ.log("added class attribute with values:");
-		for(int i=0; i<classes.size(); i++)
-			IJ.log("  " + classes.get(i));
-		*/
 		
 		// create initial set of instances
 		final Instances trainingData =  new Instances( "segment", attributes, 1 );
@@ -3636,9 +3619,6 @@ public class WekaSegmentation {
 
 		if (trainingData.numInstances() == 0)
 			return null;		
-		
-		//final long end = System.currentTimeMillis();
-		//IJ.log( "Creating training instances took " + (end-start) + " ms." );
 
 		return trainingData;
 	}
