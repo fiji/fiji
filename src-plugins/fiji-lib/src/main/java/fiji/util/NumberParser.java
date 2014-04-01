@@ -40,11 +40,21 @@ public final class NumberParser {
 	/**
 	 * Parses a {@link Number} from the given string, respecting the default
 	 * {@link Locale}.
+	 * <p>
+	 * If parsing with the default locale fails, parsing is reattempted using the
+	 * en-US locale as well before giving up.
+	 * </p>
 	 * 
 	 * @throws NumberFormatException if the number cannot be parsed
 	 */
 	public static Number parseNumber(final String number) {
-		return parseNumber(number, NumberFormat.getNumberInstance());
+		try {
+			return parseNumber(number, NumberFormat.getNumberInstance());
+		}
+		catch (final NumberFormatException exc) {
+			// try again with en-US locale
+			return parseNumber(number, NumberFormat.getNumberInstance(Locale.US));
+		}
 	}
 
 	/**
@@ -52,11 +62,23 @@ public final class NumberParser {
 	 * {@link Locale}. If a decimal number is given as input, the result is
 	 * rounded to the nearest integer; see
 	 * {@link NumberFormat#getIntegerInstance()} for details.
+	 * <p>
+	 * If parsing with the default locale fails, parsing is reattempted using the
+	 * en-US locale as well before giving up.
+	 * </p>
 	 * 
 	 * @throws NumberFormatException if the number cannot be parsed
 	 */
 	public static int parseInteger(final String number) {
-		return parseNumber(number, NumberFormat.getIntegerInstance()).intValue();
+		Number n;
+		try {
+			n = parseNumber(number, NumberFormat.getIntegerInstance());
+		}
+		catch (final NumberFormatException exc) {
+			// try again with en-US locale
+			n = parseNumber(number, NumberFormat.getIntegerInstance(Locale.US));
+		}
+		return n.intValue();
 	}
 
 	/**
