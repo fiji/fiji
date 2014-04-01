@@ -108,9 +108,9 @@
 			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>ij-minimaven</artifactId>
-			<version>${imagej.version}</version>
+			<groupId>${minimaven.groupId}</groupId>
+			<artifactId>minimaven</artifactId>
+			<version>${minimaven.version}</version>
 		</dependency>
 	</dependencies>
 

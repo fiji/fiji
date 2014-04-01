@@ -36,7 +36,25 @@
 					<groupId>gov.nih.imagej</groupId>
 					<artifactId>imagej</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.testng</groupId>
+					<artifactId>testng</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>xerces</groupId>
+					<artifactId>xercesImpl</artifactId>
+				</exclusion>
 			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>IJ_Robot</artifactId>
+			<version>${IJ_Robot.version}</version>
+			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>ca.mcgill</groupId>
@@ -60,6 +78,12 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>TrackMate_</artifactId>
 			<version>${TrackMate.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Vaa3d_Writer</artifactId>
+			<version>${Vaa3d_Writer.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>

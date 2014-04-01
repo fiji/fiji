@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>1.149</version>
+		<version>1.153</version>
 		<relativePath />
 	</parent>
 
@@ -25,10 +25,12 @@
 		<bio-formats.version>5.0.0</bio-formats.version>
 
 		<Colocalisation_Analysis.version>2.0.0-SNAPSHOT</Colocalisation_Analysis.version>
+		<IJ_Robot.version>1.0.0</IJ_Robot.version>
 		<SPIM_Registration.version>2.0.0-SNAPSHOT</SPIM_Registration.version>
-		<Sholl_Analysis.version>3.4.0</Sholl_Analysis.version>
+		<Sholl_Analysis.version>3.4.1</Sholl_Analysis.version>
 		<Stitching.version>2.0.0-SNAPSHOT</Stitching.version>
-		<TrackMate.version>2.1.1-SNAPSHOT</TrackMate.version>
+		<TrackMate.version>2.2.0</TrackMate.version>
+		<Vaa3d_Writer.version>1.0.0</Vaa3d_Writer.version>
 		<autocomplete.version>2.0.2</autocomplete.version>
 		<batik.version>1.8</batik.version>
 		<beanshell.version>2.0b4</beanshell.version>
@@ -59,7 +61,7 @@
 		<jzlib.version>1.0.7</jzlib.version>
 		<legacy-imglib1.version>2.0.0-SNAPSHOT</legacy-imglib1.version>
 		<level_sets.version>1.0.1-SNAPSHOT</level_sets.version>
-		<mpicbg.version>0.6.1-SNAPSHOT</mpicbg.version>
+		<mpicbg.version>0.6.1</mpicbg.version>
 		<rsyntaxtextarea.version>2.0.4.1</rsyntaxtextarea.version>
 		<scala.version>2.10.0</scala.version>
 		<skeletonize3d.version>1.0.1-SNAPSHOT</skeletonize3d.version>
@@ -165,6 +167,25 @@
 						<configuration>
 							<source>1.5</source>
 							<target>1.5</target>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<profile>
+			<id>macosx</id>
+			<activation>
+				<os>
+					<name>Mac OS X</name>
+				</os>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-compiler-plugin</artifactId>
+						<configuration>
+							<compilerArgument>-Djava.ext.dirs=${rootdir}/java/macosx-java3d/Home/lib/ext</compilerArgument>
 						</configuration>
 					</plugin>
 				</plugins>

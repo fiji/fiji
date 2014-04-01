@@ -1650,7 +1650,7 @@ public class Weka_Segmentation implements PlugIn
 		final int numThreads        = Math.min(imageFiles.length, numProcessors);
 		final int numFurtherThreads = (int)Math.ceil((double)(numProcessors - numThreads)/imageFiles.length) + 1;
 
-		IJ.log("Processing " + imageFiles.length + " image files in " + numThreads + " thread(s)....");
+		IJ.log("Processing " + imageFiles.length + " image file(s) in " + numThreads + " thread(s)....");
 
 		win.setButtonsEnabled(false);
 
@@ -1683,6 +1683,13 @@ public class Weka_Segmentation implements PlugIn
 					File file = imageFiles[i];
 
 					ImagePlus testImage = IJ.openImage(file.getPath());
+					
+					if( null == testImage )
+					{
+						IJ.log( "Error: " + file.getPath() + " is not a valid image file.");
+						IJ.error("Trainable Weka Segmentation I/O error", "Error: " + file.getPath() + " is not a valid image file.");
+						return;						
+					}
 
 					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
 

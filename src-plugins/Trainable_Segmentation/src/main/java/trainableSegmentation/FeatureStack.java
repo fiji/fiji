@@ -2418,7 +2418,9 @@ public class FeatureStack
 	}
 
 	/**
-	 * Get slice image processor
+	 * Get slice image processor. Warning: every time this 
+	 * method is called, ImageStack creates a new processor.
+	 * 
 	 * @param index selected slice
 	 * @return slice image processor
 	 */
@@ -3407,7 +3409,10 @@ public class FeatureStack
 	 * @param classValue class value to be assigned
 	 * @return corresponding instance
 	 */
-	public DenseInstance createInstance(int x, int y, int classValue)
+	public DenseInstance createInstance(
+			int x, 
+			int y, 
+			int classValue )
 	{
 		final int extra = useNeighbors ? 8 : 0;
 		
@@ -3416,8 +3421,8 @@ public class FeatureStack
 		
 		if( colorFeatures == false || oldColorFormat == true)
 		{
-			for (int z=1; z<=getSize(); z++, n++)		
-				values[ z-1 ] = getProcessor( z ).getf( x, y );
+			for (int z=0; z<getSize(); z++, n++)		
+				values[ z ] = this.wholeStack.getVoxel( x, y, z );
 		}
 		else
 		{
@@ -3459,12 +3464,18 @@ public class FeatureStack
 			int classValue,
 			DenseInstance ins)
 	{		
+		if( classValue < 0 )
+		{
+			IJ.log("Error: negative class value.");
+			return;
+		}
+		
 		int n = 0;
 		
 		if( colorFeatures == false || oldColorFormat == true )
 		{
-			for (int z=1; z<=getSize(); z++, n++)		
-				ins.setValue( z-1, getProcessor( z ).getf( x, y ) );
+			for (int z=0; z<getSize(); z++, n++)		
+				ins.setValue( z, wholeStack.getVoxel( x, y, z ) );
 		}
 		else
 		{
