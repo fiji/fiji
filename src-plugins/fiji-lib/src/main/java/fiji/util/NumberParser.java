@@ -41,13 +41,21 @@ public final class NumberParser {
 	 * Parses a {@link Number} from the given string, respecting the default
 	 * {@link Locale}.
 	 * <p>
-	 * If parsing with the default locale fails, parsing is reattempted using the
+	 * Strings representing integers or fractions with a decimal point, optionally
+	 * signed, are parsed with the US locale. Other strings are first parsed with
+	 * the default locale and if that fails, parsing is re-attempted using the
 	 * en-US locale as well before giving up.
 	 * </p>
 	 * 
 	 * @throws NumberFormatException if the number cannot be parsed
 	 */
 	public static Number parseNumber(final String number) {
+		if (number.matches("-?([0-9]+|[0-9]*\\.[0-9]+)")) {
+			return parseNumber(number, NumberFormat.getNumberInstance(Locale.US));
+		}
+		if ("Infinity".equals(number)) return Double.POSITIVE_INFINITY;
+		if ("-Infinity".equals(number)) return Double.NEGATIVE_INFINITY;
+		if ("NaN".equals(number)) return Double.NaN;
 		try {
 			return parseNumber(number, NumberFormat.getNumberInstance());
 		}
