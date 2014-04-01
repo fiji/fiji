@@ -40,11 +40,29 @@ public final class NumberParser {
 	/**
 	 * Parses a {@link Number} from the given string, respecting the default
 	 * {@link Locale}.
+	 * <p>
+	 * Strings representing integers or fractions with a decimal point, optionally
+	 * signed, are parsed with the US locale. Other strings are first parsed with
+	 * the default locale and if that fails, parsing is re-attempted using the
+	 * en-US locale as well before giving up.
+	 * </p>
 	 * 
 	 * @throws NumberFormatException if the number cannot be parsed
 	 */
 	public static Number parseNumber(final String number) {
-		return parseNumber(number, NumberFormat.getNumberInstance());
+		if (number.matches("-?([0-9]+|[0-9]*\\.[0-9]+)")) {
+			return parseNumber(number, NumberFormat.getNumberInstance(Locale.US));
+		}
+		if ("Infinity".equals(number)) return Double.POSITIVE_INFINITY;
+		if ("-Infinity".equals(number)) return Double.NEGATIVE_INFINITY;
+		if ("NaN".equals(number)) return Double.NaN;
+		try {
+			return parseNumber(number, NumberFormat.getNumberInstance());
+		}
+		catch (final NumberFormatException exc) {
+			// try again with en-US locale
+			return parseNumber(number, NumberFormat.getNumberInstance(Locale.US));
+		}
 	}
 
 	/**
@@ -52,11 +70,23 @@ public final class NumberParser {
 	 * {@link Locale}. If a decimal number is given as input, the result is
 	 * rounded to the nearest integer; see
 	 * {@link NumberFormat#getIntegerInstance()} for details.
+	 * <p>
+	 * If parsing with the default locale fails, parsing is reattempted using the
+	 * en-US locale as well before giving up.
+	 * </p>
 	 * 
 	 * @throws NumberFormatException if the number cannot be parsed
 	 */
 	public static int parseInteger(final String number) {
-		return parseNumber(number, NumberFormat.getIntegerInstance()).intValue();
+		Number n;
+		try {
+			n = parseNumber(number, NumberFormat.getIntegerInstance());
+		}
+		catch (final NumberFormatException exc) {
+			// try again with en-US locale
+			n = parseNumber(number, NumberFormat.getIntegerInstance(Locale.US));
+		}
+		return n.intValue();
 	}
 
 	/**
