@@ -21,52 +21,36 @@ public class NumberParserTest {
 	@Test
 	public void testFrance() {
 		Locale.setDefault(Locale.FRANCE);
-		final double value = NumberParser.parseDouble("902.300");
-		assertEquals(902.0, value, 0.0); // !!
-		final double value2 = NumberParser.parseDouble("902,300");
-		assertEquals(902.3, value2, 0.0);
-		final double value3 = NumberParser.parseDouble("902300");
-		assertEquals(902300.0, value3, 0.0);
-		final double value4 = NumberParser.parseDouble( "Infinity" );
-		assertEquals( Double.POSITIVE_INFINITY, value4, 0.0 );
-		final double value5 = NumberParser.parseDouble( "-Infinity" );
-		assertEquals( Double.NEGATIVE_INFINITY, value5, 0.0 );
-		final double value6 = NumberParser.parseDouble( "NaN" );
-		assertTrue( Double.isNaN( value6 ) );
+		assertDouble(902.3, "902,300");
+		assertCommon();
 	}
 
 	@Test
 	public void testGermany() {
 		Locale.setDefault(Locale.GERMANY);
-		final double value = NumberParser.parseDouble("902.300");
-		assertEquals(902300.0, value, 0.0);
-		final double value2 = NumberParser.parseDouble("902,300");
-		assertEquals(902.3, value2, 0.0);
-		final double value3 = NumberParser.parseDouble("902300");
-		assertEquals(902300.0, value3, 0.0);
-		final double value4 = NumberParser.parseDouble( "Infinity" );
-		assertEquals( Double.POSITIVE_INFINITY, value4, 0.0 );
-		final double value5 = NumberParser.parseDouble( "-Infinity" );
-		assertEquals( Double.NEGATIVE_INFINITY, value5, 0.0 );
-		final double value6 = NumberParser.parseDouble( "NaN" );
-		assertTrue( Double.isNaN( value6 ) );
+		assertDouble(902.3, "902,300");
+		assertCommon();
 	}
 
 	@Test
 	public void testUS() {
 		Locale.setDefault(Locale.US);
-		final double value = NumberParser.parseDouble("902.300");
-		assertEquals(902.3, value, 0.0);
-		final double value2 = NumberParser.parseDouble("902,300");
-		assertEquals(902300.0, value2, 0.0);
-		final double value3 = NumberParser.parseDouble("902300");
-		assertEquals(902300.0, value3, 0.0);
-		final double value4 = NumberParser.parseDouble( "Infinity" );
-		assertEquals( Double.POSITIVE_INFINITY, value4, 0.0 );
-		final double value5 = NumberParser.parseDouble( "-Infinity" );
-		assertEquals( Double.NEGATIVE_INFINITY, value5, 0.0 );
-		final double value6 = NumberParser.parseDouble( "NaN" );
-		assertTrue( Double.isNaN( value6 ) );
+		assertDouble(902300.0, "902,300");
+		assertCommon();
 	}
 
+	private void assertCommon() {
+		assertDouble(-203.9, "-203.9");
+		assertDouble(902.3, "902.300");
+		assertDouble(902300.0, "902300");
+		assertDouble(Double.POSITIVE_INFINITY, "Infinity");
+		assertDouble(Double.NEGATIVE_INFINITY, "-Infinity");
+		final double value = NumberParser.parseDouble( "NaN" );
+		assertTrue(Double.isNaN(value));
+	}
+
+	private void assertDouble(final double expect, final String string) {
+		final double value = NumberParser.parseDouble(string);
+		assertEquals(expect, value, 0.0);
+	}
 }
