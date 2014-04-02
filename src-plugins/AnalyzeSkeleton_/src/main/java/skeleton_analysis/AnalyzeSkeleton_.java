@@ -1674,6 +1674,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 						// Create graph edge
 						this.slabList = new ArrayList<Point>();
 						this.slabList.add(nextPoint);
+						this.numberOfSlabs[iTree]++;
 
 						// Calculate distance from junction to that point
 						double length = calculateDistance(junctionCoord, nextPoint);	
