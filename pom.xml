@@ -68,6 +68,7 @@
 		<skeletonize3d.version>1.0.1-SNAPSHOT</skeletonize3d.version>
 		<trakem2.version>1.0b-SNAPSHOT</trakem2.version>
 		<weka.version>3.7.6</weka.version>
+		<javac.version>1.6.0.24-ubuntu-fiji1</javac.version>
 	</properties>
 
 	<modules>

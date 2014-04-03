@@ -98,6 +98,12 @@
 			<version>${Colocalisation_Analysis.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>javac</artifactId>
+			<version>${javac.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
