@@ -2,6 +2,7 @@
 /target/
 
 ## Externals' clones ##
+/AnalyzeSkeleton/
 /ASA/
 /Colocalisation_Analysis/
 /IJ_Robot/

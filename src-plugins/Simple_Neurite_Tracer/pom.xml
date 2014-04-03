@@ -85,7 +85,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>AnalyzeSkeleton_</artifactId>
-			<version>${fiji.version}</version>
+			<version>${AnalyzeSkeleton.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
