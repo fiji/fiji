@@ -84,7 +84,6 @@ hs_err*.log
 /jars/ij1-patcher-[0-9]*.jar
 /jars/imagescience-[0-9]*.jar
 /jars/imageware-[0-9]*.jar
-/jars/javac-[0-9]*.jar
 /jars/log4j-[0-9]*.jar
 /jars/mij-[0-9]*.jar
 /jars/pal-optimization-[0-9]*.jar
@@ -217,6 +216,7 @@ hs_err*.log
 /jars/itextpdf-[0-9]*.jar
 /jars/jama-[0-9]*.jar
 /jars/java-cup-[0-9]*.jar
+/jars/javac-[0-9]*.jar
 /jars/javassist-[0-9]*.jar
 /jars/jcommon-[0-9]*.jar
 /jars/jep-[0-9]*.jar
