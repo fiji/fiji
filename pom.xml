@@ -69,7 +69,7 @@
 		<trakem2.version>1.0b-SNAPSHOT</trakem2.version>
 		<weka.version>3.7.6</weka.version>
 		<javac.version>1.6.0.24-ubuntu-fiji1</javac.version>
-		<TopoJ_.version></TopoJ_.version>
+		<TopoJ_.version>2.0.0-SNAPSHOT</TopoJ_.version>
 	</properties>
 
 	<modules>
