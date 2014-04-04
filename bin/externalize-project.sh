@@ -18,9 +18,10 @@ die "Could not cd to Fiji's top-level directory"
 test -d src-plugins/"$name" ||
 die "src-plugins/$name does not exist"
 
-curl -f -s https://github.com/fiji/"$name" ||
+REPOURL=https://github.com/fiji/"$name"
+curl -f -s "$REPOURL" ||
 curl -f --netrc -XPOST -d "{\"name\":\"$name\"}" https://api.github.com/orgs/fiji/repos ||
-die "Could not create https://github.com/fiji/$name"
+die "Could not create $REPOURL"
 
 git clone -b master . external/"$name" ||
 die "Could not clone to external/$name"
@@ -30,7 +31,7 @@ die "Could not clone to external/$name"
 
   git commit --allow-empty -s -m "Mark first commit of $name in its own repository" -m "Based on $(git log --format='%h(%s)' -1 origin/master -- src-plugins/"$name")." &&
 
-  sed -i "s|[ \t]*<repositories>|\t<scm>\n\t\t<connection>scm:git:git://github.com/fiji/$name</connection>\n\t\t<developerConnection>scm:git:git@github.com:fiji/$name</developerConnection>\n\t\t<tag>HEAD</tag>\n\t\t<url>https://github.com/fiji/$name</url>\n\t</scm>\n\n&|" pom.xml &&
+  sed -i "s|[ \t]*<repositories>|\t<scm>\n\t\t<connection>scm:git:git://github.com/fiji/$name</connection>\n\t\t<developerConnection>scm:git:git@github.com:fiji/$name</developerConnection>\n\t\t<tag>HEAD</tag>\n\t\t<url>$REPOURL</url>\n\t</scm>\n\n&|" pom.xml &&
   git commit -s -m "Add SCM location" pom.xml &&
 
   sed -i "s|^\(\t\t<artifactId>pom-fiji\)-plugins\(</artifactId>\)|\1\2|" pom.xml &&
@@ -57,7 +58,7 @@ sed -i "/<artifactId>$name</{N;s/\(<version>\).*\(<\/version>\)/\1\${$name.versi
 sed -i "s|^\t</dependencies>|\t\t<dependency>\n\t\t\t<groupId>sc.fiji</groupId>\n\t\t\t<artifactId>$name</artifactId>\n\t\t\t<version>\${$name.version}</version>\n\t\t\t<scope>runtime</scope>\n\t\t</dependency>\n&|" external/pom.xml &&
 sed -i "/<module>$name<\/module>/d" src-plugins/pom.xml &&
 git rm -rf src-plugins/"$name" &&
-git commit -s -m "$name is an external project now" -m "As of $(cd external/"$name" && git log --format='%h(%s)' -1), $name lives in" -m "	https://github.com/fiji/$name" pom.xml src-plugins/*/pom.xml external/pom.xml src-plugins/pom.xml src-plugins/"$name" &&
+git commit -s -m "$name is an external project now" -m "As of $(cd external/"$name" && git log --format='%h(%s)' -1), $name lives in" -m "	$REPOURL" pom.xml src-plugins/*/pom.xml external/pom.xml src-plugins/pom.xml src-plugins/"$name" &&
 
 echo "/$name/" >> external/.gitignore &&
 git commit -s -m "Ignore if $name is cloned into external/" external/.gitignore &&
