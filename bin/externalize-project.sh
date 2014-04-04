@@ -18,9 +18,10 @@ die "Could not cd to Fiji's top-level directory"
 test -d src-plugins/"$name" ||
 die "src-plugins/$name does not exist"
 
-REPOURL=https://github.com/fiji/"$name"
+name2="${name%_}"
+REPOURL=https://github.com/fiji/"$name2"
 curl -f -s "$REPOURL" ||
-curl -f --netrc -XPOST -d "{\"name\":\"$name\"}" https://api.github.com/orgs/fiji/repos ||
+curl -f --netrc -XPOST -d "{\"name\":\"$name2\"}" https://api.github.com/orgs/fiji/repos ||
 die "Could not create $REPOURL"
 
 git clone -b master . external/"$name" ||
@@ -31,7 +32,7 @@ die "Could not clone to external/$name"
 
   git commit --allow-empty -s -m "Mark first commit of $name in its own repository" -m "Based on $(git log --format='%h(%s)' -1 origin/master -- src-plugins/"$name")." &&
 
-  sed -i "s|[ \t]*<repositories>|\t<scm>\n\t\t<connection>scm:git:git://github.com/fiji/$name</connection>\n\t\t<developerConnection>scm:git:git@github.com:fiji/$name</developerConnection>\n\t\t<tag>HEAD</tag>\n\t\t<url>$REPOURL</url>\n\t</scm>\n\n&|" pom.xml &&
+  sed -i "s|[ \t]*<repositories>|\t<scm>\n\t\t<connection>scm:git:git://github.com/fiji/$name2</connection>\n\t\t<developerConnection>scm:git:git@github.com:fiji/$name2</developerConnection>\n\t\t<tag>HEAD</tag>\n\t\t<url>$REPOURL</url>\n\t</scm>\n\n&|" pom.xml &&
   git commit -s -m "Add SCM location" pom.xml &&
 
   sed -i "s|^\(\t\t<artifactId>pom-fiji\)-plugins\(</artifactId>\)|\1\2|" pom.xml &&
@@ -49,7 +50,7 @@ EOF
   git add .gitignore &&
   git commit -s -m "Add a .gitignore file" .gitignore &&
 
-  git remote set-url origin git@github.com:fiji/"$name" &&
+  git remote set-url origin git@github.com:fiji/"$name2" &&
   git push origin HEAD) &&
 
 version="$(sed -n 's|^\t<version>\(.*\)</version>|\1|p' < external/"$name"/pom.xml)" &&
