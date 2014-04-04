@@ -54,6 +54,7 @@ EOF
   git push origin HEAD) &&
 
 version="$(sed -n 's|^\t<version>\(.*\)</version>|\1|p' < external/"$name"/pom.xml)" &&
+version="${version:-2.0.0-SNAPSHOT}" &&
 sed -i "s|^\t</properties>|\t\t<$name.version>$version</$name.version>\n&|" pom.xml &&
 sed -i "/<artifactId>$name</{N;s/\(<version>\).*\(<\/version>\)/\1\${$name.version}\2/}" src-plugins/*/pom.xml &&
 sed -i "s|^\t</dependencies>|\t\t<dependency>\n\t\t\t<groupId>sc.fiji</groupId>\n\t\t\t<artifactId>$name</artifactId>\n\t\t\t<version>\${$name.version}</version>\n\t\t\t<scope>runtime</scope>\n\t\t</dependency>\n&|" external/pom.xml &&
