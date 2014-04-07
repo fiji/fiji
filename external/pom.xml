@@ -512,6 +512,12 @@
 			<version>${RATS_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>RandomJ_</artifactId>
+			<version>${RandomJ_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
