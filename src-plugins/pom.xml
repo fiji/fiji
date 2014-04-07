@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>CorrectBleach_</module>
 		<module>Descriptor_based_registration</module>
 		<module>Dichromacy_</module>
 		<module>Differentials_</module>

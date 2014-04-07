@@ -284,6 +284,12 @@
 			<version>${Colour_Deconvolution.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>CorrectBleach_</artifactId>
+			<version>${CorrectBleach_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
