@@ -182,7 +182,6 @@ hs_err*.log
 /plugins/View5D_-[0-9]*.jar
 /plugins/Volume_Calculator-[0-9]*.jar
 /plugins/Volume_Viewer-[0-9]*.jar
-/plugins/bUnwarpJ_-[0-9]*.jar
 /plugins/blockmatching_-[0-9]*.jar
 /plugins/level_sets-[0-9]*.jar
 /plugins/panorama_-[0-9]*.jar
@@ -235,6 +234,7 @@ hs_err*.log
 /jars/tools-[0-9]*.jar
 /jars/udunits-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
+/plugins/bUnwarpJ_-[0-9]*.jar
 /plugins/Colocalisation_Analysis-[0-9]*.jar
 /plugins/IJ_Robot-[0-9]*.jar
 /plugins/SPIM_Registration-[0-9]*.jar
