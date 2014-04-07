@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Helmholtz_Analysis</module>
 		<module>IO_</module>
 		<module>Image_Expression_Parser</module>
 		<module>Interactive_3D_Surface_Plot</module>
