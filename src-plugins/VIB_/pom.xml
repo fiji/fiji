@@ -40,7 +40,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>pal-optimization</artifactId>
-			<version>${fiji.version}</version>
+			<version>${pal-optimization.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>

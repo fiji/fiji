@@ -58,7 +58,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>pal-optimization</artifactId>
-			<version>${project.version}</version>
+			<version>${pal-optimization.version}</version>
 		</dependency>
 	</dependencies>
 

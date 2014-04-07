@@ -158,6 +158,12 @@
 			<version>${fake.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>pal-optimization</artifactId>
+			<version>${pal-optimization.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
