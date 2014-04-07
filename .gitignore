@@ -86,7 +86,6 @@ hs_err*.log
 /jars/scala-library-[0-9]*.jar
 /jars/scala-reflect-[0-9]*.jar
 /jars/slf4j-log4j12-[0-9]*.jar
-/jars/wavelets-[0-9]*.jar
 /jars/weave_jy2java-[0-9]*.jar
 /plugins/3D_Blob_Segmentation-[0-9]*.jar
 /plugins/3D_Objects_Counter-[0-9]*.jar
@@ -230,6 +229,7 @@ hs_err*.log
 /jars/postgresql-[0-9]*.jar
 /jars/tools-[0-9]*.jar
 /jars/udunits-[0-9]*.jar
+/jars/wavelets-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
 /plugins/Siox_Segmentation-[0-9]*.jar
 /plugins/Trainable_Segmentation-[0-9]*.jar
