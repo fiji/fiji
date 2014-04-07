@@ -626,6 +626,12 @@
 			<version>${Time_Stamper.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>ToAST_</artifactId>
+			<version>${ToAST_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
