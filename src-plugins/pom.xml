@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Color_Histogram</module>
 		<module>Color_Inspector_3D</module>
 		<module>Colour_Deconvolution</module>
 		<module>CorrectBleach_</module>

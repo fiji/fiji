@@ -266,6 +266,12 @@
 			<version>${Clojure_Interpreter.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Color_Histogram</artifactId>
+			<version>${Color_Histogram.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
