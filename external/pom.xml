@@ -218,6 +218,12 @@
 			<version>${Archipelago_Plugins.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Auto_Threshold</artifactId>
+			<version>${Auto_Threshold.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
