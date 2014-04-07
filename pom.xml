@@ -145,6 +145,7 @@
 		<Script_Editor.version>2.0.0-SNAPSHOT</Script_Editor.version>
 		<Series_Labeler.version>2.0.0-SNAPSHOT</Series_Labeler.version>
 		<SheppLogan_.version>2.0.0-SNAPSHOT</SheppLogan_.version>
+		<Simple_Neurite_Tracer.version>2.0.2-SNAPSHOT</Simple_Neurite_Tracer.version>
 	</properties>
 
 	<modules>

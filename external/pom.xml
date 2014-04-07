@@ -560,6 +560,12 @@
 			<version>${SheppLogan_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Simple_Neurite_Tracer</artifactId>
+			<version>${Simple_Neurite_Tracer.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
