@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>IO_</module>
 		<module>Image_Expression_Parser</module>
 		<module>Interactive_3D_Surface_Plot</module>
 		<module>IsoData_Classifier</module>

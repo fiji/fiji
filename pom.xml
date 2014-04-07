@@ -117,6 +117,7 @@
 		<Graph_Cut.version>0.1.1-SNAPSHOT</Graph_Cut.version>
 		<Gray_Morphology.version>2.3.2-SNAPSHOT</Gray_Morphology.version>
 		<Helmholtz_Analysis.version>2.0.1-SNAPSHOT</Helmholtz_Analysis.version>
+		<IO_.version>2.0.0-SNAPSHOT</IO_.version>
 	</properties>
 
 	<modules>
