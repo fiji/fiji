@@ -89,7 +89,6 @@ hs_err*.log
 /jars/weave_jy2java-[0-9]*.jar
 /plugins/Fiji_Updater.jar
 /plugins/PIV_analyser-[0-9]*.jar
-/plugins/QuickPALM_-[0-9]*.jar
 /plugins/RATS_-[0-9]*.jar
 /plugins/RandomJ_-[0-9]*.jar
 /plugins/Reconstruct_Reader-[0-9]*.jar
@@ -230,6 +229,7 @@ hs_err*.log
 /plugins/MosaicJ_-[0-9]*.jar
 /plugins/Multi_Kymograph-[0-9]*.jar
 /plugins/PointPicker_-[0-9]*.jar
+/plugins/QuickPALM_-[0-9]*.jar
 /plugins/Samples_-[0-9]*.jar
 /plugins/Siox_Segmentation-[0-9]*.jar
 /plugins/Trainable_Segmentation-[0-9]*.jar
