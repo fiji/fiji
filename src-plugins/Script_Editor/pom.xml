@@ -75,7 +75,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>BeanShell_Interpreter</artifactId>
-			<version>${fiji.version}</version>
+			<version>${BeanShell_Interpreter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>

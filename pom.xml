@@ -90,6 +90,7 @@
 		<Archipelago_Plugins.version>0.5.0-SNAPSHOT</Archipelago_Plugins.version>
 		<Auto_Threshold.version>1.16-SNAPSHOT</Auto_Threshold.version>
 		<BalloonSegmentation_.version>2.0.0-SNAPSHOT</BalloonSegmentation_.version>
+		<BeanShell_Interpreter.version>2.0.0-SNAPSHOT</BeanShell_Interpreter.version>
 	</properties>
 
 	<modules>

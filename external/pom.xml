@@ -230,6 +230,12 @@
 			<version>${BalloonSegmentation_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>BeanShell_Interpreter</artifactId>
+			<version>${BeanShell_Interpreter.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
