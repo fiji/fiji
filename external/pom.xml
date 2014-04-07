@@ -398,6 +398,12 @@
 			<version>${IO_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Image_Expression_Parser</artifactId>
+			<version>${Image_Expression_Parser.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
