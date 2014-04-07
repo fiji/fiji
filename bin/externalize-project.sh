@@ -65,5 +65,23 @@ git commit -s -m "$name is an external project now" -m "As of $(cd external/"$na
 echo "/$name/" >> external/.gitignore &&
 git commit -s -m "Ignore if $name is cloned into external/" external/.gitignore &&
 
-echo "Now, adjust .gitignore and push" ||
+perl -i -e 'my $line = undef;
+my $in_minimaven_section = 0;
+while (<>) {
+	if (/^.*\/'"$name"'-.*\.jar$/) {
+		$line = $_;
+		next;
+	}
+	if ($in_minimaven_section) {
+		if ($_ eq '' || ($line cmp $_) < 0) {
+			print $line;
+			$in_minimaven_section = 0;
+		}
+	} elsif (/^# Dependencies copied by MiniMaven #$/) {
+		$in_minimaven_section = 1;
+	}
+	print $_;
+}' .gitignore &&
+git commit -s -m "Adjust .gitignore" .gitignore &&
+echo "Now, test and push" ||
 die "Uh oh!"
