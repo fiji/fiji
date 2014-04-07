@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Multi_Kymograph</module>
 		<module>PIV_analyser</module>
 		<module>PointPicker_</module>
 		<module>QuickPALM_</module>

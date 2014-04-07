@@ -133,6 +133,7 @@
 		<M_I_P.version>2.0.0-SNAPSHOT</M_I_P.version>
 		<Manual_Tracking.version>2.0.0-SNAPSHOT</Manual_Tracking.version>
 		<MosaicJ_.version>2.0.0-SNAPSHOT</MosaicJ_.version>
+		<Multi_Kymograph.version>2.0.0-SNAPSHOT</Multi_Kymograph.version>
 	</properties>
 
 	<modules>

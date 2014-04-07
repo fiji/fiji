@@ -488,6 +488,12 @@
 			<version>${MosaicJ_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Multi_Kymograph</artifactId>
+			<version>${Multi_Kymograph.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
