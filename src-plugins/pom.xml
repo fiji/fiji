@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Graph_Cut</module>
 		<module>Gray_Morphology</module>
 		<module>Helmholtz_Analysis</module>
 		<module>IO_</module>

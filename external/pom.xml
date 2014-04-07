@@ -374,6 +374,12 @@
 			<version>${FlowJ_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Graph_Cut</artifactId>
+			<version>${Graph_Cut.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

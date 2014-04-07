@@ -114,6 +114,7 @@
 		<Fiji_Plugins.version>2.0.0-SNAPSHOT</Fiji_Plugins.version>
 		<Fiji_Updater.version>2.0.0-SNAPSHOT</Fiji_Updater.version>
 		<FlowJ_.version>1.29.1-SNAPSHOT</FlowJ_.version>
+		<Graph_Cut.version>0.1.1-SNAPSHOT</Graph_Cut.version>
 	</properties>
 
 	<modules>
