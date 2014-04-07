@@ -76,7 +76,6 @@ hs_err*.log
 /fiji.exe
 
 # Files generated from sources in src-plugins/ #
-/jars/VIB-lib-[0-9]*.jar
 /jars/fiji-compat-[0-9]*.jar
 /jars/fiji-lib-[0-9]*.jar
 /jars/fiji-scripting-[0-9]*.jar
@@ -116,6 +115,7 @@ hs_err*.log
 /plugins/mpicbg_-[0-9]*.jar
 
 # Dependencies copied by MiniMaven #
+/jars/VIB-lib-[0-9]*.jar
 /jars/base64-[0-9]*.jar
 /jars/bcmail-jdk14-[0-9]*.jar
 /jars/bcprov-jdk14-[0-9]*.jar
