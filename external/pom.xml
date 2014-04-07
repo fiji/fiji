@@ -434,6 +434,12 @@
 			<version>${Jython_Interpreter.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Kuwahara_Filter</artifactId>
+			<version>${Kuwahara_Filter.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

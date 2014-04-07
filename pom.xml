@@ -124,6 +124,7 @@
 		<JRuby_Interpreter.version>2.0.0-SNAPSHOT</JRuby_Interpreter.version>
 		<Javascript_.version>2.0.0-SNAPSHOT</Javascript_.version>
 		<Jython_Interpreter.version>2.0.0-SNAPSHOT</Jython_Interpreter.version>
+		<Kuwahara_Filter.version>2.0.0-SNAPSHOT</Kuwahara_Filter.version>
 	</properties>
 
 	<modules>
