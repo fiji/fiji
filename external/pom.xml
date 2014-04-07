@@ -572,6 +572,12 @@
 			<version>${Skeletonize3D_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Snakuscule_</artifactId>
+			<version>${Snakuscule_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
