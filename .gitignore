@@ -87,7 +87,6 @@ hs_err*.log
 /jars/scala-reflect-[0-9]*.jar
 /jars/slf4j-log4j12-[0-9]*.jar
 /jars/weave_jy2java-[0-9]*.jar
-/plugins/Fiji_Developer-[0-9]*.jar
 /plugins/Fiji_Package_Maker-[0-9]*.jar
 /plugins/Fiji_Plugins-[0-9]*.jar
 /plugins/Fiji_Updater.jar
@@ -230,6 +229,7 @@ hs_err*.log
 /plugins/FeatureJ_-[0-9]*.jar
 /plugins/Feature_Detection-[0-9]*.jar
 /plugins/Fiji_Archipelago-[0-9]*.jar
+/plugins/Fiji_Developer-[0-9]*.jar
 /plugins/Samples_-[0-9]*.jar
 /plugins/Siox_Segmentation-[0-9]*.jar
 /plugins/Trainable_Segmentation-[0-9]*.jar
