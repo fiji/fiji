@@ -686,6 +686,12 @@
 			<version>${View5D_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Volume_Calculator</artifactId>
+			<version>${Volume_Calculator.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

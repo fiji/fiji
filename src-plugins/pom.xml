@@ -26,7 +26,6 @@
 	<modules>
 		<module>PIV_analyser</module>
 		<module>Updater_Fix</module>
-		<module>Volume_Calculator</module>
 		<module>Volume_Viewer</module>
 		<module>blockmatching_</module>
 		<module>fiji-compat</module>
