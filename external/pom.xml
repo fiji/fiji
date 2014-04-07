@@ -692,6 +692,12 @@
 			<version>${Volume_Calculator.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Volume_Viewer</artifactId>
+			<version>${Volume_Viewer.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

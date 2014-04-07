@@ -167,6 +167,7 @@
 		<Video_Editing.version>2.0.0-SNAPSHOT</Video_Editing.version>
 		<View5D_.version>1.3.1-SNAPSHOT</View5D_.version>
 		<Volume_Calculator.version>1.0.1-SNAPSHOT</Volume_Calculator.version>
+		<Volume_Viewer.version>2.01.1-SNAPSHOT</Volume_Viewer.version>
 	</properties>
 
 	<modules>
