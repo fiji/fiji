@@ -596,6 +596,12 @@
 			<version>${Stack_Manipulation.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Statistical_Region_Merging</artifactId>
+			<version>${Statistical_Region_Merging.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
