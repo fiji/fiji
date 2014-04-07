@@ -25,7 +25,6 @@
 
 	<modules>
 		<module>PIV_analyser</module>
-		<module>Time_Stamper</module>
 		<module>ToAST_</module>
 		<module>TransformJ_</module>
 		<module>TurboReg_</module>

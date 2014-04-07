@@ -620,6 +620,12 @@
 			<version>${Threshold_Colour.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Time_Stamper</artifactId>
+			<version>${Time_Stamper.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
