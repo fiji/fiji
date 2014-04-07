@@ -85,7 +85,6 @@ hs_err*.log
 /jars/weave_jy2java-[0-9]*.jar
 /plugins/Fiji_Updater.jar
 /plugins/PIV_analyser-[0-9]*.jar
-/plugins/registration_3d-[0-9]*.jar
 
 # Files generated from submodules #
 /jars/VectorString-[0-9]*.jar
