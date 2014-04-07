@@ -173,6 +173,7 @@
 		<fiji-lib.version>2.0.0-SNAPSHOT</fiji-lib.version>
 		<fiji-scripting.version>2.0.0-SNAPSHOT</fiji-scripting.version>
 		<panorama_.version>2.0.0-SNAPSHOT</panorama_.version>
+		<register_virtual_stack_slices.version>2.0.0-SNAPSHOT</register_virtual_stack_slices.version>
 	</properties>
 
 	<modules>

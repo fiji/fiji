@@ -26,7 +26,6 @@
 	<modules>
 		<module>PIV_analyser</module>
 		<module>Updater_Fix</module>
-		<module>register_virtual_stack_slices</module>
 		<module>registration_3d</module>
 		<module>weave_jy2java</module>
 	</modules>

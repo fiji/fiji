@@ -728,6 +728,12 @@
 			<version>${panorama_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>register_virtual_stack_slices</artifactId>
+			<version>${register_virtual_stack_slices.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
