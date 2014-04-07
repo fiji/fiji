@@ -332,6 +332,12 @@
 			<version>${FeatureJ_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Feature_Detection</artifactId>
+			<version>${Feature_Detection.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
