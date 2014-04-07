@@ -368,6 +368,12 @@
 			<version>${Fiji_Updater.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>FlowJ_</artifactId>
+			<version>${FlowJ_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

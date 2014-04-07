@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>FlowJ_</module>
 		<module>Graph_Cut</module>
 		<module>Gray_Morphology</module>
 		<module>Helmholtz_Analysis</module>
