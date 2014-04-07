@@ -314,6 +314,12 @@
 			<version>${Directionality_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Extended_Depth_Field</artifactId>
+			<version>${Extended_Depth_Field.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

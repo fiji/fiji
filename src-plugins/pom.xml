@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Extended_Depth_Field</module>
 		<module>FS_Align_TrakEM2</module>
 		<module>FeatureJ_</module>
 		<module>Feature_Detection</module>
