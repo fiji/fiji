@@ -160,7 +160,6 @@ hs_err*.log
 /plugins/Series_Labeler-[0-9]*.jar
 /plugins/SheppLogan_-[0-9]*.jar
 /plugins/Simple_Neurite_Tracer-[0-9]*.jar
-/plugins/Siox_Segmentation-[0-9]*.jar
 /plugins/Skeletonize3D_-[0-9]*.jar
 /plugins/Snakuscule_-[0-9]*.jar
 /plugins/SplineDeformationGenerator_-[0-9]*.jar
@@ -233,6 +232,7 @@ hs_err*.log
 /jars/tools-[0-9]*.jar
 /jars/udunits-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
+/plugins/Siox_Segmentation-[0-9]*.jar
 /plugins/Trainable_Segmentation-[0-9]*.jar
 /plugins/bUnwarpJ_-[0-9]*.jar
 /plugins/Colocalisation_Analysis-[0-9]*.jar
