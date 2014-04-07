@@ -115,7 +115,6 @@
 		<module>View5D_</module>
 		<module>Volume_Calculator</module>
 		<module>Volume_Viewer</module>
-		<module>bUnwarpJ_</module>
 		<module>blockmatching_</module>
 		<module>fake</module>
 		<module>fiji-compat</module>

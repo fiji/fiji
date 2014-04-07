@@ -110,6 +110,12 @@
 			<version>${TopoJ_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bUnwarpJ_</artifactId>
+			<version>${bUnwarpJ_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

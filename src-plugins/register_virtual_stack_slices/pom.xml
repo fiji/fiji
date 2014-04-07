@@ -40,7 +40,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bUnwarpJ_</artifactId>
-			<version>${bunwarpj.version}</version>
+			<version>${bUnwarpJ_.version}</version>
 		</dependency>
 	</dependencies>
 
