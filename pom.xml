@@ -125,6 +125,7 @@
 		<Javascript_.version>2.0.0-SNAPSHOT</Javascript_.version>
 		<Jython_Interpreter.version>2.0.0-SNAPSHOT</Jython_Interpreter.version>
 		<Kuwahara_Filter.version>2.0.0-SNAPSHOT</Kuwahara_Filter.version>
+		<Lasso_and_Blow_Tool.version>2.0.0-SNAPSHOT</Lasso_and_Blow_Tool.version>
 	</properties>
 
 	<modules>

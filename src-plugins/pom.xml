@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Lasso_and_Blow_Tool</module>
 		<module>Linear_Kuwahara</module>
 		<module>LocalThickness_</module>
 		<module>MTrack2_</module>

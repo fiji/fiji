@@ -440,6 +440,12 @@
 			<version>${Kuwahara_Filter.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Lasso_and_Blow_Tool</artifactId>
+			<version>${Lasso_and_Blow_Tool.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
