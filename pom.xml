@@ -98,6 +98,7 @@
 		<Clojure_Interpreter.version>2.0.0-SNAPSHOT</Clojure_Interpreter.version>
 		<Color_Histogram.version>2.0.6-SNAPSHOT</Color_Histogram.version>
 		<Color_Inspector_3D.version>2.3-SNAPSHOT</Color_Inspector_3D.version>
+		<Colour_Deconvolution.version>2.0.0-SNAPSHOT</Colour_Deconvolution.version>
 	</properties>
 
 	<modules>

@@ -278,6 +278,12 @@
 			<version>${Color_Inspector_3D.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Colour_Deconvolution</artifactId>
+			<version>${Colour_Deconvolution.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
