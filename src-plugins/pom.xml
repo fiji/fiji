@@ -25,7 +25,6 @@
 
 	<modules>
 		<module>PIV_analyser</module>
-		<module>PointPicker_</module>
 		<module>QuickPALM_</module>
 		<module>RATS_</module>
 		<module>RandomJ_</module>

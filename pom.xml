@@ -134,6 +134,7 @@
 		<Manual_Tracking.version>2.0.0-SNAPSHOT</Manual_Tracking.version>
 		<MosaicJ_.version>2.0.0-SNAPSHOT</MosaicJ_.version>
 		<Multi_Kymograph.version>2.0.0-SNAPSHOT</Multi_Kymograph.version>
+		<PointPicker_.version>2.0.0-SNAPSHOT</PointPicker_.version>
 	</properties>
 
 	<modules>

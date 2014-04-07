@@ -494,6 +494,12 @@
 			<version>${Multi_Kymograph.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>PointPicker_</artifactId>
+			<version>${PointPicker_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
