@@ -85,6 +85,7 @@
 		<Analyze_Reader_Writer.version>2.0.0-SNAPSHOT</Analyze_Reader_Writer.version>
 		<ImageJ_3D_Viewer.version>2.0.0-SNAPSHOT</ImageJ_3D_Viewer.version>
 		<Fiji_3D_Blob_Segmentation.version>2.0.0-SNAPSHOT</Fiji_3D_Blob_Segmentation.version>
+		<ImageJ_3D_Objects_Counter.version>2.0.0-SNAPSHOT</ImageJ_3D_Objects_Counter.version>
 	</properties>
 
 	<modules>

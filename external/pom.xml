@@ -200,6 +200,12 @@
 			<version>${Fiji_3D_Blob_Segmentation.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>3D_Objects_Counter</artifactId>
+			<version>${ImageJ_3D_Objects_Counter.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
