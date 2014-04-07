@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>CPU_Meter</module>
 		<module>Calculator_Plus</module>
 		<module>Clojure_Interpreter</module>
 		<module>Color_Histogram</module>

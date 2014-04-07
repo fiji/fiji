@@ -93,6 +93,7 @@
 		<BeanShell_Interpreter.version>2.0.0-SNAPSHOT</BeanShell_Interpreter.version>
 		<Bug_Submitter.version>2.0.0-SNAPSHOT</Bug_Submitter.version>
 		<CLI_.version>2.0.0-SNAPSHOT</CLI_.version>
+		<CPU_Meter.version>2.0.0-SNAPSHOT</CPU_Meter.version>
 	</properties>
 
 	<modules>
