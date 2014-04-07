@@ -146,6 +146,7 @@
 		<Series_Labeler.version>2.0.0-SNAPSHOT</Series_Labeler.version>
 		<SheppLogan_.version>2.0.0-SNAPSHOT</SheppLogan_.version>
 		<Simple_Neurite_Tracer.version>2.0.2-SNAPSHOT</Simple_Neurite_Tracer.version>
+		<Skeletonize3D_.version>1.0.1-SNAPSHOT</Skeletonize3D_.version>
 	</properties>
 
 	<modules>

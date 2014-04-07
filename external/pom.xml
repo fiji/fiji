@@ -566,6 +566,12 @@
 			<version>${Simple_Neurite_Tracer.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Skeletonize3D_</artifactId>
+			<version>${Skeletonize3D_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
