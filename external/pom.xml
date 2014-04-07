@@ -584,6 +584,12 @@
 			<version>${SplineDeformationGenerator_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>StackReg_</artifactId>
+			<version>${StackReg_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

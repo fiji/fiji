@@ -149,6 +149,7 @@
 		<Skeletonize3D_.version>1.0.1-SNAPSHOT</Skeletonize3D_.version>
 		<Snakuscule_.version>2.0.0-SNAPSHOT</Snakuscule_.version>
 		<SplineDeformationGenerator_.version>2.0.0-SNAPSHOT</SplineDeformationGenerator_.version>
+		<StackReg_.version>2.0.0-SNAPSHOT</StackReg_.version>
 	</properties>
 
 	<modules>
