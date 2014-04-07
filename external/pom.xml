@@ -242,6 +242,12 @@
 			<version>${Bug_Submitter.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>CLI_</artifactId>
+			<version>${CLI_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

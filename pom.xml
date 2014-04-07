@@ -92,6 +92,7 @@
 		<BalloonSegmentation_.version>2.0.0-SNAPSHOT</BalloonSegmentation_.version>
 		<BeanShell_Interpreter.version>2.0.0-SNAPSHOT</BeanShell_Interpreter.version>
 		<Bug_Submitter.version>2.0.0-SNAPSHOT</Bug_Submitter.version>
+		<CLI_.version>2.0.0-SNAPSHOT</CLI_.version>
 	</properties>
 
 	<modules>

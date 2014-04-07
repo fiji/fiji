@@ -80,7 +80,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>CLI_</artifactId>
-			<version>${fiji.version}</version>
+			<version>${CLI_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
