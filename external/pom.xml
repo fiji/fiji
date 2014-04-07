@@ -350,6 +350,12 @@
 			<version>${Fiji_Developer.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Fiji_Package_Maker</artifactId>
+			<version>${Fiji_Package_Maker.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Fiji_Package_Maker</module>
 		<module>Fiji_Plugins</module>
 		<module>Fiji_Updater</module>
 		<module>FlowJ_</module>
