@@ -548,6 +548,12 @@
 			<version>${Script_Editor.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Series_Labeler</artifactId>
+			<version>${Series_Labeler.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
