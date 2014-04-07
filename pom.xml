@@ -170,6 +170,7 @@
 		<Volume_Viewer.version>2.01.1-SNAPSHOT</Volume_Viewer.version>
 		<blockmatching_.version>2.0.0-SNAPSHOT</blockmatching_.version>
 		<fiji-compat.version>2.0.0-SNAPSHOT</fiji-compat.version>
+		<fiji-lib.version>2.0.0-SNAPSHOT</fiji-lib.version>
 	</properties>
 
 	<modules>
