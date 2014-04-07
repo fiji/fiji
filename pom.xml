@@ -172,6 +172,7 @@
 		<fiji-compat.version>2.0.0-SNAPSHOT</fiji-compat.version>
 		<fiji-lib.version>2.0.0-SNAPSHOT</fiji-lib.version>
 		<fiji-scripting.version>2.0.0-SNAPSHOT</fiji-scripting.version>
+		<panorama_.version>2.0.0-SNAPSHOT</panorama_.version>
 	</properties>
 
 	<modules>

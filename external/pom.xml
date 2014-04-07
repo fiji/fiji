@@ -722,6 +722,12 @@
 			<version>${fiji-scripting.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>panorama_</artifactId>
+			<version>${panorama_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
