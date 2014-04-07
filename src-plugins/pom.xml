@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>M_I_P</module>
 		<module>Manual_Tracking</module>
 		<module>MosaicJ_</module>
 		<module>Multi_Kymograph</module>
