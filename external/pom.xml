@@ -182,6 +182,12 @@
 			<version>${Samples_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Analyze_Reader_Writer</artifactId>
+			<version>${Analyze_Reader_Writer.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
