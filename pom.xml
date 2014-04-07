@@ -111,6 +111,7 @@
 		<Fiji_Archipelago.version>2.0.0-SNAPSHOT</Fiji_Archipelago.version>
 		<Fiji_Developer.version>2.0.0-SNAPSHOT</Fiji_Developer.version>
 		<Fiji_Package_Maker.version>2.0.0-SNAPSHOT</Fiji_Package_Maker.version>
+		<Fiji_Plugins.version>2.0.0-SNAPSHOT</Fiji_Plugins.version>
 	</properties>
 
 	<modules>
