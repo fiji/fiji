@@ -172,7 +172,6 @@ hs_err*.log
 /plugins/Threshold_Colour-[0-9]*.jar
 /plugins/Time_Stamper-[0-9]*.jar
 /plugins/ToAST_-[0-9]*.jar
-/plugins/Trainable_Segmentation-[0-9]*.jar
 /plugins/TransformJ_-[0-9]*.jar
 /plugins/TurboReg_-[0-9]*.jar
 /plugins/UnwarpJ_-[0-9]*.jar
@@ -234,6 +233,7 @@ hs_err*.log
 /jars/tools-[0-9]*.jar
 /jars/udunits-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
+/plugins/Trainable_Segmentation-[0-9]*.jar
 /plugins/bUnwarpJ_-[0-9]*.jar
 /plugins/Colocalisation_Analysis-[0-9]*.jar
 /plugins/IJ_Robot-[0-9]*.jar
