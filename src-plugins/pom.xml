@@ -120,7 +120,6 @@
 		<module>fiji-scripting</module>
 		<module>imagescience</module>
 		<module>level_sets</module>
-		<module>mij</module>
 		<module>pal-optimization</module>
 		<module>panorama_</module>
 		<module>register_virtual_stack_slices</module>
