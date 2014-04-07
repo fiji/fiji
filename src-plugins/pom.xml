@@ -26,7 +26,6 @@
 	<modules>
 		<module>3D_Blob_Segmentation</module>
 		<module>3D_Objects_Counter</module>
-		<module>3D_Viewer</module>
 		<module>Anisotropic_Diffusion_2D</module>
 		<module>Archipelago_Plugins</module>
 		<module>Auto_Threshold</module>
