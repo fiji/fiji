@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Bug_Submitter</module>
 		<module>CLI_</module>
 		<module>CPU_Meter</module>
 		<module>Calculator_Plus</module>
