@@ -362,6 +362,12 @@
 			<version>${Fiji_Plugins.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Fiji_Updater</artifactId>
+			<version>${Fiji_Updater.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
