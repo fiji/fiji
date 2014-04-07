@@ -129,6 +129,7 @@
 		<Linear_Kuwahara.version>2.0.0-SNAPSHOT</Linear_Kuwahara.version>
 		<LocalThickness_.version>3.1.1-SNAPSHOT</LocalThickness_.version>
 		<MTrack2_.version>2.0.0-SNAPSHOT</MTrack2_.version>
+		<MTrackJ_.version>1.5.1-SNAPSHOT</MTrackJ_.version>
 	</properties>
 
 	<modules>
