@@ -296,6 +296,12 @@
 			<version>${Descriptor_based_registration.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Dichromacy_</artifactId>
+			<version>${Dichromacy_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

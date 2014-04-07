@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Dichromacy_</module>
 		<module>Differentials_</module>
 		<module>Directionality_</module>
 		<module>Extended_Depth_Field</module>
