@@ -71,6 +71,7 @@
 		<javac.version>1.6.0.24-ubuntu-fiji1</javac.version>
 		<TopoJ_.version>2.0.0-SNAPSHOT</TopoJ_.version>
 		<bUnwarpJ_.version>2.6.1-SNAPSHOT</bUnwarpJ_.version>
+		<Trainable_Segmentation.version>2.0.0-SNAPSHOT</Trainable_Segmentation.version>
 	</properties>
 
 	<modules>
