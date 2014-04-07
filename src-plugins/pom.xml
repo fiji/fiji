@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Interactive_3D_Surface_Plot</module>
 		<module>IsoData_Classifier</module>
 		<module>JRuby_Interpreter</module>
 		<module>Javascript_</module>

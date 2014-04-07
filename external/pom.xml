@@ -404,6 +404,12 @@
 			<version>${Image_Expression_Parser.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Interactive_3D_Surface_Plot</artifactId>
+			<version>${Interactive_3D_Surface_Plot.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

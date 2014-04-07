@@ -119,6 +119,7 @@
 		<Helmholtz_Analysis.version>2.0.1-SNAPSHOT</Helmholtz_Analysis.version>
 		<IO_.version>2.0.0-SNAPSHOT</IO_.version>
 		<Image_Expression_Parser.version>2.0.0-SNAPSHOT</Image_Expression_Parser.version>
+		<Interactive_3D_Surface_Plot.version>2.31.1-SNAPSHOT</Interactive_3D_Surface_Plot.version>
 	</properties>
 
 	<modules>
