@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>IsoData_Classifier</module>
 		<module>JRuby_Interpreter</module>
 		<module>Javascript_</module>
 		<module>Jython_Interpreter</module>

@@ -410,6 +410,12 @@
 			<version>${Interactive_3D_Surface_Plot.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>IsoData_Classifier</artifactId>
+			<version>${IsoData_Classifier.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
