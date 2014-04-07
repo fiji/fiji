@@ -127,6 +127,7 @@
 		<Kuwahara_Filter.version>2.0.0-SNAPSHOT</Kuwahara_Filter.version>
 		<Lasso_and_Blow_Tool.version>2.0.0-SNAPSHOT</Lasso_and_Blow_Tool.version>
 		<Linear_Kuwahara.version>2.0.0-SNAPSHOT</Linear_Kuwahara.version>
+		<LocalThickness_.version>3.1.1-SNAPSHOT</LocalThickness_.version>
 	</properties>
 
 	<modules>

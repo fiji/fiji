@@ -452,6 +452,12 @@
 			<version>${Linear_Kuwahara.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>LocalThickness_</artifactId>
+			<version>${LocalThickness_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
