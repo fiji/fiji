@@ -108,6 +108,7 @@
 		<FS_Align_TrakEM2.version>2.0.0-SNAPSHOT</FS_Align_TrakEM2.version>
 		<FeatureJ_.version>1.6.1-SNAPSHOT</FeatureJ_.version>
 		<Feature_Detection.version>2.0.0-SNAPSHOT</Feature_Detection.version>
+		<Fiji_Archipelago.version>2.0.0-SNAPSHOT</Fiji_Archipelago.version>
 	</properties>
 
 	<modules>

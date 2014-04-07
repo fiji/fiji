@@ -338,6 +338,12 @@
 			<version>${Feature_Detection.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Fiji_Archipelago</artifactId>
+			<version>${Fiji_Archipelago.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

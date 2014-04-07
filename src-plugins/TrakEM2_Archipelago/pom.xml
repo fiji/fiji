@@ -25,7 +25,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Archipelago</artifactId>
-			<version>${fiji.version}</version>
+			<version>${Fiji_Archipelago.version}</version>
 		</dependency>
         </dependencies>
 
