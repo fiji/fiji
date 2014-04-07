@@ -81,6 +81,7 @@
 		<pal-optimization.version>2.0.0-SNAPSHOT</pal-optimization.version>
 		<wavelets.version>2.0.0-SNAPSHOT</wavelets.version>
 		<Arrow_.version>2.0.0-SNAPSHOT</Arrow_.version>
+		<Samples_.version>2.0.0-SNAPSHOT</Samples_.version>
 	</properties>
 
 	<modules>
