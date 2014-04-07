@@ -458,6 +458,12 @@
 			<version>${LocalThickness_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>MTrack2_</artifactId>
+			<version>${MTrack2_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

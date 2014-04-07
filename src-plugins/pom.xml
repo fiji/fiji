@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>MTrack2_</module>
 		<module>MTrackJ_</module>
 		<module>M_I_P</module>
 		<module>Manual_Tracking</module>
