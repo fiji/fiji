@@ -88,7 +88,6 @@ hs_err*.log
 /jars/slf4j-log4j12-[0-9]*.jar
 /jars/weave_jy2java-[0-9]*.jar
 /plugins/Fiji_Updater.jar
-/plugins/Lasso_and_Blow_Tool-[0-9]*.jar
 /plugins/Linear_Kuwahara-[0-9]*.jar
 /plugins/LocalThickness_-[0-9]*.jar
 /plugins/MTrack2_-[0-9]*.jar
@@ -230,6 +229,7 @@ hs_err*.log
 /plugins/Javascript_-[0-9]*.jar
 /plugins/Jython_Interpreter-[0-9]*.jar
 /plugins/Kuwahara_Filter-[0-9]*.jar
+/plugins/Lasso_and_Blow_Tool-[0-9]*.jar
 /plugins/Samples_-[0-9]*.jar
 /plugins/Siox_Segmentation-[0-9]*.jar
 /plugins/Trainable_Segmentation-[0-9]*.jar
