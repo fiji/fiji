@@ -25,7 +25,6 @@
 
 	<modules>
 		<module>PIV_analyser</module>
-		<module>Refresh_Javas</module>
 		<module>SPIM_Opener</module>
 		<module>Scala_Interpreter</module>
 		<module>Script_Editor</module>

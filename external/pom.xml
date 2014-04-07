@@ -524,6 +524,12 @@
 			<version>${Reconstruct_Reader.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Refresh_Javas</artifactId>
+			<version>${Refresh_Javas.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

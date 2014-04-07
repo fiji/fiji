@@ -139,6 +139,7 @@
 		<RATS_.version>2.0.0-SNAPSHOT</RATS_.version>
 		<RandomJ_.version>1.5.1-SNAPSHOT</RandomJ_.version>
 		<Reconstruct_Reader.version>2.0.0-SNAPSHOT</Reconstruct_Reader.version>
+		<Refresh_Javas.version>2.0.0-SNAPSHOT</Refresh_Javas.version>
 	</properties>
 
 	<modules>

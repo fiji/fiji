@@ -35,7 +35,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Refresh_Javas</artifactId>
-			<version>${fiji.version}</version>
+			<version>${Refresh_Javas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
