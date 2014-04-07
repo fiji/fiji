@@ -90,7 +90,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>JRuby_Interpreter</artifactId>
-			<version>${fiji.version}</version>
+			<version>${JRuby_Interpreter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
