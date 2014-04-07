@@ -674,6 +674,12 @@
 			<version>${Vaa3d_Reader.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Video_Editing</artifactId>
+			<version>${Video_Editing.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

@@ -164,6 +164,7 @@
 		<VIB-lib.version>2.0.0-SNAPSHOT</VIB-lib.version>
 		<VIB_.version>2.0.0-SNAPSHOT</VIB_.version>
 		<Vaa3d_Reader.version>2.0.0-SNAPSHOT</Vaa3d_Reader.version>
+		<Video_Editing.version>2.0.0-SNAPSHOT</Video_Editing.version>
 	</properties>
 
 	<modules>
