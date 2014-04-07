@@ -85,7 +85,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Clojure_Interpreter</artifactId>
-			<version>${fiji.version}</version>
+			<version>${Clojure_Interpreter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>

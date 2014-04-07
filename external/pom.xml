@@ -260,6 +260,12 @@
 			<version>${Calculator_Plus.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Clojure_Interpreter</artifactId>
+			<version>${Clojure_Interpreter.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
