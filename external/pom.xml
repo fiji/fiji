@@ -344,6 +344,12 @@
 			<version>${Fiji_Archipelago.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Fiji_Developer</artifactId>
+			<version>${Fiji_Developer.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

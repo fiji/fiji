@@ -109,6 +109,7 @@
 		<FeatureJ_.version>1.6.1-SNAPSHOT</FeatureJ_.version>
 		<Feature_Detection.version>2.0.0-SNAPSHOT</Feature_Detection.version>
 		<Fiji_Archipelago.version>2.0.0-SNAPSHOT</Fiji_Archipelago.version>
+		<Fiji_Developer.version>2.0.0-SNAPSHOT</Fiji_Developer.version>
 	</properties>
 
 	<modules>
