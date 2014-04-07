@@ -159,6 +159,7 @@
 		<ToAST_.version>25.0.1-SNAPSHOT</ToAST_.version>
 		<TrakEM2_Archipelago.version>2.0.0-SNAPSHOT</TrakEM2_Archipelago.version>
 		<TransformJ_.version>2.8.1-SNAPSHOT</TransformJ_.version>
+		<TurboReg_.version>2.0.0-SNAPSHOT</TurboReg_.version>
 	</properties>
 
 	<modules>

@@ -644,6 +644,12 @@
 			<version>${TransformJ_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>TurboReg_</artifactId>
+			<version>${TurboReg_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
