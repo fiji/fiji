@@ -128,6 +128,12 @@
 			<version>${Siox_Segmentation.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>imageware</artifactId>
+			<version>${imageware.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

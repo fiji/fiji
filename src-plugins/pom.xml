@@ -119,7 +119,6 @@
 		<module>fiji-lib</module>
 		<module>fiji-scripting</module>
 		<module>imagescience</module>
-		<module>imageware</module>
 		<module>level_sets</module>
 		<module>mij</module>
 		<module>pal-optimization</module>
