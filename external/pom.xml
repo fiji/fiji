@@ -326,6 +326,12 @@
 			<version>${FS_Align_TrakEM2.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>FeatureJ_</artifactId>
+			<version>${FeatureJ_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

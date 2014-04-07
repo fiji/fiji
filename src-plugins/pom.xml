@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>FeatureJ_</module>
 		<module>Feature_Detection</module>
 		<module>Fiji_Archipelago</module>
 		<module>Fiji_Developer</module>
