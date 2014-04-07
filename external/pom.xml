@@ -380,6 +380,12 @@
 			<version>${Graph_Cut.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Gray_Morphology</artifactId>
+			<version>${Gray_Morphology.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
