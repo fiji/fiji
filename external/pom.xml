@@ -194,6 +194,12 @@
 			<version>${ImageJ_3D_Viewer.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>3D_Blob_Segmentation</artifactId>
+			<version>${Fiji_3D_Blob_Segmentation.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
