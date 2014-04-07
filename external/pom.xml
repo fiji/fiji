@@ -212,6 +212,12 @@
 			<version>${Anisotropic_Diffusion_2D.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Archipelago_Plugins</artifactId>
+			<version>${Archipelago_Plugins.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

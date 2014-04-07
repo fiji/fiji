@@ -87,6 +87,7 @@
 		<Fiji_3D_Blob_Segmentation.version>2.0.0-SNAPSHOT</Fiji_3D_Blob_Segmentation.version>
 		<ImageJ_3D_Objects_Counter.version>2.0.0-SNAPSHOT</ImageJ_3D_Objects_Counter.version>
 		<Anisotropic_Diffusion_2D.version>2.0.0-SNAPSHOT</Anisotropic_Diffusion_2D.version>
+		<Archipelago_Plugins.version>0.5.0-SNAPSHOT</Archipelago_Plugins.version>
 	</properties>
 
 	<modules>

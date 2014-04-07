@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Archipelago_Plugins</module>
 		<module>Auto_Threshold</module>
 		<module>BalloonSegmentation_</module>
 		<module>BeanShell_Interpreter</module>
