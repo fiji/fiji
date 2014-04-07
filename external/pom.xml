@@ -422,6 +422,12 @@
 			<version>${JRuby_Interpreter.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Javascript_</artifactId>
+			<version>${Javascript_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

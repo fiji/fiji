@@ -122,6 +122,7 @@
 		<Interactive_3D_Surface_Plot.version>2.31.1-SNAPSHOT</Interactive_3D_Surface_Plot.version>
 		<IsoData_Classifier.version>2.0.0-SNAPSHOT</IsoData_Classifier.version>
 		<JRuby_Interpreter.version>2.0.0-SNAPSHOT</JRuby_Interpreter.version>
+		<Javascript_.version>2.0.0-SNAPSHOT</Javascript_.version>
 	</properties>
 
 	<modules>

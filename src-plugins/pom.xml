@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Javascript_</module>
 		<module>Jython_Interpreter</module>
 		<module>Kuwahara_Filter</module>
 		<module>Lasso_and_Blow_Tool</module>

@@ -95,7 +95,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Javascript_</artifactId>
-			<version>${fiji.version}</version>
+			<version>${Javascript_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
