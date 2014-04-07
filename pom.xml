@@ -158,6 +158,7 @@
 		<Time_Stamper.version>2.0.0-SNAPSHOT</Time_Stamper.version>
 		<ToAST_.version>25.0.1-SNAPSHOT</ToAST_.version>
 		<TrakEM2_Archipelago.version>2.0.0-SNAPSHOT</TrakEM2_Archipelago.version>
+		<TransformJ_.version>2.8.1-SNAPSHOT</TransformJ_.version>
 	</properties>
 
 	<modules>

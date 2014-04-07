@@ -638,6 +638,12 @@
 			<version>${TrakEM2_Archipelago.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>TransformJ_</artifactId>
+			<version>${TransformJ_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

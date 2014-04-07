@@ -25,7 +25,6 @@
 
 	<modules>
 		<module>PIV_analyser</module>
-		<module>TransformJ_</module>
 		<module>TurboReg_</module>
 		<module>UnwarpJ_</module>
 		<module>Updater_Fix</module>
