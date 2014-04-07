@@ -87,7 +87,6 @@ hs_err*.log
 /jars/scala-reflect-[0-9]*.jar
 /jars/slf4j-log4j12-[0-9]*.jar
 /jars/weave_jy2java-[0-9]*.jar
-/plugins/Anisotropic_Diffusion_2D-[0-9]*.jar
 /plugins/Archipelago_Plugins-[0-9]*.jar
 /plugins/Auto_Threshold-[0-9]*.jar
 /plugins/BalloonSegmentation_-[0-9]*.jar
@@ -229,6 +228,7 @@ hs_err*.log
 /plugins/3D_Objects_Counter-[0-9]*.jar
 /plugins/3D_Viewer-[0-9]*.jar
 /plugins/Analyze_Reader_Writer-[0-9]*.jar
+/plugins/Anisotropic_Diffusion_2D-[0-9]*.jar
 /plugins/Arrow_-[0-9]*.jar
 /plugins/Samples_-[0-9]*.jar
 /plugins/Siox_Segmentation-[0-9]*.jar
