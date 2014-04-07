@@ -254,6 +254,12 @@
 			<version>${CPU_Meter.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Calculator_Plus</artifactId>
+			<version>${Calculator_Plus.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
