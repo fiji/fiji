@@ -590,6 +590,12 @@
 			<version>${StackReg_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Stack_Manipulation</artifactId>
+			<version>${Stack_Manipulation.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
