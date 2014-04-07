@@ -25,7 +25,6 @@
 
 	<modules>
 		<module>PIV_analyser</module>
-		<module>SplineDeformationGenerator_</module>
 		<module>StackReg_</module>
 		<module>Stack_Manipulation</module>
 		<module>Statistical_Region_Merging</module>

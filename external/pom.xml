@@ -578,6 +578,12 @@
 			<version>${Snakuscule_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>SplineDeformationGenerator_</artifactId>
+			<version>${SplineDeformationGenerator_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
