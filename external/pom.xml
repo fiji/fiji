@@ -716,6 +716,12 @@
 			<version>${fiji-lib.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>fiji-scripting</artifactId>
+			<version>${fiji-scripting.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

@@ -25,7 +25,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-scripting</artifactId>
-			<version>${fiji.version}</version>
+			<version>${fiji-scripting.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
