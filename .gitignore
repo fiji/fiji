@@ -87,7 +87,6 @@ hs_err*.log
 /jars/scala-reflect-[0-9]*.jar
 /jars/slf4j-log4j12-[0-9]*.jar
 /jars/weave_jy2java-[0-9]*.jar
-/plugins/Differentials_-[0-9]*.jar
 /plugins/Directionality_-[0-9]*.jar
 /plugins/Extended_Depth_Field-[0-9]*.jar
 /plugins/FS_Align_TrakEM2-[0-9]*.jar
@@ -230,6 +229,7 @@ hs_err*.log
 /plugins/CorrectBleach_-[0-9]*.jar
 /plugins/Descriptor_based_registration-[0-9]*.jar
 /plugins/Dichromacy_-[0-9]*.jar
+/plugins/Differentials_-[0-9]*.jar
 /plugins/Samples_-[0-9]*.jar
 /plugins/Siox_Segmentation-[0-9]*.jar
 /plugins/Trainable_Segmentation-[0-9]*.jar
