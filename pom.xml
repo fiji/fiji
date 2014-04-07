@@ -83,6 +83,7 @@
 		<Arrow_.version>2.0.0-SNAPSHOT</Arrow_.version>
 		<Samples_.version>2.0.0-SNAPSHOT</Samples_.version>
 		<Analyze_Reader_Writer.version>2.0.0-SNAPSHOT</Analyze_Reader_Writer.version>
+		<ImageJ_3D_Viewer.version>2.0.0-SNAPSHOT</ImageJ_3D_Viewer.version>
 	</properties>
 
 	<modules>
