@@ -530,6 +530,12 @@
 			<version>${Refresh_Javas.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>SPIM_Opener</artifactId>
+			<version>${SPIM_Opener.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
