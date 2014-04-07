@@ -482,6 +482,12 @@
 			<version>${Manual_Tracking.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>MosaicJ_</artifactId>
+			<version>${MosaicJ_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

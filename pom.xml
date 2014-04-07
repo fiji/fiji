@@ -132,6 +132,7 @@
 		<MTrackJ_.version>1.5.1-SNAPSHOT</MTrackJ_.version>
 		<M_I_P.version>2.0.0-SNAPSHOT</M_I_P.version>
 		<Manual_Tracking.version>2.0.0-SNAPSHOT</Manual_Tracking.version>
+		<MosaicJ_.version>2.0.0-SNAPSHOT</MosaicJ_.version>
 	</properties>
 
 	<modules>
