@@ -88,7 +88,6 @@ hs_err*.log
 /jars/weave_jy2java-[0-9]*.jar
 /plugins/Fiji_Updater.jar
 /plugins/PIV_analyser-[0-9]*.jar
-/plugins/Volume_Calculator-[0-9]*.jar
 /plugins/Volume_Viewer-[0-9]*.jar
 /plugins/blockmatching_-[0-9]*.jar
 /plugins/panorama_-[0-9]*.jar
@@ -233,6 +232,7 @@ hs_err*.log
 /plugins/Vaa3d_Reader-[0-9]*.jar
 /plugins/Video_Editing-[0-9]*.jar
 /plugins/View5D_-[0-9]*.jar
+/plugins/Volume_Calculator-[0-9]*.jar
 /plugins/bUnwarpJ_-[0-9]*.jar
 /plugins/Colocalisation_Analysis-[0-9]*.jar
 /plugins/IJ_Robot-[0-9]*.jar
