@@ -89,7 +89,6 @@ hs_err*.log
 /jars/weave_jy2java-[0-9]*.jar
 /plugins/Fiji_Updater.jar
 /plugins/PIV_analyser-[0-9]*.jar
-/plugins/Scala_Interpreter-[0-9]*.jar
 /plugins/Script_Editor-[0-9]*.jar
 /plugins/Series_Labeler-[0-9]*.jar
 /plugins/SheppLogan_-[0-9]*.jar
@@ -231,6 +230,7 @@ hs_err*.log
 /plugins/Refresh_Javas-[0-9]*.jar
 /plugins/SPIM_Opener-[0-9]*.jar
 /plugins/Samples_-[0-9]*.jar
+/plugins/Scala_Interpreter-[0-9]*.jar
 /plugins/Siox_Segmentation-[0-9]*.jar
 /plugins/Trainable_Segmentation-[0-9]*.jar
 /plugins/bUnwarpJ_-[0-9]*.jar
