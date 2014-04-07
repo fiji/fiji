@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>BalloonSegmentation_</module>
 		<module>BeanShell_Interpreter</module>
 		<module>Bug_Submitter</module>
 		<module>CLI_</module>
