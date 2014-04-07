@@ -123,6 +123,7 @@
 		<IsoData_Classifier.version>2.0.0-SNAPSHOT</IsoData_Classifier.version>
 		<JRuby_Interpreter.version>2.0.0-SNAPSHOT</JRuby_Interpreter.version>
 		<Javascript_.version>2.0.0-SNAPSHOT</Javascript_.version>
+		<Jython_Interpreter.version>2.0.0-SNAPSHOT</Jython_Interpreter.version>
 	</properties>
 
 	<modules>

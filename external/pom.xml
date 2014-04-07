@@ -428,6 +428,12 @@
 			<version>${Javascript_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Jython_Interpreter</artifactId>
+			<version>${Jython_Interpreter.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

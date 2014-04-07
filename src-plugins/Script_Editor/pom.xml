@@ -100,7 +100,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Jython_Interpreter</artifactId>
-			<version>${fiji.version}</version>
+			<version>${Jython_Interpreter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
