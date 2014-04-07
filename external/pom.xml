@@ -206,6 +206,12 @@
 			<version>${ImageJ_3D_Objects_Counter.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Anisotropic_Diffusion_2D</artifactId>
+			<version>${Anisotropic_Diffusion_2D.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
