@@ -144,6 +144,7 @@
 		<Scala_Interpreter.version>1.0.2-SNAPSHOT</Scala_Interpreter.version>
 		<Script_Editor.version>2.0.0-SNAPSHOT</Script_Editor.version>
 		<Series_Labeler.version>2.0.0-SNAPSHOT</Series_Labeler.version>
+		<SheppLogan_.version>2.0.0-SNAPSHOT</SheppLogan_.version>
 	</properties>
 
 	<modules>

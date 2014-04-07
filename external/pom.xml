@@ -554,6 +554,12 @@
 			<version>${Series_Labeler.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>SheppLogan_</artifactId>
+			<version>${SheppLogan_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
