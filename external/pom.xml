@@ -320,6 +320,12 @@
 			<version>${Extended_Depth_Field.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>FS_Align_TrakEM2</artifactId>
+			<version>${FS_Align_TrakEM2.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
