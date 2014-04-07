@@ -680,6 +680,12 @@
 			<version>${Video_Editing.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>View5D_</artifactId>
+			<version>${View5D_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
