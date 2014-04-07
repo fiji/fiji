@@ -152,6 +152,7 @@
 		<StackReg_.version>2.0.0-SNAPSHOT</StackReg_.version>
 		<Stack_Manipulation.version>2.0.0-SNAPSHOT</Stack_Manipulation.version>
 		<Statistical_Region_Merging.version>2.0.0-SNAPSHOT</Statistical_Region_Merging.version>
+		<Sync_Win.version>1.7-fiji2-SNAPSHOT</Sync_Win.version>
 	</properties>
 
 	<modules>

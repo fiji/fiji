@@ -25,7 +25,6 @@
 
 	<modules>
 		<module>PIV_analyser</module>
-		<module>Sync_Win</module>
 		<module>Thread_Killer</module>
 		<module>Threshold_Colour</module>
 		<module>Time_Stamper</module>

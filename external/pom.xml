@@ -602,6 +602,12 @@
 			<version>${Statistical_Region_Merging.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Sync_Win</artifactId>
+			<version>${Sync_Win.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
