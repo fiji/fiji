@@ -25,7 +25,6 @@
 
 	<modules>
 		<module>PIV_analyser</module>
-		<module>QuickPALM_</module>
 		<module>RATS_</module>
 		<module>RandomJ_</module>
 		<module>Reconstruct_Reader</module>
