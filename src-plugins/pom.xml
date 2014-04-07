@@ -120,7 +120,6 @@
 		<module>panorama_</module>
 		<module>register_virtual_stack_slices</module>
 		<module>registration_3d</module>
-		<module>wavelets</module>
 		<module>weave_jy2java</module>
 	</modules>
 

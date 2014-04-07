@@ -30,7 +30,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>wavelets</artifactId>
-			<version>${fiji.version}</version>
+			<version>${wavelets.version}</version>
 		</dependency>
 	</dependencies>
 

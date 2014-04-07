@@ -79,6 +79,7 @@
 		<level_sets.version>1.0.1-SNAPSHOT</level_sets.version>
 		<fake.version>2.0.0-SNAPSHOT</fake.version>
 		<pal-optimization.version>2.0.0-SNAPSHOT</pal-optimization.version>
+		<wavelets.version>2.0.0-SNAPSHOT</wavelets.version>
 	</properties>
 
 	<modules>
