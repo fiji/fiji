@@ -26,7 +26,6 @@
 	<modules>
 		<module>PIV_analyser</module>
 		<module>Updater_Fix</module>
-		<module>fiji-compat</module>
 		<module>fiji-lib</module>
 		<module>fiji-scripting</module>
 		<module>panorama_</module>

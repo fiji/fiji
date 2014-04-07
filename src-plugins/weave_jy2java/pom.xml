@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-compat</artifactId>
-			<version>${fiji.version}</version>
+			<version>${fiji-compat.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>

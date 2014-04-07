@@ -704,6 +704,12 @@
 			<version>${blockmatching_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>fiji-compat</artifactId>
+			<version>${fiji-compat.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
