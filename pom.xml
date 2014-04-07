@@ -142,6 +142,7 @@
 		<Refresh_Javas.version>2.0.0-SNAPSHOT</Refresh_Javas.version>
 		<SPIM_Opener.version>2.0.0-SNAPSHOT</SPIM_Opener.version>
 		<Scala_Interpreter.version>1.0.2-SNAPSHOT</Scala_Interpreter.version>
+		<Script_Editor.version>2.0.0-SNAPSHOT</Script_Editor.version>
 	</properties>
 
 	<modules>

@@ -40,7 +40,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Script_Editor</artifactId>
-			<version>${fiji.version}</version>
+			<version>${Script_Editor.version}</version>
 		</dependency>
 	</dependencies>
 
