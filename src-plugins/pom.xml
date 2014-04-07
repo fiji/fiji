@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Linear_Kuwahara</module>
 		<module>LocalThickness_</module>
 		<module>MTrack2_</module>
 		<module>MTrackJ_</module>

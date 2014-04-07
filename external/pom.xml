@@ -446,6 +446,12 @@
 			<version>${Lasso_and_Blow_Tool.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Linear_Kuwahara</artifactId>
+			<version>${Linear_Kuwahara.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
