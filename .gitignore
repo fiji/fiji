@@ -76,7 +76,6 @@ hs_err*.log
 /fiji.exe
 
 # Files generated from sources in src-plugins/ #
-/jars/fiji-scripting-[0-9]*.jar
 /jars/ij1-patcher-[0-9]*.jar
 /jars/log4j-[0-9]*.jar
 /jars/scala-compiler-[0-9]*.jar
@@ -116,6 +115,7 @@ hs_err*.log
 /jars/fake-[0-9]*.jar
 /jars/fiji-compat-[0-9]*.jar
 /jars/fiji-lib-[0-9]*.jar
+/jars/fiji-scripting-[0-9]*.jar
 /jars/imagescience-[0-9]*.jar
 /jars/imageware-[0-9]*.jar
 /jars/itext-[0-9]*.jar
