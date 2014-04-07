@@ -146,6 +146,12 @@
 			<version>${imagescience.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>level_sets</artifactId>
+			<version>${level_sets.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
