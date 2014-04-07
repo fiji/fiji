@@ -82,7 +82,6 @@ hs_err*.log
 /jars/fiji-scripting-[0-9]*.jar
 /jars/ij1-patcher-[0-9]*.jar
 /jars/log4j-[0-9]*.jar
-/jars/pal-optimization-[0-9]*.jar
 /jars/scala-compiler-[0-9]*.jar
 /jars/scala-library-[0-9]*.jar
 /jars/scala-reflect-[0-9]*.jar
@@ -226,6 +225,7 @@ hs_err*.log
 /jars/legacy-imglib1-[0-9]*.jar
 /jars/mij-[0-9]*.jar
 /jars/mines-jtk-[0-9]*.jar
+/jars/pal-optimization-[0-9]*.jar
 /jars/pentaho-package-manager-[0-9]*.jar
 /jars/postgresql-[0-9]*.jar
 /jars/tools-[0-9]*.jar
