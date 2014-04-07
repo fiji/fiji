@@ -302,6 +302,12 @@
 			<version>${Dichromacy_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Differentials_</artifactId>
+			<version>${Differentials_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

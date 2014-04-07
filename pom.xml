@@ -102,6 +102,7 @@
 		<CorrectBleach_.version>2.0.0-SNAPSHOT</CorrectBleach_.version>
 		<Descriptor_based_registration.version>2.0.0-SNAPSHOT</Descriptor_based_registration.version>
 		<Dichromacy_.version>2.0.0-SNAPSHOT</Dichromacy_.version>
+		<Differentials_.version>2.0.0-SNAPSHOT</Differentials_.version>
 	</properties>
 
 	<modules>
