@@ -89,7 +89,6 @@ hs_err*.log
 /jars/weave_jy2java-[0-9]*.jar
 /plugins/Fiji_Updater.jar
 /plugins/PIV_analyser-[0-9]*.jar
-/plugins/TransformJ_-[0-9]*.jar
 /plugins/TurboReg_-[0-9]*.jar
 /plugins/UnwarpJ_-[0-9]*.jar
 /plugins/VIB_-[0-9]*.jar
@@ -233,6 +232,7 @@ hs_err*.log
 /plugins/Time_Stamper-[0-9]*.jar
 /plugins/ToAST_-[0-9]*.jar
 /plugins/Trainable_Segmentation-[0-9]*.jar
+/plugins/TransformJ_-[0-9]*.jar
 /plugins/bUnwarpJ_-[0-9]*.jar
 /plugins/Colocalisation_Analysis-[0-9]*.jar
 /plugins/IJ_Robot-[0-9]*.jar
