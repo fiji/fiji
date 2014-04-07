@@ -93,7 +93,6 @@ hs_err*.log
 /plugins/Analyze_Reader_Writer-[0-9]*.jar
 /plugins/Anisotropic_Diffusion_2D-[0-9]*.jar
 /plugins/Archipelago_Plugins-[0-9]*.jar
-/plugins/Arrow_-[0-9]*.jar
 /plugins/Auto_Threshold-[0-9]*.jar
 /plugins/BalloonSegmentation_-[0-9]*.jar
 /plugins/BeanShell_Interpreter-[0-9]*.jar
@@ -231,6 +230,7 @@ hs_err*.log
 /jars/udunits-[0-9]*.jar
 /jars/wavelets-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
+/plugins/Arrow_-[0-9]*.jar
 /plugins/Siox_Segmentation-[0-9]*.jar
 /plugins/Trainable_Segmentation-[0-9]*.jar
 /plugins/bUnwarpJ_-[0-9]*.jar
