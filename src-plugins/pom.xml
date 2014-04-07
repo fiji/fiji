@@ -118,7 +118,6 @@
 		<module>fiji-compat</module>
 		<module>fiji-lib</module>
 		<module>fiji-scripting</module>
-		<module>imagescience</module>
 		<module>level_sets</module>
 		<module>pal-optimization</module>
 		<module>panorama_</module>

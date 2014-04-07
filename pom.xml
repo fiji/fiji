@@ -75,6 +75,7 @@
 		<Siox_Segmentation.version>1.0.1-SNAPSHOT</Siox_Segmentation.version>
 		<imageware.version>2.0.0-SNAPSHOT</imageware.version>
 		<mij.version>1.3.6-fiji2-SNAPSHOT</mij.version>
+		<imagescience.version>2.4.2-SNAPSHOT</imagescience.version>
 	</properties>
 
 	<modules>
