@@ -154,6 +154,7 @@
 		<Statistical_Region_Merging.version>2.0.0-SNAPSHOT</Statistical_Region_Merging.version>
 		<Sync_Win.version>1.7-fiji2-SNAPSHOT</Sync_Win.version>
 		<Thread_Killer.version>2.0.0-SNAPSHOT</Thread_Killer.version>
+		<Threshold_Colour.version>2.0.1-SNAPSHOT</Threshold_Colour.version>
 	</properties>
 
 	<modules>

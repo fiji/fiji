@@ -614,6 +614,12 @@
 			<version>${Thread_Killer.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Threshold_Colour</artifactId>
+			<version>${Threshold_Colour.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
