@@ -72,6 +72,7 @@
 		<TopoJ_.version>2.0.0-SNAPSHOT</TopoJ_.version>
 		<bUnwarpJ_.version>2.6.1-SNAPSHOT</bUnwarpJ_.version>
 		<Trainable_Segmentation.version>2.0.0-SNAPSHOT</Trainable_Segmentation.version>
+		<Siox_Segmentation.version>1.0.1-SNAPSHOT</Siox_Segmentation.version>
 	</properties>
 
 	<modules>
