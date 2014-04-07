@@ -518,6 +518,12 @@
 			<version>${RandomJ_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Reconstruct_Reader</artifactId>
+			<version>${Reconstruct_Reader.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
