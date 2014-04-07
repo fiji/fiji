@@ -25,7 +25,6 @@
 
 	<modules>
 		<module>PIV_analyser</module>
-		<module>Scala_Interpreter</module>
 		<module>Script_Editor</module>
 		<module>Series_Labeler</module>
 		<module>SheppLogan_</module>

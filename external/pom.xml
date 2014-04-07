@@ -536,6 +536,12 @@
 			<version>${SPIM_Opener.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Scala_Interpreter</artifactId>
+			<version>${Scala_Interpreter.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
