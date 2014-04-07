@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>VIB-lib</artifactId>
-			<version>${fiji.version}</version>
+			<version>${VIB-lib.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>

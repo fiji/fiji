@@ -656,6 +656,12 @@
 			<version>${UnwarpJ_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>VIB-lib</artifactId>
+			<version>${VIB-lib.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
