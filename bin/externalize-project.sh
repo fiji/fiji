@@ -24,6 +24,14 @@ curl -f -s "$REPOURL" ||
 curl -f --netrc -XPOST -d "{\"name\":\"$name2\"}" https://api.github.com/orgs/fiji/repos ||
 die "Could not create $REPOURL"
 
+test ! -x bin/create-jenkins-job.sh ||
+sh bin/create-jenkins-job.sh "$name2" --deploy-to-imagej="$REPOURL" ||
+die "Could not create Jenkins job"
+
+test ! -x bin/add-default-github-hooks.sh ||
+sh bin/add-default-github-hooks.sh fiji/"$name2" ||
+die "Could not add webhooks to $REPOURL"
+
 git clone -b master . external/"$name" ||
 die "Could not clone to external/$name"
 
