@@ -506,6 +506,12 @@
 			<version>${QuickPALM_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>RATS_</artifactId>
+			<version>${RATS_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
