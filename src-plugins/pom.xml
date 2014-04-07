@@ -114,7 +114,6 @@
 		<module>Volume_Calculator</module>
 		<module>Volume_Viewer</module>
 		<module>blockmatching_</module>
-		<module>fake</module>
 		<module>fiji-compat</module>
 		<module>fiji-lib</module>
 		<module>fiji-scripting</module>

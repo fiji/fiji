@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fake</artifactId>
-			<version>${fiji.version}</version>
+			<version>${fake.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
