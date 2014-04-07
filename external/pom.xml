@@ -698,6 +698,12 @@
 			<version>${Volume_Viewer.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>blockmatching_</artifactId>
+			<version>${blockmatching_.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
