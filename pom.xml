@@ -131,6 +131,7 @@
 		<MTrack2_.version>2.0.0-SNAPSHOT</MTrack2_.version>
 		<MTrackJ_.version>1.5.1-SNAPSHOT</MTrackJ_.version>
 		<M_I_P.version>2.0.0-SNAPSHOT</M_I_P.version>
+		<Manual_Tracking.version>2.0.0-SNAPSHOT</Manual_Tracking.version>
 	</properties>
 
 	<modules>

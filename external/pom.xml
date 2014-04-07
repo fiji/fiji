@@ -476,6 +476,12 @@
 			<version>${M_I_P.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Manual_Tracking</artifactId>
+			<version>${Manual_Tracking.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
