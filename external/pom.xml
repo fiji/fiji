@@ -290,6 +290,12 @@
 			<version>${CorrectBleach_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Descriptor_based_registration</artifactId>
+			<version>${Descriptor_based_registration.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>

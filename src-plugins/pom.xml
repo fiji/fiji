@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Descriptor_based_registration</module>
 		<module>Dichromacy_</module>
 		<module>Differentials_</module>
 		<module>Directionality_</module>
