@@ -73,7 +73,7 @@ while (<>) {
 		next;
 	}
 	if ($in_minimaven_section) {
-		if ($_ eq '' || ($line cmp $_) < 0) {
+		if ($_ eq "" || ($line cmp $_) < 0) {
 			print $line;
 			$in_minimaven_section = 0;
 		}
