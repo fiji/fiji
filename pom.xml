@@ -162,6 +162,7 @@
 		<TurboReg_.version>2.0.0-SNAPSHOT</TurboReg_.version>
 		<UnwarpJ_.version>2.0.0-SNAPSHOT</UnwarpJ_.version>
 		<VIB-lib.version>2.0.0-SNAPSHOT</VIB-lib.version>
+		<VIB_.version>2.0.0-SNAPSHOT</VIB_.version>
 	</properties>
 
 	<modules>
