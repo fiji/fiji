@@ -174,4 +174,5 @@ run("Fill");
 run("Select None");
 selectImage(scratch);
 close();
+run("8-bit");
 setBatchMode(false);
