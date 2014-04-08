@@ -24,7 +24,6 @@
 	</properties>
 
 	<modules>
-		<module>Updater_Fix</module>
 	</modules>
 
 	<repositories>

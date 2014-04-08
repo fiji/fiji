@@ -177,6 +177,7 @@
 		<registration_3d.version>2.0.0-SNAPSHOT</registration_3d.version>
 		<weave_jy2java.version>2.0.0-SNAPSHOT</weave_jy2java.version>
 		<PIV_analyser.version>1.1.1-SNAPSHOT</PIV_analyser.version>
+		<Updater_Fix.version>2.0.0-SNAPSHOT</Updater_Fix.version>
 	</properties>
 
 	<modules>
