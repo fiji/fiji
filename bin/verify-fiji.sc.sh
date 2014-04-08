@@ -5,7 +5,7 @@
 set -e
 
 echo Search
-curl http://fiji.sc/verify-fiji.sc.sh | grep "Sources for HandleExtraFileTypes"
+curl http://fiji.sc/verify-fiji.sc.sh | grep "Sources for verify-fiji.sc"
 
 echo Fiji Wiki
 curl http://fiji.sc/Fiji | grep "Fiji Is Just ImageJ"
