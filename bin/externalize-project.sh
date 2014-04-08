@@ -44,7 +44,10 @@ die "Could not clone to external/$name"
   git commit -s -m "Add SCM location" pom.xml &&
 
   sed -i "s|^\(\t\t<artifactId>pom-fiji\)-plugins\(</artifactId>\)|\1\2|" pom.xml &&
-  git commit -s -m "Switch the parent to pom-fiji" pom.xml &&
+  if ! git diff -- pom.xml
+  then
+    git commit -s -m "Switch the parent to pom-fiji" pom.xml
+  fi &&
 
   cat > .gitignore << EOF &&
 # Eclipse #
