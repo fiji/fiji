@@ -752,12 +752,6 @@
 			<version>${PIV_analyser.version}</version>
 			<scope>runtime</scope>
 		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>Updater_Fix</artifactId>
-			<version>${Updater_Fix.version}</version>
-			<scope>runtime</scope>
-		</dependency>
 	</dependencies>
 
 	<repositories>
