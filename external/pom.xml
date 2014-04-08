@@ -746,6 +746,12 @@
 			<version>${weave_jy2java.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>PIV_analyser</artifactId>
+			<version>${PIV_analyser.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
