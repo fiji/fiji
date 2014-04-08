@@ -36,7 +36,7 @@ git clone -b master . external/"$name" ||
 die "Could not clone to external/$name"
 
 (cd external/"$name" &&
-  git filter-branch -f --prune-empty --subdirectory-filter src-plugins/"$name" &&
+  git filter-branch -f --prune-empty --subdirectory-filter src-plugins/"$name"/ &&
 
   git commit --allow-empty -s -m "Mark first commit of $name in its own repository" -m "Based on $(git log --format='%h(%s)' -1 origin/master -- src-plugins/"$name")." &&
 
