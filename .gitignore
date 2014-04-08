@@ -342,5 +342,4 @@ hs_err*.log
 /jars/vecmath-[0-9]*.jar
 
 # Miscellaneous #
-/jars/Updater_Fix-[0-9]*.jar
 /jars/meta-fiji-external-plugins-[0-9]*.jar
