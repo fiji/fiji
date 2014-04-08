@@ -33,7 +33,7 @@
 		<edu.mines.version>20100113</edu.mines.version>
 		<fiji.version>2.0.0-SNAPSHOT</fiji.version>
 		<itextpdf.version>5.1.1</itextpdf.version>
-		<jama.version>1.0.2</jama.version>
+		<jama.version>1.0.3</jama.version>
 		<java3d.version>1.5.2</java3d.version>
 		<javassist.version>3.16.1-GA</javassist.version>
 		<jcommon.version>1.0.17</jcommon.version>
