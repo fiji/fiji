@@ -181,7 +181,6 @@
 	</properties>
 
 	<modules>
-		<module>src-plugins</module>
 		<module>external</module>
 		<module>modules</module>
 	</modules>
