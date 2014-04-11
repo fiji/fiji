@@ -192,9 +192,26 @@
 			<plugin>
 				<groupId>net.imagej</groupId>
 				<artifactId>imagej-maven-plugin</artifactId>
+				<version>${imagej-maven-plugin.version}</version>
 				<configuration>
 					<deleteOtherVersions>true</deleteOtherVersions>
 				</configuration>
+				<executions>
+					<execution>
+						<id>copy-jars</id>
+						<phase>install</phase>
+						<goals>
+							<goal>copy-jars</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>set-rootdir</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>set-rootdir</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
