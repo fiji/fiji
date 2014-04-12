@@ -47,7 +47,6 @@
 /Interactive_3D_Surface_Plot/
 /IsoData_Classifier/
 /JRuby_Interpreter/
-/Jama/
 /Javascript_/
 /Jython_Interpreter/
 /Kuwahara_Filter/
@@ -94,7 +93,6 @@
 /TransformJ_/
 /TurboReg_/
 /UnwarpJ_/
-/Updater_Fix/
 /VIB-lib/
 /VIB_/
 /Vaa3d_Reader/
@@ -105,14 +103,12 @@
 /Volume_Viewer/
 /bUnwarpJ_/
 /blockmatching_/
-/fake/
 /fiji-compat/
 /fiji-lib/
 /fiji-scripting/
 /imagescience/
 /imageware/
 /javac/
-/jep/
 /level_sets/
 /mij/
 /pal-optimization/
