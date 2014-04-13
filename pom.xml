@@ -89,7 +89,7 @@
 		<Fiji_Plugins.version>2.0.0-SNAPSHOT</Fiji_Plugins.version>
 		<Fiji_Updater.version>2.0.0-SNAPSHOT</Fiji_Updater.version>
 		<FlowJ_.version>1.29.1-SNAPSHOT</FlowJ_.version>
-		<Graph_Cut.version>0.1.1-SNAPSHOT</Graph_Cut.version>
+		<Graph_Cut.version>0.2.0</Graph_Cut.version>
 		<Gray_Morphology.version>2.3.2-SNAPSHOT</Gray_Morphology.version>
 		<Helmholtz_Analysis.version>2.0.1-SNAPSHOT</Helmholtz_Analysis.version>
 		<IJ_Robot.version>1.0.0</IJ_Robot.version>
