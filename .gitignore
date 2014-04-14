@@ -150,6 +150,7 @@ hs_err*.log
 /plugins/3D_Blob_Segmentation-[0-9]*.jar
 /plugins/3D_Objects_Counter-[0-9]*.jar
 /plugins/3D_Viewer-[0-9]*.jar
+/plugins/AnalyzeSkeleton_-[0-9]*.jar
 /plugins/Analyze_Reader_Writer-[0-9]*.jar
 /plugins/Anisotropic_Diffusion_2D-[0-9]*.jar
 /plugins/Archipelago_Plugins-[0-9]*.jar
@@ -162,6 +163,7 @@ hs_err*.log
 /plugins/CPU_Meter-[0-9]*.jar
 /plugins/Calculator_Plus-[0-9]*.jar
 /plugins/Clojure_Interpreter-[0-9]*.jar
+/plugins/Colocalisation_Analysis-[0-9]*.jar
 /plugins/Color_Histogram-[0-9]*.jar
 /plugins/Color_Inspector_3D-[0-9]*.jar
 /plugins/Colour_Deconvolution-[0-9]*.jar
@@ -182,6 +184,7 @@ hs_err*.log
 /plugins/Graph_Cut-[0-9]*.jar
 /plugins/Gray_Morphology-[0-9]*.jar
 /plugins/Helmholtz_Analysis-[0-9]*.jar
+/plugins/IJ_Robot-[0-9]*.jar
 /plugins/IO_-[0-9]*.jar
 /plugins/Image_Expression_Parser-[0-9]*.jar
 /plugins/Interactive_3D_Surface_Plot-[0-9]*.jar
@@ -207,11 +210,13 @@ hs_err*.log
 /plugins/Reconstruct_Reader-[0-9]*.jar
 /plugins/Refresh_Javas-[0-9]*.jar
 /plugins/SPIM_Opener-[0-9]*.jar
+/plugins/SPIM_Registration-[0-9]*.jar
 /plugins/Samples_-[0-9]*.jar
 /plugins/Scala_Interpreter-[0-9]*.jar
 /plugins/Script_Editor-[0-9]*.jar
 /plugins/Series_Labeler-[0-9]*.jar
 /plugins/SheppLogan_-[0-9]*.jar
+/plugins/Sholl_Analysis-[0-9]*.jar
 /plugins/Simple_Neurite_Tracer-[0-9]*.jar
 /plugins/Siox_Segmentation-[0-9]*.jar
 /plugins/Skeletonize3D_-[0-9]*.jar
@@ -220,31 +225,26 @@ hs_err*.log
 /plugins/StackReg_-[0-9]*.jar
 /plugins/Stack_Manipulation-[0-9]*.jar
 /plugins/Statistical_Region_Merging-[0-9]*.jar
+/plugins/Stitching_-[0-9]*.jar
 /plugins/Sync_Win-[0-9]*.jar
 /plugins/Thread_Killer-[0-9]*.jar
 /plugins/Threshold_Colour-[0-9]*.jar
 /plugins/Time_Stamper-[0-9]*.jar
 /plugins/ToAST_-[0-9]*.jar
+/plugins/TopoJ_-[0-9]*.jar
+/plugins/TrackMate_-[0-9]*.jar
 /plugins/Trainable_Segmentation-[0-9]*.jar
 /plugins/TransformJ_-[0-9]*.jar
 /plugins/TurboReg_-[0-9]*.jar
 /plugins/UnwarpJ_-[0-9]*.jar
 /plugins/VIB_-[0-9]*.jar
 /plugins/Vaa3d_Reader-[0-9]*.jar
+/plugins/Vaa3d_Writer-[0-9]*.jar
 /plugins/Video_Editing-[0-9]*.jar
 /plugins/View5D_-[0-9]*.jar
 /plugins/Volume_Calculator-[0-9]*.jar
 /plugins/Volume_Viewer-[0-9]*.jar
 /plugins/bUnwarpJ_-[0-9]*.jar
-/plugins/Colocalisation_Analysis-[0-9]*.jar
-/plugins/IJ_Robot-[0-9]*.jar
-/plugins/SPIM_Registration-[0-9]*.jar
-/plugins/Sholl_Analysis-[0-9]*.jar
-/plugins/Stitching_-[0-9]*.jar
-/plugins/AnalyzeSkeleton_-[0-9]*.jar
-/plugins/TopoJ_-[0-9]*.jar
-/plugins/TrackMate_-[0-9]*.jar
-/plugins/Vaa3d_Writer-[0-9]*.jar
 
 # For maven-download.sh
 /jars/minimaven-[0-9]*.jar
