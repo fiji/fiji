@@ -234,6 +234,7 @@ hs_err*.log
 /plugins/TopoJ_-[0-9]*.jar
 /plugins/TrackMate_-[0-9]*.jar
 /plugins/Trainable_Segmentation-[0-9]*.jar
+/plugins/TrakEM2_Archipelago-[0-9]*.jar
 /plugins/TransformJ_-[0-9]*.jar
 /plugins/TurboReg_-[0-9]*.jar
 /plugins/UnwarpJ_-[0-9]*.jar
@@ -245,6 +246,11 @@ hs_err*.log
 /plugins/Volume_Calculator-[0-9]*.jar
 /plugins/Volume_Viewer-[0-9]*.jar
 /plugins/bUnwarpJ_-[0-9]*.jar
+/plugins/blockmatching_-[0-9]*.jar
+/plugins/level_sets-[0-9]*.jar
+/plugins/panorama_-[0-9]*.jar
+/plugins/register_virtual_stack_slices-[0-9]*.jar
+/plugins/registration_3d-[0-9]*.jar
 
 # For maven-download.sh
 /jars/minimaven-[0-9]*.jar
