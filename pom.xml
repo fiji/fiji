@@ -167,7 +167,8 @@
 		<imagescience.version>2.4.2-SNAPSHOT</imagescience.version>
 		<imageware.version>2.0.0-SNAPSHOT</imageware.version>
 		<javac.version>1.6.0.24-ubuntu-fiji1</javac.version>
-		<jep.version>2.4.1-fiji1-SNAPSHOT</jep.version>
+		<jep.groupId>org.scijava</jep.groupId>
+		<jep.version>2.4.2</jep.version>
 		<legacy-imglib1.version>2.0.0-SNAPSHOT</legacy-imglib1.version>
 		<level_sets.version>1.0.1-SNAPSHOT</level_sets.version>
 		<level_sets.version>1.0.1-SNAPSHOT</level_sets.version>
