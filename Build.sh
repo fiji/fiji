@@ -310,7 +310,7 @@ JAVAC_VERSION="$(maven_helper latest-version sc.fiji:javac)"
 MINIMAVEN_VERSION="$(maven_helper \
 	property-from-pom "$CWD/pom.xml" minimaven.version)"
 maven_update sc.fiji:javac:$JAVAC_VERSION \
-	net.imagej:minimaven:$MINIMAVEN_VERSION
+	org.scijava:minimaven:$MINIMAVEN_VERSION
 
 # Avoid confusing ij-minimaven (obsolete) with minimaven (current)
 for f in "$CWD"/jars/ij-minimaven-*.jar
