@@ -51,6 +51,14 @@ if home != None and path.exists(home + '/.netrc'):
 			break
 	f.close()
 
+from java.io import File
+
+jssecacerts = File('jssecacerts')
+if jssecacerts.exists():
+	from java.lang import System
+
+	System.setProperty('javax.net.ssl.trustStore', jssecacerts.getAbsolutePath())
+
 from fiji import MediaWikiClient
 
 client = MediaWikiClient(url)

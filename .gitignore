@@ -38,6 +38,7 @@
 
 # Wiki monitor #
 /.recent-changes.*
+/jssecacerts
 
 # Micro-Manager #
 *-stamp
