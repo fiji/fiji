@@ -35,34 +35,10 @@ esac
 curl -O http://update.imagej.net/bootstrap.js
 jrunscript bootstrap.js update-force-pristine
 
-# Generate a fake pom.xml for imagej-maven-plugin to use
-cat > pom.xml << EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-		http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-
-	<groupId>$groupId</groupId>
-	<artifactId>$artifactId</artifactId>
-	<version>$version</version>
-
-	<repositories>
-		<!-- NB: for project parent -->
-		<repository>
-			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
-		</repository>
-	</repositories>
-
-</project>
-EOF
-
 # install plugin and dependencies using the imagej-maven-plugin
-rm plugins/$artifactId-[0-9]*.jar
 mvn -Ddelete.other.versions=true -Dimagej.app.directory=$(pwd) \
-	net.imagej:imagej-maven-plugin:0.3.1:copy-jars
+	net.imagej:imagej-maven-plugin:0.5.0:install-artifact \
+	-DgroupId=$groupId -DartifactId=$artifactId -Dversion=$version
 
 # upload complete update site
 ./$launcher --update remove-update-site $update_site
