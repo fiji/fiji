@@ -208,7 +208,7 @@ esac
 # Build.sh and hence needs to be updated.
 
 uptodate () {
-	test -f "$2" &&
+	test -s "$2" &&
 	test "$2" -nt "$1" &&
 	case "$2" in
 	*-SNAPSHOT.jar)
