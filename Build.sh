@@ -236,7 +236,7 @@ force_update=
 maven_helper () {
 	uptodate "$ARGV0" "$MAVEN_HELPER" || {
 		force_update=t
-		if ! curl "$MAVEN_HELPER_URL" > "$MAVEN_HELPER"
+		if ! curl -L "$MAVEN_HELPER_URL" > "$MAVEN_HELPER"
 		then
 			rm "$MAVEN_HELPER"
 			echo "Could not find $MAVEN_HELPER!" >&2
