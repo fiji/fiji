@@ -39,7 +39,7 @@ jrunscript bootstrap.js update-force-pristine
 rm -f "plugins/$artifactId-$version.jar"
 
 # install plugin and dependencies using the imagej-maven-plugin
-mvn -Ddelete.other.versions=true -Dimagej.app.directory=$(pwd) \
+mvn -Ddelete.other.versions=true -Dforce=true -Dimagej.app.directory=$(pwd) \
 	net.imagej:imagej-maven-plugin:0.5.0:install-artifact \
 	-DgroupId=$groupId -DartifactId=$artifactId -Dversion=$version
 
