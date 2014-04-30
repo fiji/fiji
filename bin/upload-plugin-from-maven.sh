@@ -35,6 +35,9 @@ esac
 curl -O http://update.imagej.net/bootstrap.js
 jrunscript bootstrap.js update-force-pristine
 
+# delete the artifact, just in case
+rm -f "plugins/$artifactId-$version.jar"
+
 # install plugin and dependencies using the imagej-maven-plugin
 mvn -Ddelete.other.versions=true -Dimagej.app.directory=$(pwd) \
 	net.imagej:imagej-maven-plugin:0.5.0:install-artifact \
