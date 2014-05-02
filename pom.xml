@@ -71,7 +71,7 @@
 		<Clojure_Interpreter.version>2.0.0-SNAPSHOT</Clojure_Interpreter.version>
 		<Colocalisation_Analysis.version>2.0.0-SNAPSHOT</Colocalisation_Analysis.version>
 		<Color_Histogram.version>2.0.6-SNAPSHOT</Color_Histogram.version>
-		<Color_Inspector_3D.version>2.3-SNAPSHOT</Color_Inspector_3D.version>
+		<Color_Inspector_3D.version>2.4-SNAPSHOT</Color_Inspector_3D.version>
 		<Colour_Deconvolution.version>2.0.0-SNAPSHOT</Colour_Deconvolution.version>
 		<CorrectBleach_.version>2.0.0-SNAPSHOT</CorrectBleach_.version>
 		<Descriptor_based_registration.version>2.0.0-SNAPSHOT</Descriptor_based_registration.version>
