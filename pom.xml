@@ -160,7 +160,7 @@
 		<blockmatching_.version>2.0.0-SNAPSHOT</blockmatching_.version>
 		<fake.version>2.0.0-SNAPSHOT</fake.version>
 		<fiji-compat.version>2.0.0-SNAPSHOT</fiji-compat.version>
-		<fiji-lib.version>2.0.0-SNAPSHOT</fiji-lib.version>
+		<fiji-lib.version>2.0.0</fiji-lib.version>
 		<fiji-scripting.version>2.0.0-SNAPSHOT</fiji-scripting.version>
 		<image5d.version>1.2.5</image5d.version>
 		<imagescience.version>2.4.2-SNAPSHOT</imagescience.version>
