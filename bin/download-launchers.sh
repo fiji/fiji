@@ -24,6 +24,9 @@ case "$mode" in
 snapshots)
 	baseurl=http://maven.imagej.net/service/local/repositories/sonatype-snapshots/content/$groupId/$artifactId
 	;;
+releases)
+	baseurl=http://maven.imagej.net/service/local/repositories/sonatype/content/$groupId/$artifactId
+	;;
 *)
 	baseurl=http://maven.imagej.net/service/local/repo_groups/public/content/$groupId/$artifactId
 	;;
