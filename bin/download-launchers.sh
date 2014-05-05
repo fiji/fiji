@@ -19,8 +19,15 @@ osx*)
 esac
 
 groupId=net/imagej
-artifactId=ij-launcher
-baseurl=http://maven.imagej.net/content/repositories/$mode/$groupId/$artifactId
+artifactId=imagej-launcher
+case "$mode" in
+snapshots)
+	baseurl=http://maven.imagej.net/service/local/repositories/sonatype-snapshots/content/$groupId/$artifactId
+	;;
+*)
+	baseurl=http://maven.imagej.net/service/local/repo_groups/public/content/$groupId/$artifactId
+	;;
+esac
 
 get () {
 	echo "$metadata" |
@@ -67,7 +74,7 @@ download () {
 
 	case $2 in */*) mkdir -p ${2%/*};; esac
 	curl $baseurl/$basename-$1-gcc-executable.nar > $tmpdir/$1.zip
-	unzip -p $tmpdir/$1.zip bin/$1-gcc/ij-launcher$exe > $2
+	unzip -p $tmpdir/$1.zip bin/$1-gcc/imagej-launcher$exe > $2
 	chmod a+x $2
 
 	case $2,$mode in
@@ -119,7 +126,7 @@ download_platform () {
 	esac
 }
 
-curl $baseurl/$basename.nar > jars/ij-launcher-$version.jar
+curl $baseurl/$basename.nar > jars/imagej-launcher-$version.jar
 
 if test -z "$platform"
 then

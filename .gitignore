@@ -96,7 +96,7 @@ hs_err*.log
 /jars/autocomplete-[0-9]*.jar
 /jars/batik-[0-9]*.jar
 /jars/ij-[0-9]*.jar
-/jars/ij-launcher-[0-9]*.jar
+/jars/imagej-launcher-[0-9]*.jar
 /jars/jai-codec-[0-9]*.jar
 /jars/jai-core-[0-9]*.jar
 /jars/jython-[0-9]*.jar
