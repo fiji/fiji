@@ -269,7 +269,7 @@ maven_update () {
 
 		 uptodate "$ARGV0" "$path" && continue
 		 echo "Downloading $gav" >&2
-		 (cd jars/ && maven_helper install "$gav")
+		 (cd jars/ && maven_helper install "$gav") || exit
 		 if test ! -f "$path"
 		 then
 			echo "Failure to download $path" >&2
@@ -306,9 +306,9 @@ EOF
 
 # make sure that javac and minimaven are up-to-date
 
-JAVAC_VERSION="$(maven_helper latest-version sc.fiji:javac)"
+JAVAC_VERSION="$(maven_helper latest-version sc.fiji:javac)" || exit
 MINIMAVEN_VERSION="$(maven_helper \
-	property-from-pom "$CWD/pom.xml" minimaven.version)"
+	property-from-pom "$CWD/pom.xml" minimaven.version)" || exit
 maven_update sc.fiji:javac:$JAVAC_VERSION \
 	org.scijava:minimaven:$MINIMAVEN_VERSION
 
