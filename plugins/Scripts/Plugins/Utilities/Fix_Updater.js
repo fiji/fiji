@@ -64,36 +64,42 @@ if (isCommandLine) {
 }
 
 
-// make sure that the system property 'ij.dir' is set correctly
-if (System.getProperty("ij.dir") == null) {
-	ijDir = IJ.getDirectory("imagej");
-	if (ijDir == null) {
+// make sure that the system property 'imagej.dir' is set correctly
+if (System.getProperty("imagej.dir") == null) {
+	imagejDir = IJ.getDirectory("imagej");
+	if (imagejDir == null) {
 		url = IJ.getClassLoader().loadClass("ij.IJ").getResource("/ij/IJ.class").toString();
 		bang = url.indexOf(".jar!/");
 		if (url.startsWith("jar:file:") && bang > 0) {
-			ijDir = new File(url.substring(9, bang)).getParent();
-			if (ijDir.endsWith("/target") || ijDir.endsWith("\\target"))
-				ijDir = ijDir.substring(0, ijDir.length() - 7);
+			imagejDir = new File(url.substring(9, bang)).getParent();
+			if (imagejDir.endsWith("/target") || imagejDir.endsWith("\\target"))
+				imagejDir = imagejDir.substring(0, imagejDir.length() - 7);
 		}
 		else if (url.startsWith("file:") && bang < 0 && url.endsWith("/ij/IJ.class")) {
-			ijDir = url.substring(5, url.length() - 12);
-			if (ijDir.endsWith("/classes"))
-				ijDir = ijDir.substring(0, ijDir.length() - 8);
-			if (ijDir.endsWith("/target"))
-				ijDir = ijDir.substring(0, ijDir.length() - 7);
+			imagejDir = url.substring(5, url.length() - 12);
+			if (imagejDir.endsWith("/classes"))
+				imagejDir = imagejDir.substring(0, imagejDir.length() - 8);
+			if (imagejDir.endsWith("/target"))
+				imagejDir = imagejDir.substring(0, imagejDir.length() - 7);
 		}
 		else {
-			IJ.error("Cannot set ij.dir for " + url);
+			IJ.error("Cannot set imagej.dir for " + url);
 		}
 	}
-	System.setProperty("ij.dir", ijDir);
+	System.setProperty("imagej.dir", imagejDir);
 }
 
-ijDir = new File(System.getProperty("ij.dir"));
-if (!new File(ijDir, "db.xml.gz").exists()) {
+// for backwards-compatibility, make sure that the system property 'ij.dir'
+// is set correctly, too, just in case
+if (System.getProperty("ij.dir") == null) {
+	System.setProperty("ij.dir", System.getProperty("imagej.dir"));
+}
+
+imagejDir = new File(System.getProperty("imagej.dir"));
+if (!new File(imagejDir, "db.xml.gz").exists()) {
 	IJ.showStatus("adding the Fiji update site");
 	filesClass = loader.loadClass("imagej.updater.core.FilesCollection");
-	files = filesClass.getConstructor([ loader.loadClass("java.io.File") ]).newInstance([ ijDir ]);
+	files = filesClass.getConstructor([ loader.loadClass("java.io.File") ]).newInstance([ imagejDir ]);
 	files.getUpdateSite("ImageJ").timestamp = -1;
 	files.addUpdateSite("Fiji", "http://fiji.sc/update/", null, null, -1);
 	files.write();
