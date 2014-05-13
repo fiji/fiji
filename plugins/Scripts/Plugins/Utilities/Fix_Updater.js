@@ -66,7 +66,10 @@ if (isCommandLine) {
 
 // make sure that the system property 'imagej.dir' is set correctly
 if (System.getProperty("imagej.dir") == null) {
-	imagejDir = IJ.getDirectory("imagej");
+	imagejDir = System.getProperty("ij.dir");
+	if (imagejDir == null) {
+		imagejDir = IJ.getDirectory("imagej");
+	}
 	if (imagejDir == null) {
 		url = IJ.getClassLoader().loadClass("ij.IJ").getResource("/ij/IJ.class").toString();
 		bang = url.indexOf(".jar!/");
