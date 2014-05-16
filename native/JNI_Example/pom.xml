@@ -24,7 +24,6 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>ij</artifactId>
-			<version>${imagej1.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -32,9 +31,8 @@
 			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>${scijava-common.groupId}</groupId>
+			<groupId>org.scijava</groupId>
 			<artifactId>scijava-common</artifactId>
-			<version>${scijava-common.version}</version>
 		</dependency>
 	</dependencies>
 

@@ -24,30 +24,8 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>${bio-formats.groupId}</groupId>
+			<groupId>ome</groupId>
 			<artifactId>bio-formats_plugins</artifactId>
-			<version>${bio-formats.version}</version>
-			<!-- NB: Bio-Formats 5.0.0 erroneously depends on the obsolete
-			         gov.nih.imagej:imagej artifact, which causes a name
-			         clash with net.imagej:ij. So we exclude it. -->
-			<exclusions>
-				<exclusion>
-					<groupId>gov.nih.imagej</groupId>
-					<artifactId>imagej</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>junit</groupId>
-					<artifactId>junit</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.testng</groupId>
-					<artifactId>testng</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>xerces</groupId>
-					<artifactId>xercesImpl</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>

@@ -6,9 +6,9 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>org.scijava</groupId>
-		<artifactId>pom-scijava</artifactId>
-		<version>1.162</version>
+		<groupId>net.imagej</groupId>
+		<artifactId>pom-imagej</artifactId>
+		<version>2.10</version>
 		<relativePath />
 	</parent>
 
@@ -21,9 +21,6 @@
 	<description></description>
 
 	<properties>
-		<bio-formats.groupId>ome</bio-formats.groupId>
-		<bio-formats.version>5.0.0</bio-formats.version>
-
 		<autocomplete.version>2.0.2</autocomplete.version>
 		<batik.version>1.8</batik.version>
 		<beanshell.version>2.0b4</beanshell.version>
@@ -205,6 +202,13 @@
 							<goal>copy-jars</goal>
 						</goals>
 					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.scijava</groupId>
+				<artifactId>scijava-maven-plugin</artifactId>
+				<version>${scijava-maven-plugin.version}</version>
+				<executions>
 					<execution>
 						<id>set-rootdir</id>
 						<phase>validate</phase>

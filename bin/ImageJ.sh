@@ -169,7 +169,7 @@ EOF
 		main_class=fiji.build.Fake
 		;;
 	?,--mini-maven)
-		main_class=imagej.build.MiniMaven
+		main_class=org.scijava.minimaven.MiniMaven
 		;;
 	?,--update)
 		main_class=fiji.updater.Main
@@ -252,7 +252,7 @@ test -z "$needs_tools_jar" || {
 case "$main_class" in
 fiji.Main|ij.ImageJ)
 	ij_options="$main_class -port7 $ij_options"
-	main_class="imagej.ClassLauncher -ijjarpath jars/ -ijjarpath plugins/"
+	main_class="net.imagej.updater.ClassLauncher -ijjarpath jars/ -ijjarpath plugins/"
 	add_classpath "`discover_jar ij-launcher`" "`discover_jar ij`" "`discover_jar javassist`"
 	;;
 fiji.build.Fake)
