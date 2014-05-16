@@ -7,8 +7,6 @@ import ij.io.SaveDialog;
 
 import fiji.User_Plugins;
 
-import imagej.util.LineOutputStream;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
@@ -24,6 +22,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import org.scijava.util.LineOutputStream;
 import org.scijava.util.ReadInto;
 
 class IJLogOutputStream extends LineOutputStream {
