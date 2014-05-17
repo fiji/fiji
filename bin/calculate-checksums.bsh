@@ -1,13 +1,13 @@
 #!/bin/sh
 /*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji */
 
-import imagej.updater.core.Checksummer;
-import imagej.updater.core.FilesCollection;
-import imagej.updater.core.FileObject;
-
-import imagej.updater.util.StderrProgress;
-
 import java.util.Arrays;
+
+import net.imagej.updater.Checksummer;
+import net.imagej.updater.FilesCollection;
+import net.imagej.updater.FileObject;
+
+import net.imagej.updater.util.StderrProgress;
 
 ijDir = new File(System.getProperty("ij.dir"));
 files = new FilesCollection(ijDir);
