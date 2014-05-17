@@ -1,8 +1,6 @@
 #!/bin/sh
 /*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji */
 
-import fiji.build.Fake;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -69,89 +67,6 @@ String editClasspath(String contents, String target, String match, String replac
 ijDir = System.getProperty("ij.dir");
 ijRoot = new File(ijDir);
 DependencyAnalyzer da = new DependencyAnalyzer(ijRoot);
-if (bsh.args.length > 0 && (bsh.args[0].equals("--check-fakefile") || bsh.args[0].equals("--fix-fakefile"))) {
-	fix = bsh.args[0].equals("--fix-fakefile");
-	if (!ijDir.endsWith("/"))
-		ijDir += "/";
-	fake = new Fake();
-	parser = fake.parse(new FileInputStream(ijDir + "Fakefile"),
-		new File(ijDir));
-	parser.parseRules(new ArrayList());
-
-	targets = new ArrayList();
-	if (bsh.args.length > 1)
-		for (i = 1; i < bsh.args.length; i++)
-			targets.add(bsh.args[i]);
-	else
-		for (String target : parser.getAllRules().keySet()) {
-			String className = parser.getRule(target).getClass().getName();
-			if (className.endsWith("CompileJar") || className.endsWith("CompileClass") || className.endsWith("SubFake"))
-				targets.add(target);
-		}
-
-	if (fix)
-		contents = new String(fake.readFile(ijDir + "Fakefile"));
-
-	for (String target : targets) {
-		rule = parser.getRule(target);
-		if (rule == null) {
-			print("No rule found for " + target);
-			continue;
-		}
-		analyzed = new HashSet();
-		dependencies = da.getDependencies(ijRoot, target);
-		if (dependencies == null) {
-			print("No dependencies found for " + target);
-			continue;
-		}
-		for (String dependency : dependencies)
-			analyzed.add(dependency);
-		inFakefile = new HashSet();
-		classPath = rule.getVar("CLASSPATH");
-		if (classPath != null)
-			for (String dependency : fake.split(classPath, ":")) {
-				if (dependency.startsWith(ijDir))
-					dependency = dependency.substring(ijDir.length());
-				inFakefile.add(dependency);
-			}
-
-		message = "";
-		for (String dependency : inFakefile) {
-			if (dependency.endsWith("/tools.jar") &&
-					target.equals("plugins/Script_Editor.jar"))
-				continue;
-			if (!analyzed.contains(dependency)) {
-				message += " " + dependency;
-				if (fix)
-					contents = editClasspath(contents, target, dependency, "");
-			}
-		}
-		if (!message.equals(""))
-			print("Target " + target + " has extra elements in the "
-				+ "classpath:" + message);
-
-		message = "";
-		for (String dependency : analyzed)
-			if (!inFakefile.contains(dependency) &&
-					parser.getRule(dependency) != null) {
-				message += " " + dependency;
-				if (fix)
-					contents = editClasspath(contents, target, "", dependency);
-			}
-
-		if (!message.equals(""))
-			print("Target " + target + " misses elements in the "
-				+ "classpath: " + message);
-	}
-
-	if (fix) {
-		FileOutputStream out = new FileOutputStream(ijDir + "Fakefile");
-		out.write(contents.getBytes());
-		out.close();
-	}
-
-	return;
-}
 
 if (bsh.args[0].equals("-v")) {
 	import ij.IJ;
