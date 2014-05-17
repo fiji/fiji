@@ -12,12 +12,15 @@ importClass(Packages.java.net.URLClassLoader);
 
 baseURL = 'http://update.imagej.net/jars/';
 jars = [
-	'ij-ui-swing-updater-2.0.0-beta-7.6.jar-20131230181631',
-	'miglayout-3.7.3.1-swing.jar-20120404210913',
-	'ij-updater-core-2.0.0-SNAPSHOT.jar-20140113205837',
-	'ij-core-2.0.0-SNAPSHOT.jar-20140106174944',
-	'scijava-common-2.7.0.jar-20131230181631',
-	'eventbus-1.4.jar-20120404210913'
+        'imagej-ui-swing-0.4.0.jar-20140516211031',
+        'imagej-updater-0.3.1.jar-20140516211031',
+        'scijava-common-2.19.1.jar-20140516211031',
+        'imagej-common-0.5.1.jar-20140516211031',
+        'jai_imageio-1.0.1.jar-20130716162630',
+        'mapdb-0.9.7.jar-20131230181631',
+        'udunits-4.3.18.jar-20131018164809',
+        'eventbus-1.4.jar-20120404210913',
+        'gentyref-1.1.0.jar-20140516211031'
 ];
 
 urls = [];
@@ -52,7 +55,7 @@ if (isCommandLine) {
 		}
 	}
 
-	var updaterClassName = "imagej.updater.ui.CommandLine";
+	var updaterClassName = "net.imagej.updater.CommandLine";
 } else {
 	importClass(Packages.ij.IJ);
 
@@ -60,7 +63,7 @@ if (isCommandLine) {
 		var IJ = Thread.currentThread().getContextClassLoader().loadClass('ij.IJ').newInstance();
 	}
 
-	var updaterClassName = "imagej.updater.gui.ImageJUpdater";
+	var updaterClassName = "net.imagej.ui.swing.updater.ImageJUpdater";
 }
 
 
@@ -101,7 +104,7 @@ if (System.getProperty("ij.dir") == null) {
 imagejDir = new File(System.getProperty("imagej.dir"));
 if (!new File(imagejDir, "db.xml.gz").exists()) {
 	IJ.showStatus("adding the Fiji update site");
-	filesClass = loader.loadClass("imagej.updater.core.FilesCollection");
+	filesClass = loader.loadClass("net.imagej.updater.FilesCollection");
 	files = filesClass.getConstructor([ loader.loadClass("java.io.File") ]).newInstance([ imagejDir ]);
 	files.getUpdateSite("ImageJ").timestamp = -1;
 	files.addUpdateSite("Fiji", "http://fiji.sc/update/", null, null, -1);
