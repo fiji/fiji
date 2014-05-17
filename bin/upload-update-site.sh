@@ -89,9 +89,11 @@ done
 
 if [ -n "$FIJI_INITIALIZED" ]
 then
-	./$EXE --update remove-update-site "$UPDATE_SITE_NAME"
+	MODE=edit
+else
+	MODE=add
 fi
-./$EXE --update add-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL" \
+./$EXE --update $MODE-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL" \
 	"webdav:$UPDATE_SITE_USER:$(cat "$PASSWD_FILE")" .
 ./$EXE --update upload-complete-site --force-shadow "$UPDATE_SITE_NAME"
 ./$EXE --update edit-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL"
