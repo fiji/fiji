@@ -163,11 +163,6 @@ EOF
 		needs_tools_jar=t
 		main_class=com.sun.tools.javadoc.Main
 		;;
-	?,--build)
-		echo 'WARNING: The Fiji Build system is DEPRECATED' >&2
-		echo 'Please use (Mini-)Maven instead!' >&2
-		main_class=fiji.build.Fake
-		;;
 	?,--mini-maven)
 		main_class=org.scijava.minimaven.MiniMaven
 		;;
@@ -254,9 +249,6 @@ fiji.Main|ij.ImageJ)
 	ij_options="$main_class -port7 $ij_options"
 	main_class="net.imagej.updater.ClassLauncher -ijjarpath jars/ -ijjarpath plugins/"
 	add_classpath "`discover_jar ij-launcher`" "`discover_jar ij`" "`discover_jar javassist`"
-	;;
-fiji.build.Fake)
-	add_classpath "`discover_jar fake`"
 	;;
 org.apache.tools.ant.Main)
 	for path in "$FIJI_ROOT"/jars/ant*.jar
