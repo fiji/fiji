@@ -352,7 +352,8 @@ done
 
 if test $# = 0 || test "run" = "$*"
 then
-	eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install
+	eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install ||
+	exit
 	update_launcher
 	for name in fiji ImageJ
 	do
@@ -364,7 +365,8 @@ else
 	do
 		case "$name" in
 		fiji|ImageJ)
-			update_launcher
+			update_launcher ||
+			exit
 			uptodate "$LAUNCHER" "$name$exe" ||
 			cp "$LAUNCHER" "$name$exe"
 			continue
@@ -372,12 +374,14 @@ else
 		misc/headless.jar)
 			sh -$- "$CWD/bin/ImageJ.sh" \
 				"$CWD/bin/write-headless-jar.bsh" \
-				"$CWD/misc/headless.jar"
+				"$CWD/misc/headless.jar" ||
+			exit
 			continue
 			;;
 		clean)
 			eval sh -$- \"$CWD/bin/ImageJ.sh\" --mini-maven \
-                                "$OPTIONS" clean
+                                "$OPTIONS" clean ||
+			exit
 			continue
 			;;
 		esac
@@ -389,10 +393,13 @@ else
 			artifactId=${artifactId%-rebuild}
 			artifactId="${artifactId%.jar}"
 			eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven \
-				"$OPTIONS" -DartifactId="$artifactId" -- clean
+				"$OPTIONS" -DartifactId="$artifactId" \
+				-- clean ||
+			exit
 			;;
 		esac
 		eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven \
-			"$OPTIONS" -DartifactId="$artifactId" -- install
+			"$OPTIONS" -DartifactId="$artifactId" -- install ||
+		exit
 	done
 fi
