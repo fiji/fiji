@@ -307,9 +307,12 @@ EOF
 # make sure that javac and minimaven are up-to-date
 
 JAVAC_VERSION="$(maven_helper latest-version sc.fiji:javac)" || exit
+SCIJAVA_COMMON_VERSION="$(maven_helper \
+	property-from-pom "$CWD/pom.xml" scijava-common.version)" || exit
 MINIMAVEN_VERSION="$(maven_helper \
 	property-from-pom "$CWD/pom.xml" minimaven.version)" || exit
 maven_update sc.fiji:javac:$JAVAC_VERSION \
+	org.scijava:scijava-common:$SCIJAVA_COMMON_VERSION \
 	org.scijava:minimaven:$MINIMAVEN_VERSION
 
 # Avoid confusing ij-minimaven (obsolete) with minimaven (current)
