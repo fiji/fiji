@@ -33,7 +33,6 @@ plugins/bio-formats_plugins
 #jars/netcdf-4.3.19
 #jars/perf4j-0.9.13
 #jars/serializer-2.7.1
-#jars/slf4j-api-1.7.2
 #jars/xalan-2.7.1
 
 # Excluded due to naming mismatch:
