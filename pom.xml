@@ -22,7 +22,7 @@
 
 	<properties>
 		<!-- Temporary, until pom-scijava 2.5 comes out -->
-		<minimaven.version>2.1.1</minimaven.version>
+		<minimaven.version>2.1.2</minimaven.version>
 
 		<autocomplete.version>2.0.2</autocomplete.version>
 		<batik.version>1.8</batik.version>
