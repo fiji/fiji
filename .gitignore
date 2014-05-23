@@ -257,7 +257,22 @@ hs_err*.log
 /jars/minimaven-[0-9]*.jar
 
 # SciJava
+/jars/eventbus-[0-9]*.jar
+/jars/gentyref-[0-9]*.jar
 /jars/scijava-common-[0-9]*.jar
+/jars/scijava-plugins-commands-[0-9]*.jar
+/jars/scijava-plugins-platforms-[0-9]*.jar
+/jars/scijava-plugins-text-markdown-[0-9]*.jar
+/jars/scijava-plugins-text-plain-[0-9]*.jar
+/jars/scijava-ui-awt-[0-9]*.jar
+/jars/scijava-ui-swing-[0-9]*.jar
+/jars/scripting-beanshell-[0-9]*.jar
+/jars/scripting-clojure-[0-9]*.jar
+/jars/scripting-java-[0-9]*.jar
+/jars/scripting-javascript-[0-9]*.jar
+/jars/scripting-jruby-[0-9]*.jar
+/jars/scripting-jython-[0-9]*.jar
+/jars/swing-checkbox-tree-[0-9]*.jar
 
 # ImgLib #
 /jars/imglib2-[0-9]*.jar
@@ -320,34 +335,17 @@ hs_err*.log
 
 # ImageJ2 #
 /jars/commons-lang3-[0-9]*.jar
-/jars/eventbus-[0-9]*.jar
-/jars/ij-app-[0-9]*.jar
-/jars/ij-commands-[0-9]*.jar
-/jars/ij-core-[0-9]*.jar
-/jars/ij-data-[0-9]*.jar
-/jars/ij-legacy-[0-9]*.jar
-/jars/ij-options-[0-9]*.jar
-/jars/ij-platforms-[0-9]*.jar
-/jars/ij-scripting-beanshell-[0-9]*.jar
-/jars/ij-scripting-javascript-[0-9]*.jar
-/jars/ij-scripting-clojure-[0-9]*.jar
-/jars/ij-scripting-java-[0-9]*.jar
-/jars/ij-scripting-jruby-[0-9]*.jar
-/jars/ij-scripting-jython-[0-9]*.jar
-/jars/ij-text-[0-9]*.jar
-/jars/ij-tools-[0-9]*.jar
-/jars/ij-ui-[0-9]*.jar
-/jars/ij-ui-common-awt-[0-9]*.jar
-/jars/ij-ui-swing-[0-9]*.jar
-/jars/ij-ui-swing-commands-[0-9]*.jar
-/jars/ij-ui-swing-script-editor-[0-9]*.jar
-/jars/ij-ui-swing-tools-[0-9]*.jar
-/jars/ij-ui-swing-updater-[0-9]*.jar
-/jars/ij-updater-core-[0-9]*.jar
-/jars/ij-updater-ssh-[0-9]*.jar
-/jars/ij-updater-webdav-[0-9]*.jar
-/jars/ij-util-awt-[0-9]*.jar
-/jars/ij-util-swing-[0-9]*.jar
+/jars/imagej-[0-9]*.jar
+/jars/imagej-common-[0-9]*.jar
+/jars/imagej-legacy-[0-9]*.jar
+/jars/imagej-ops-[0-9]*.jar
+/jars/imagej-plugins-commands-[0-9]*.jar
+/jars/imagej-plugins-tools-[0-9]*.jar
+/jars/imagej-plugins-uploader-ssh-[0-9]*.jar
+/jars/imagej-plugins-uploader-webdav-[0-9]*.jar
+/jars/imagej-ui-awt-[0-9]*.jar
+/jars/imagej-ui-swing-[0-9]*.jar
+/jars/imagej-updater-[0-9]*.jar
 /jars/jdatepicker-1.3.2.jar
 /jars/jhotdraw-[0-9]*.jar
 /jars/markdownj-[0-9]*.jar
