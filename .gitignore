@@ -309,9 +309,14 @@ hs_err*.log
 /plugins/bio-formats_plugins-[0-9]*.jar
 
 # SCIFIO #
+/jars/args4j-[0-9]*.jar
 /jars/jai_imageio-[0-9]*.jar
 /jars/mapdb-[0-9]*.jar
 /jars/scifio-[0-9]*.jar
+/jars/scifio-bf-compat-[0-9]*.jar
+/jars/scifio-lifesci-[0-9]*.jar
+/jars/scifio-ome-xml-[0-9]*.jar
+/jars/scifio-tools-[0-9]*.jar
 
 # ImageJ2 #
 /jars/commons-lang3-[0-9]*.jar
