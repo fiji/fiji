@@ -88,7 +88,6 @@ Name					File					Author(s)						Contact								License
 * PostgreSQL JDBC 			postgresql.jar		 		http://jdbc.postgresql.org/ 				http://jdbc.postgresql.org/					BSD
 * RandomJ	 			RandomJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/randomj/		imagescience (see below)
 * Register virtual stack slices 	register_virtual_stack_slices.jar 	Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
-* Script Editor				Script_Editor.jar			Johannes Schindelin et al				fiji@googlegroups.com						BSD
 * Shepp-Logan Phantom			SheppLogan_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/shepplogan/			BIG (see below)
 * Sholl Analysis			Sholl_Analysis.jar			Tiago Ferreira, Tom Maddock				http://fiji.sc/Sholl_Analysis					GPL 3 or later
 * Snakuscule				Snakuscule_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/snakuscule/			BIG (see below)

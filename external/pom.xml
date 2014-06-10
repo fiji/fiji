@@ -451,17 +451,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>Script_Editor</artifactId>
-			<version>${Script_Editor.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>com.sun</groupId>
-					<artifactId>tools</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>Series_Labeler</artifactId>
 			<version>${Series_Labeler.version}</version>
 		</dependency>
