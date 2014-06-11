@@ -4,9 +4,16 @@
  *    Macros>Evaluate Javascript
  *
  * or by hitting Ctrl+J (on MacOSX, Apple+J).
+ *
+ * If this fails, please call Edit>Select All,
+ * Edit>Copy, switch to the main window call
+ * File>New>Script..., Edit>Paste, select
+ * Language>JavaScript and then hit the Run
+ * button.
  */
 
 importClass(Packages.java.io.File);
+importClass(Packages.java.lang.System);
 importClass(Packages.java.net.URL);
 importClass(Packages.java.net.URLClassLoader);
 
@@ -56,9 +63,14 @@ if (isCommandLine) {
 
 	var updaterClassName = "net.imagej.updater.CommandLine";
 } else {
-	importClass(Packages.ij.IJ);
+	try {
+		importClass(Packages.ij.IJ);
+	} catch (e) {
+		// ignore; this is a funny PluginClassLoader problem
+	}
 
 	if (typeof IJ == 'undefined') {
+		importClass(Packages.java.lang.Thread);
 		var IJ = Thread.currentThread().getContextClassLoader().loadClass('ij.IJ').newInstance();
 	}
 
