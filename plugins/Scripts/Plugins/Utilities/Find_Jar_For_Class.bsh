@@ -1,3 +1,4 @@
+import ij.IJ;
 import java.util.Collections;
 
 String stripURL(String url) {
@@ -49,7 +50,6 @@ void printJarName() {
 if (bsh.args == void || bsh.args.length == 0)
 	printJarName();
 else {
-	import ij.IJ;
 	for (String arg : bsh.args)
 		print(getJarName(arg));
 }
