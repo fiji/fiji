@@ -41,7 +41,7 @@ export PATH=$JAVA_HOME/bin:$MAVEN_HOME/bin:$PATH
 test -d "$MAVEN_HOME" ||
 "$FIJI_HOME"/bin/maven.sh --help
 
-JENKINS_URL=http://jenkins.imagej.net/
+JENKINS_URL=http://jenkins.imagej.net:8080/
 NODE_NAME=Windows
 
 cd /bin
