@@ -85,7 +85,10 @@ if (System.getProperty("imagej.dir") == null) {
 	if (imagejDir == null) {
 		imagejDir = IJ.getDirectory("imagej");
 	}
-	if (imagejDir == null) {
+	if (imagejDir != null) {
+		if (imagejDir.endsWith("/jars/") || imagejDir.endsWith("\\jars\\"))
+			imagejDir = imagejDir.substring(0, imagejDir.length() - 5);
+	} else {
 		url = IJ.getClassLoader().loadClass("ij.IJ").getResource("/ij/IJ.class").toString();
 		bang = url.indexOf(".jar!/");
 		if (url.startsWith("jar:file:") && bang > 0) {
