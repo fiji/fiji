@@ -42,6 +42,8 @@ if (isCommandLine) {
 	importClass(Packages.java.lang.System);
 
 	var IJ = {
+		debugMode: false,
+
 		getDirectory: function(label) {
 			// command-line: default to current directory
 			return new File("").getAbsolutePath();
@@ -104,6 +106,7 @@ if (System.getProperty("imagej.dir") == null) {
 	}
 	System.setProperty("imagej.dir", imagejDir);
 }
+if (IJ.debugMode) print('ImageJ directory: ' + imagejDir);
 
 // for backwards-compatibility, make sure that the system property 'ij.dir'
 // is set correctly, too, just in case
