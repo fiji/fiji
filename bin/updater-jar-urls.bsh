@@ -13,6 +13,7 @@ swingUI = c.files.get("jars/imagej-ui-swing.jar");
 cmdLine = c.files.get("jars/imagej-updater.jar");
 list = new ArrayList();
 list.add(swingUI);
+list.add(c.files.get("jars/imagej-plugins-uploader-webdav.jar"));
 for (Object f : cmdLine.getFileDependencies(c.files, true)) {
 	if (!f.getFilename(true).matches("jars/(imglib2|scifio|mapdb|udunits).*")) {
 		list.add(f);
