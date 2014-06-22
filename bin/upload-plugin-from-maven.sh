@@ -41,7 +41,7 @@ rm -f "plugins/$artifactId-$version.jar"
 # install plugin and dependencies using the imagej-maven-plugin
 mvn -Ddelete.other.versions=true -Dforce=true -Dimagej.app.directory=$(pwd) \
 	net.imagej:imagej-maven-plugin:0.5.4:install-artifact \
-	-DgroupId=$groupId -DartifactId=$artifactId -Dversion=$version
+	-Dartifact=$groupId:$artifactId:$version
 
 # upload complete update site
 mode=edit
