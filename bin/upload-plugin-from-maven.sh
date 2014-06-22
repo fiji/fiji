@@ -44,6 +44,13 @@ mvn -Ddelete.other.versions=true -Dforce=true -Dimagej.app.directory=$(pwd) \
 	-Dartifact=$groupId:$artifactId:$version
 
 # upload complete update site
-./$launcher --update edit-update-site $update_site $url "webdav:$webdav_user:$(cat "$HOME/$webdav_user.passwd")" .
+password=
+if test -f "$HOME/$webdav_user.passwd"
+then
+	password=":$(cat "$HOME/$webdav_user.passwd")"
+	echo "Please switch to .netrc method"
+fi
+./$launcher --update edit-update-site $update_site $url "webdav:$webdav_user$password" .
 ./$launcher --update upload-complete-site --force --force-shadow $update_site
+test -z "$password" ||
 ./$launcher --update edit-update-site $update_site $url
