@@ -44,8 +44,6 @@ mvn -Ddelete.other.versions=true -Dforce=true -Dimagej.app.directory=$(pwd) \
 	-Dartifact=$groupId:$artifactId:$version
 
 # upload complete update site
-mode=edit
-test -f db.xml.gz || mode=add
-./$launcher --update $mode-update-site $update_site $url "webdav:$webdav_user:$(cat "$HOME/$webdav_user.passwd")" .
+./$launcher --update edit-update-site $update_site $url "webdav:$webdav_user:$(cat "$HOME/$webdav_user.passwd")" .
 ./$launcher --update upload-complete-site --force --force-shadow $update_site
 ./$launcher --update edit-update-site $update_site $url
