@@ -135,6 +135,7 @@ try {
 	if (isCommandLine) {
 		i.main(arguments);
 	} else {
+		Thread.currentThread().setName("Updating the Updater itself!");
 		i.run();
 	}
 } catch (e) {
