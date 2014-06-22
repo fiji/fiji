@@ -19,12 +19,11 @@ importClass(Packages.java.net.URLClassLoader);
 
 baseURL = 'http://update.imagej.net/jars/';
 jars = [
-	'imagej-ui-swing-0.4.6.jar-20140609213633',
-	'imagej-updater-0.3.6.jar-20140607183739',
-	'scijava-common-2.22.5.jar-20140610214546',
-	'imagej-common-0.7.2.jar-20140603151316',
-	'mapdb-1.0.3.jar-20140610190158',
-	'udunits-4.3.18.jar-20131018164809',
+	'imagej-ui-swing-0.4.7.jar-20140620201423',
+	'imagej-plugins-uploader-webdav-0.1.1.jar-20140516211031',
+	'imagej-updater-0.3.9.jar-20140620201423',
+	'scijava-common-2.24.0.jar-20140620201423',
+	'imagej-common-0.7.6.jar-20140620201423',
 	'eventbus-1.4.jar-20120404210913',
 	'gentyref-1.1.0.jar-20140516211031'
 ];
@@ -43,6 +42,8 @@ if (isCommandLine) {
 	importClass(Packages.java.lang.System);
 
 	var IJ = {
+		debugMode: false,
+
 		getDirectory: function(label) {
 			// command-line: default to current directory
 			return new File("").getAbsolutePath();
@@ -84,7 +85,10 @@ if (System.getProperty("imagej.dir") == null) {
 	if (imagejDir == null) {
 		imagejDir = IJ.getDirectory("imagej");
 	}
-	if (imagejDir == null) {
+	if (imagejDir != null) {
+		if (imagejDir.endsWith("/jars/") || imagejDir.endsWith("\\jars\\"))
+			imagejDir = imagejDir.substring(0, imagejDir.length() - 5);
+	} else {
 		url = IJ.getClassLoader().loadClass("ij.IJ").getResource("/ij/IJ.class").toString();
 		bang = url.indexOf(".jar!/");
 		if (url.startsWith("jar:file:") && bang > 0) {
@@ -105,6 +109,7 @@ if (System.getProperty("imagej.dir") == null) {
 	}
 	System.setProperty("imagej.dir", imagejDir);
 }
+if (IJ.debugMode) print('ImageJ directory: ' + imagejDir);
 
 // for backwards-compatibility, make sure that the system property 'ij.dir'
 // is set correctly, too, just in case
@@ -130,6 +135,7 @@ try {
 	if (isCommandLine) {
 		i.main(arguments);
 	} else {
+		Thread.currentThread().setName("Updating the Updater itself!");
 		i.run();
 	}
 } catch (e) {
