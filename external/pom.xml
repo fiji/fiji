@@ -126,11 +126,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>fake</artifactId>
-			<version>${fake.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>pal-optimization</artifactId>
 			<version>${pal-optimization.version}</version>
 		</dependency>
