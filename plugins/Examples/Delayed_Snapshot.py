@@ -5,7 +5,8 @@
 # 2 - invoking the function via thread.start_new_thread,
 #     which runs it in a separate thread.
 
-
+from ij import IJ
+from ij.gui import GenericDialog
 import thread
 import time
 
