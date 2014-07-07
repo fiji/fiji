@@ -1,3 +1,5 @@
+from ij import IJ, WindowManager
+from ij.gui import Toolbar
 from time import sleep
 
 w = 40
