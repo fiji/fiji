@@ -16,6 +16,7 @@ importClass(Packages.java.io.File);
 importClass(Packages.java.lang.System);
 importClass(Packages.java.net.URL);
 importClass(Packages.java.net.URLClassLoader);
+importClass(Packages.java.util.regex.Pattern);
 
 baseURL = 'http://update.imagej.net/jars/';
 jars = [
@@ -28,15 +29,27 @@ jars = [
 	'gentyref-1.1.0.jar-20140516211031'
 ];
 
+isCommandLine = typeof arguments != 'undefined';
+
 urls = [];
-for (i = 0; i < jars.length; i++)
+remoteCount = localCount = 0;
+pattern = Pattern.compile("^(.*/)?([^/]*\\.jar)-[0-9]+$");
+for (i = 0; i < jars.length; i++) {
+	if (isCommandLine && (matcher = pattern.matcher(jars[i])).matches()) {
+		file = new File("jars/" + matcher.group(2));
+		if (file.exists()) {
+			urls[i] = file.toURI().toURL();
+			localCount++;
+			continue;
+		}
+	}
 	urls[i] = new URL(baseURL + jars[i]);
+	remoteCount++;
+}
 
 importClass(Packages.java.lang.ClassLoader);
 parent = ClassLoader.getSystemClassLoader().getParent();
 loader = new URLClassLoader(urls, parent);
-
-isCommandLine = typeof arguments != 'undefined';
 
 if (isCommandLine) {
 	importClass(Packages.java.lang.System);
@@ -129,9 +142,15 @@ if (!new File(imagejDir, "db.xml.gz").exists()) {
 	files.write();
 }
 
-IJ.showStatus("loading remote updater");
+if (remoteCount > 0) {
+	suffix = (localCount > 0 ? "partially " : "") + "remote updater";
+} else {
+	suffix = "local updater";
+}
+
+IJ.showStatus("loading " + suffix);
 updaterClass = loader.loadClass(updaterClassName);
-IJ.showStatus("running remote updater");
+IJ.showStatus("running " + suffix);
 try {
 	i = updaterClass.newInstance();
 	if (isCommandLine) {
