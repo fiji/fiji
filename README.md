@@ -3,25 +3,20 @@ This is Fiji
 
 [ Fiji Is Just ImageJ ]
 
-Fiji provides an easy way to set up Java, ImageJ and a lot of plugins
-that are useful to biologists, geologists and every other scientist who
-wants to process images.
+Fiji is a distribution of [ImageJ](http://imagej.net/), a popular, free
+scientific image processing application. Fiji adds a couple of plugins
+that are useful to life scientists analysing images.
 
 At the moment, the following platforms are supported:
 
-- Windows Intel 32-bit
-- Windows Intel 64-bit
-- Linux Intel 32-bit
-- Linux Intel 64-bit
-- MacOSX PowerPC 32-bit
-- MacOSX Intel 32-bit
-- MacOSX Intel 64-bit
+- Windows Intel 32-bit/64-bit
+- Linux Intel 32-bit/64-bit
+- MacOSX Intel 32-bit/64-bit (partial support for PowerPC 32-bit)
 - all platforms supporting Java and a POSIX shell, via bin/ImageJ.sh
 
-The setup should be as easy as unpacking the (portable) application and
-starting the Java wrapper. The wrapper is a program that starts the Java
-machine hands-free, i.e. it sets the correct settings to start up ImageJ
-with the plugins directory and heap size set up for you.
+The setup is as easy as unpacking the portable archive and
+double-clicking the [ImageJ
+launcher](https://github.com/imagej/imagej-launcher).
 
 Fiji is intended to be the most painless, easy, quick and convenient way
 to install ImageJ and plugins and keep everything up-to-date.
@@ -51,63 +46,40 @@ Open Source
 
 We are dedicated to open source. Not only does open source allow other
 developers to port the application to new platforms that the original
-authors did not begin to think of, it permits others to use the program
-in totally new ways, and enhance it in all imaginable ways.
+authors did not begin to think of, it allows scientists to study the
+code to understand the inner workings of the algorithms used, and it
+permits others to use the program in totally new ways, and enhance it in
+all imaginable ways.
 
-Therefore, Fiji is licensed under the GNU Public License, version 2 (of
-course, this license only applies to Fiji: the build system and the Java
-wrapper). Not version 3, because we think that it is not our job to
-educate everybody to be a decent person; that's every person's own job.
-
-In the same vein, Fiji will contain only Open Source software, unless
-there are good reasons for a non-open sourced component to be included.
-
-But those would need to be _very_ compelling reasons.
+Therefore, the majority of Fiji is licensed under the GNU Public License
+version 2. Exceptions are listed in the
+[LICENSES](https://github.com/fiji/fiji/blob/master/LICENSES) file.
 
 Participating
 -------------
 
-Pull Requests are very welcome!
+[Pull Requests](https://help.github.com/articles/using-pull-requests)
+are very welcome!
 
 Authors
 -------
 
-* Albert Cardona
-* Benjamin Schmid
-* Cornelius Sicker
-* Curtis Rueden
-* Dan White
-* Daniel Hornung
-* Erwin Frise
-* Gabriel Landini
-* Greg Jefferis
-* Ignacio Arganda-Carreras
-* Jan Eglinger
-* Jean-Yves Tinevez
-* Johannes Schindelin
-* Jolly Jenkins
-* Kota Miura
-* Larry Lindsey
-* Mark Longair
-* Niko Ehrenfeuchter
-* Pavel Tomancak
-* Stephan Preibisch
-* Stephan Saalfeld
-* Tiago Ferreira
-* Tom Kazimiers
-* Verena Kaynig
-* Wayne Rasband
-* and all the good people providing ImageJ and plugins
-
-See also http://fiji.sc/Contributors
+Fiji was created and is maintained by Johannes Schindelin, ImageJ 1.x
+was created and is maintained by Wayne Rasband, ImageJ2 was created and
+is maintained and actively developed by Curtis Rueden. For a list of
+most recent contributors, please refer to the
+[Contributors](http://imagej.net/Contributors) page of the Fiji/ImageJ
+wiki.
 
 Thanks
 ------
 
-Our first and foremost thanks go to Wayne Rasband, who is not only a
-very dedicated developer; he also fosters an active and friendly
+We are very grateful to Wayne Rasband, who is not only a very dedicated
+developer of ImageJ 1.x; he also fosters an active and friendly
 community around ImageJ.
 
-The rest of our thanks go to everybody who helped this project prosper.
+We are especially grateful to be part of an outstanding
+[community](http://imagej.net/Mailing_Lists) who is active, friendly and
+helping to scientists understanding and analysing images every day.
 
 Oh, and Fiji is also an island. We just wanted to let you know.
