@@ -125,7 +125,7 @@
 		<Scala_Interpreter.version>1.0.2-SNAPSHOT</Scala_Interpreter.version>
 		<Series_Labeler.version>2.0.0-SNAPSHOT</Series_Labeler.version>
 		<SheppLogan_.version>2.0.0-SNAPSHOT</SheppLogan_.version>
-		<Sholl_Analysis.version>3.4.1</Sholl_Analysis.version>
+		<Sholl_Analysis.version>3.4.2</Sholl_Analysis.version>
 		<Simple_Neurite_Tracer.version>2.0.2-SNAPSHOT</Simple_Neurite_Tracer.version>
 		<Siox_Segmentation.version>1.0.1-SNAPSHOT</Siox_Segmentation.version>
 		<Skeletonize3D_.version>1.0.1-SNAPSHOT</Skeletonize3D_.version>
