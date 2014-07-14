@@ -87,13 +87,7 @@ done
 
 # -- Upload files to the update site! --
 
-if [ -n "$FIJI_INITIALIZED" ]
-then
-	MODE=edit
-else
-	MODE=add
-fi
-./$EXE --update $MODE-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL" \
+./$EXE --update edit-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL" \
 	"webdav:$UPDATE_SITE_USER:$(cat "$PASSWD_FILE")" .
 ./$EXE --update upload-complete-site --force-shadow "$UPDATE_SITE_NAME"
 ./$EXE --update edit-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL"
