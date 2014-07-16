@@ -54,12 +54,12 @@
 		<Analyze_Reader_Writer.version>2.0.0-SNAPSHOT</Analyze_Reader_Writer.version>
 		<Anisotropic_Diffusion_2D.version>2.0.0-SNAPSHOT</Anisotropic_Diffusion_2D.version>
 		<Archipelago_Plugins.version>0.5.0-SNAPSHOT</Archipelago_Plugins.version>
-		<Arrow_.version>2.0.0-SNAPSHOT</Arrow_.version>
+		<Arrow.version>2.0.0-SNAPSHOT</Arrow.version>
 		<Auto_Threshold.version>1.16-SNAPSHOT</Auto_Threshold.version>
-		<BalloonSegmentation_.version>2.0.0-SNAPSHOT</BalloonSegmentation_.version>
+		<BalloonSegmentation.version>2.0.0-SNAPSHOT</BalloonSegmentation.version>
 		<BeanShell_Interpreter.version>2.0.0-SNAPSHOT</BeanShell_Interpreter.version>
 		<Bug_Submitter.version>2.0.0-SNAPSHOT</Bug_Submitter.version>
-		<CLI_.version>2.0.0-SNAPSHOT</CLI_.version>
+		<CLI.version>2.0.0-SNAPSHOT</CLI.version>
 		<CPU_Meter.version>2.0.0-SNAPSHOT</CPU_Meter.version>
 		<Calculator_Plus.version>2.0.0-SNAPSHOT</Calculator_Plus.version>
 		<Clojure_Interpreter.version>2.0.0-SNAPSHOT</Clojure_Interpreter.version>
@@ -67,14 +67,14 @@
 		<Color_Histogram.version>2.0.6-SNAPSHOT</Color_Histogram.version>
 		<Color_Inspector_3D.version>2.4-SNAPSHOT</Color_Inspector_3D.version>
 		<Colour_Deconvolution.version>2.0.0-SNAPSHOT</Colour_Deconvolution.version>
-		<CorrectBleach_.version>2.0.0-SNAPSHOT</CorrectBleach_.version>
+		<CorrectBleach.version>2.0.0-SNAPSHOT</CorrectBleach.version>
 		<Descriptor_based_registration.version>2.0.0-SNAPSHOT</Descriptor_based_registration.version>
-		<Dichromacy_.version>2.0.0-SNAPSHOT</Dichromacy_.version>
-		<Differentials_.version>2.0.0-SNAPSHOT</Differentials_.version>
-		<Directionality_.version>2.0.1-SNAPSHOT</Directionality_.version>
+		<Dichromacy.version>2.0.0-SNAPSHOT</Dichromacy.version>
+		<Differentials.version>2.0.0-SNAPSHOT</Differentials.version>
+		<Directionality.version>2.0.1-SNAPSHOT</Directionality.version>
 		<Extended_Depth_Field.version>2.0.0-SNAPSHOT</Extended_Depth_Field.version>
 		<FS_Align_TrakEM2.version>2.0.0-SNAPSHOT</FS_Align_TrakEM2.version>
-		<FeatureJ_.version>1.6.1-SNAPSHOT</FeatureJ_.version>
+		<FeatureJ.version>1.6.1-SNAPSHOT</FeatureJ.version>
 		<Feature_Detection.version>2.0.0-SNAPSHOT</Feature_Detection.version>
 		<Fiji_3D_Blob_Segmentation.version>2.0.0-SNAPSHOT</Fiji_3D_Blob_Segmentation.version>
 		<Fiji_Archipelago.version>2.0.0-SNAPSHOT</Fiji_Archipelago.version>
@@ -82,50 +82,50 @@
 		<Fiji_Package_Maker.version>2.0.0-SNAPSHOT</Fiji_Package_Maker.version>
 		<Fiji_Plugins.version>2.0.0-SNAPSHOT</Fiji_Plugins.version>
 		<Fiji_Updater.version>2.0.0-SNAPSHOT</Fiji_Updater.version>
-		<FlowJ_.version>1.29.1-SNAPSHOT</FlowJ_.version>
+		<FlowJ.version>1.29.1-SNAPSHOT</FlowJ.version>
 		<Graph_Cut.version>0.2.0</Graph_Cut.version>
 		<Gray_Morphology.version>2.3.2-SNAPSHOT</Gray_Morphology.version>
 		<Helmholtz_Analysis.version>2.0.1-SNAPSHOT</Helmholtz_Analysis.version>
 		<IJ_Robot.version>1.0.0</IJ_Robot.version>
-		<IO_.version>2.0.0-SNAPSHOT</IO_.version>
+		<IO.version>2.0.0-SNAPSHOT</IO.version>
 		<ImageJ_3D_Objects_Counter.version>2.0.0-SNAPSHOT</ImageJ_3D_Objects_Counter.version>
 		<ImageJ_3D_Viewer.version>2.0.0-SNAPSHOT</ImageJ_3D_Viewer.version>
 		<Image_Expression_Parser.version>2.0.0-SNAPSHOT</Image_Expression_Parser.version>
 		<Interactive_3D_Surface_Plot.version>2.31.1-SNAPSHOT</Interactive_3D_Surface_Plot.version>
 		<IsoData_Classifier.version>2.0.0-SNAPSHOT</IsoData_Classifier.version>
 		<JRuby_Interpreter.version>2.0.0-SNAPSHOT</JRuby_Interpreter.version>
-		<Javascript_.version>2.0.0-SNAPSHOT</Javascript_.version>
+		<Javascript.version>2.0.0-SNAPSHOT</Javascript.version>
 		<Jython_Interpreter.version>2.0.0-SNAPSHOT</Jython_Interpreter.version>
 		<Kuwahara_Filter.version>2.0.0-SNAPSHOT</Kuwahara_Filter.version>
 		<Lasso_and_Blow_Tool.version>2.0.0-SNAPSHOT</Lasso_and_Blow_Tool.version>
 		<Linear_Kuwahara.version>2.0.0-SNAPSHOT</Linear_Kuwahara.version>
-		<LocalThickness_.version>3.1.1-SNAPSHOT</LocalThickness_.version>
-		<MTrack2_.version>2.0.0-SNAPSHOT</MTrack2_.version>
-		<MTrackJ_.version>1.5.1-SNAPSHOT</MTrackJ_.version>
+		<LocalThickness.version>3.1.1-SNAPSHOT</LocalThickness.version>
+		<MTrack2.version>2.0.0-SNAPSHOT</MTrack2.version>
+		<MTrackJ.version>1.5.1-SNAPSHOT</MTrackJ.version>
 		<M_I_P.version>2.0.0-SNAPSHOT</M_I_P.version>
 		<Manual_Tracking.version>2.0.0-SNAPSHOT</Manual_Tracking.version>
-		<MosaicJ_.version>2.0.0-SNAPSHOT</MosaicJ_.version>
+		<MosaicJ.version>2.0.0-SNAPSHOT</MosaicJ.version>
 		<Multi_Kymograph.version>2.0.0-SNAPSHOT</Multi_Kymograph.version>
 		<PIV_analyser.version>1.1.1-SNAPSHOT</PIV_analyser.version>
-		<PointPicker_.version>2.0.0-SNAPSHOT</PointPicker_.version>
-		<QuickPALM_.version>1.1.1-SNAPSHOT</QuickPALM_.version>
-		<RATS_.version>2.0.0-SNAPSHOT</RATS_.version>
-		<RandomJ_.version>1.5.1-SNAPSHOT</RandomJ_.version>
+		<PointPicker.version>2.0.0-SNAPSHOT</PointPicker.version>
+		<QuickPALM.version>1.1.1-SNAPSHOT</QuickPALM.version>
+		<RATS.version>2.0.0-SNAPSHOT</RATS.version>
+		<RandomJ.version>1.5.1-SNAPSHOT</RandomJ.version>
 		<Reconstruct_Reader.version>2.0.0-SNAPSHOT</Reconstruct_Reader.version>
 		<Refresh_Javas.version>2.0.0-SNAPSHOT</Refresh_Javas.version>
 		<SPIM_Opener.version>2.0.0-SNAPSHOT</SPIM_Opener.version>
 		<SPIM_Registration.version>2.0.0-SNAPSHOT</SPIM_Registration.version>
-		<Samples_.version>2.0.0-SNAPSHOT</Samples_.version>
+		<Samples.version>2.0.0-SNAPSHOT</Samples.version>
 		<Scala_Interpreter.version>1.0.2-SNAPSHOT</Scala_Interpreter.version>
 		<Series_Labeler.version>2.0.0-SNAPSHOT</Series_Labeler.version>
-		<SheppLogan_.version>2.0.0-SNAPSHOT</SheppLogan_.version>
+		<SheppLogan.version>2.0.0-SNAPSHOT</SheppLogan.version>
 		<Sholl_Analysis.version>3.4.2</Sholl_Analysis.version>
 		<Simple_Neurite_Tracer.version>2.0.2-SNAPSHOT</Simple_Neurite_Tracer.version>
 		<Siox_Segmentation.version>1.0.1-SNAPSHOT</Siox_Segmentation.version>
-		<Skeletonize3D_.version>1.0.1-SNAPSHOT</Skeletonize3D_.version>
-		<Snakuscule_.version>2.0.0-SNAPSHOT</Snakuscule_.version>
-		<SplineDeformationGenerator_.version>2.0.0-SNAPSHOT</SplineDeformationGenerator_.version>
-		<StackReg_.version>2.0.0-SNAPSHOT</StackReg_.version>
+		<Skeletonize3D.version>1.0.1-SNAPSHOT</Skeletonize3D.version>
+		<Snakuscule.version>2.0.0-SNAPSHOT</Snakuscule.version>
+		<SplineDeformationGenerator.version>2.0.0-SNAPSHOT</SplineDeformationGenerator.version>
+		<StackReg.version>2.0.0-SNAPSHOT</StackReg.version>
 		<Stack_Manipulation.version>2.0.0-SNAPSHOT</Stack_Manipulation.version>
 		<Statistical_Region_Merging.version>2.0.0-SNAPSHOT</Statistical_Region_Merging.version>
 		<Stitching.version>2.0.0-SNAPSHOT</Stitching.version>
@@ -134,24 +134,24 @@
 		<Threshold_Colour.version>2.0.1-SNAPSHOT</Threshold_Colour.version>
 		<Time_Lapse.version>2.0.0</Time_Lapse.version>
 		<Time_Stamper.version>2.0.0-SNAPSHOT</Time_Stamper.version>
-		<ToAST_.version>25.0.1-SNAPSHOT</ToAST_.version>
-		<TopoJ_.version>2.0.0-SNAPSHOT</TopoJ_.version>
+		<ToAST.version>25.0.1-SNAPSHOT</ToAST.version>
+		<TopoJ.version>2.0.0-SNAPSHOT</TopoJ.version>
 		<TrackMate.version>2.3.0-SNAPSHOT</TrackMate.version>
 		<Trainable_Segmentation.version>2.0.0</Trainable_Segmentation.version>
 		<TrakEM2_Archipelago.version>2.0.0-SNAPSHOT</TrakEM2_Archipelago.version>
-		<TransformJ_.version>2.8.1-SNAPSHOT</TransformJ_.version>
-		<TurboReg_.version>2.0.0-SNAPSHOT</TurboReg_.version>
-		<UnwarpJ_.version>2.0.0-SNAPSHOT</UnwarpJ_.version>
+		<TransformJ.version>2.8.1-SNAPSHOT</TransformJ.version>
+		<TurboReg.version>2.0.0-SNAPSHOT</TurboReg.version>
+		<UnwarpJ.version>2.0.0-SNAPSHOT</UnwarpJ.version>
 		<VIB-lib.version>2.0.0-SNAPSHOT</VIB-lib.version>
-		<VIB_.version>2.0.0-SNAPSHOT</VIB_.version>
+		<VIB.version>2.0.0-SNAPSHOT</VIB.version>
 		<Vaa3d_Reader.version>2.0.0-SNAPSHOT</Vaa3d_Reader.version>
 		<Vaa3d_Writer.version>1.0.0</Vaa3d_Writer.version>
 		<Video_Editing.version>2.0.0-SNAPSHOT</Video_Editing.version>
-		<View5D_.version>1.3.1-SNAPSHOT</View5D_.version>
+		<View5D.version>1.3.1-SNAPSHOT</View5D.version>
 		<Volume_Calculator.version>1.0.1-SNAPSHOT</Volume_Calculator.version>
 		<Volume_Viewer.version>2.01.1-SNAPSHOT</Volume_Viewer.version>
-		<bUnwarpJ_.version>2.6.1-SNAPSHOT</bUnwarpJ_.version>
-		<blockmatching_.version>2.0.0-SNAPSHOT</blockmatching_.version>
+		<bUnwarpJ.version>2.6.1-SNAPSHOT</bUnwarpJ.version>
+		<blockmatching.version>2.0.0-SNAPSHOT</blockmatching.version>
 		<fake.version>2.0.0-SNAPSHOT</fake.version>
 		<fiji-compat.version>2.0.0-SNAPSHOT</fiji-compat.version>
 		<fiji-lib.version>2.0.0</fiji-lib.version>
@@ -166,7 +166,7 @@
 		<level_sets.version>1.0.1-SNAPSHOT</level_sets.version>
 		<mij.version>1.3.6-fiji2-SNAPSHOT</mij.version>
 		<pal-optimization.version>2.0.0-SNAPSHOT</pal-optimization.version>
-		<panorama_.version>2.0.0-SNAPSHOT</panorama_.version>
+		<panorama.version>2.0.0-SNAPSHOT</panorama.version>
 		<register_virtual_stack_slices.version>2.0.0-SNAPSHOT</register_virtual_stack_slices.version>
 		<registration_3d.version>2.0.0-SNAPSHOT</registration_3d.version>
 		<skeletonize3d.version>1.0.1-SNAPSHOT</skeletonize3d.version>
@@ -205,7 +205,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>Arrow_</artifactId>
-				<version>${Arrow_.version}</version>
+				<version>${Arrow.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -215,7 +215,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>BalloonSegmentation_</artifactId>
-				<version>${BalloonSegmentation_.version}</version>
+				<version>${BalloonSegmentation.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -230,7 +230,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>CLI_</artifactId>
-				<version>${CLI_.version}</version>
+				<version>${CLI.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -270,7 +270,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>CorrectBleach_</artifactId>
-				<version>${CorrectBleach_.version}</version>
+				<version>${CorrectBleach.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -280,17 +280,17 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>Dichromacy_</artifactId>
-				<version>${Dichromacy_.version}</version>
+				<version>${Dichromacy.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>Differentials_</artifactId>
-				<version>${Differentials_.version}</version>
+				<version>${Differentials.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>Directionality_</artifactId>
-				<version>${Directionality_.version}</version>
+				<version>${Directionality.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -305,7 +305,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>FeatureJ_</artifactId>
-				<version>${FeatureJ_.version}</version>
+				<version>${FeatureJ.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -345,7 +345,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>FlowJ_</artifactId>
-				<version>${FlowJ_.version}</version>
+				<version>${FlowJ.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -370,7 +370,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>IO_</artifactId>
-				<version>${IO_.version}</version>
+				<version>${IO.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -405,7 +405,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>Javascript_</artifactId>
-				<version>${Javascript_.version}</version>
+				<version>${Javascript.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -430,17 +430,17 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>LocalThickness_</artifactId>
-				<version>${LocalThickness_.version}</version>
+				<version>${LocalThickness.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>MTrack2_</artifactId>
-				<version>${MTrack2_.version}</version>
+				<version>${MTrack2.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>MTrackJ_</artifactId>
-				<version>${MTrackJ_.version}</version>
+				<version>${MTrackJ.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -455,7 +455,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>MosaicJ_</artifactId>
-				<version>${MosaicJ_.version}</version>
+				<version>${MosaicJ.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -470,22 +470,22 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>PointPicker_</artifactId>
-				<version>${PointPicker_.version}</version>
+				<version>${PointPicker.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>QuickPALM_</artifactId>
-				<version>${QuickPALM_.version}</version>
+				<version>${QuickPALM.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>RATS_</artifactId>
-				<version>${RATS_.version}</version>
+				<version>${RATS.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>RandomJ_</artifactId>
-				<version>${RandomJ_.version}</version>
+				<version>${RandomJ.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -510,7 +510,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>Samples_</artifactId>
-				<version>${Samples_.version}</version>
+				<version>${Samples.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -525,7 +525,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>SheppLogan_</artifactId>
-				<version>${SheppLogan_.version}</version>
+				<version>${SheppLogan.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>ca.mcgill</groupId>
@@ -545,22 +545,22 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>Skeletonize3D_</artifactId>
-				<version>${Skeletonize3D_.version}</version>
+				<version>${Skeletonize3D.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>Snakuscule_</artifactId>
-				<version>${Snakuscule_.version}</version>
+				<version>${Snakuscule.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>SplineDeformationGenerator_</artifactId>
-				<version>${SplineDeformationGenerator_.version}</version>
+				<version>${SplineDeformationGenerator.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>StackReg_</artifactId>
-				<version>${StackReg_.version}</version>
+				<version>${StackReg.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -605,12 +605,12 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>ToAST_</artifactId>
-				<version>${ToAST_.version}</version>
+				<version>${ToAST.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>TopoJ_</artifactId>
-				<version>${TopoJ_.version}</version>
+				<version>${TopoJ.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -630,17 +630,17 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>TransformJ_</artifactId>
-				<version>${TransformJ_.version}</version>
+				<version>${TransformJ.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>TurboReg_</artifactId>
-				<version>${TurboReg_.version}</version>
+				<version>${TurboReg.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>UnwarpJ_</artifactId>
-				<version>${UnwarpJ_.version}</version>
+				<version>${UnwarpJ.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -650,7 +650,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>VIB_</artifactId>
-				<version>${VIB_.version}</version>
+				<version>${VIB.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -670,7 +670,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>View5D_</artifactId>
-				<version>${View5D_.version}</version>
+				<version>${View5D.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -685,12 +685,12 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>bUnwarpJ_</artifactId>
-				<version>${bUnwarpJ_.version}</version>
+				<version>${bUnwarpJ.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>blockmatching_</artifactId>
-				<version>${blockmatching_.version}</version>
+				<version>${blockmatching.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
@@ -760,7 +760,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>panorama_</artifactId>
-				<version>${panorama_.version}</version>
+				<version>${panorama.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
