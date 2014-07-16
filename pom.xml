@@ -901,6 +901,11 @@
 				<version>${jpedal.version}</version>
 			</dependency>
 			<dependency>
+				<groupId>org.jpedal</groupId>
+				<artifactId>jpedalSTD</artifactId>
+				<version>${jpedal.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>org.jruby</groupId>
 				<artifactId>jruby</artifactId>
 				<version>${jruby.version}</version>
