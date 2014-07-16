@@ -88,6 +88,7 @@
 		<Helmholtz_Analysis.version>2.0.1-SNAPSHOT</Helmholtz_Analysis.version>
 		<IJ_Robot.version>1.0.0</IJ_Robot.version>
 		<IO.version>2.0.0-SNAPSHOT</IO.version>
+		<Image_5D.version>1.2.5</Image_5D.version>
 		<ImageJ_3D_Objects_Counter.version>2.0.0-SNAPSHOT</ImageJ_3D_Objects_Counter.version>
 		<ImageJ_3D_Viewer.version>2.0.0-SNAPSHOT</ImageJ_3D_Viewer.version>
 		<Image_Expression_Parser.version>2.0.0-SNAPSHOT</Image_Expression_Parser.version>
@@ -371,6 +372,11 @@
 				<groupId>sc.fiji</groupId>
 				<artifactId>IO_</artifactId>
 				<version>${IO.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>net.imagej</groupId>
+				<artifactId>Image_5D</artifactId>
+				<version>${Image_5D.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
