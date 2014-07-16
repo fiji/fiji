@@ -184,7 +184,7 @@
 		<dependencies>
 			<dependency>
 				<groupId>sc.fiji</groupId>
-				<artifactId>AnalyzeSkeleton</artifactId>
+				<artifactId>AnalyzeSkeleton_</artifactId>
 				<version>${AnalyzeSkeleton.version}</version>
 			</dependency>
 			<dependency>
@@ -314,7 +314,7 @@
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
-				<artifactId>Fiji_3D_Blob_Segmentation</artifactId>
+				<artifactId>3D_Blob_Segmentation</artifactId>
 				<version>${Fiji_3D_Blob_Segmentation.version}</version>
 			</dependency>
 			<dependency>
@@ -374,12 +374,12 @@
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
-				<artifactId>ImageJ_3D_Objects_Counter</artifactId>
+				<artifactId>3D_Objects_Counter</artifactId>
 				<version>${ImageJ_3D_Objects_Counter.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
-				<artifactId>ImageJ_3D_Viewer</artifactId>
+				<artifactId>3D_Viewer</artifactId>
 				<version>${ImageJ_3D_Viewer.version}</version>
 			</dependency>
 			<dependency>
@@ -528,7 +528,7 @@
 				<version>${SheppLogan_.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>sc.fiji</groupId>
+				<groupId>ca.mcgill</groupId>
 				<artifactId>Sholl_Analysis</artifactId>
 				<version>${Sholl_Analysis.version}</version>
 			</dependency>
@@ -574,7 +574,7 @@
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
-				<artifactId>Stitching</artifactId>
+				<artifactId>Stitching_</artifactId>
 				<version>${Stitching.version}</version>
 			</dependency>
 			<dependency>
@@ -614,7 +614,7 @@
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>
-				<artifactId>TrackMate</artifactId>
+				<artifactId>TrackMate_</artifactId>
 				<version>${TrackMate.version}</version>
 			</dependency>
 			<dependency>
