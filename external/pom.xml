@@ -42,582 +42,474 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>IJ_Robot</artifactId>
-			<version>${IJ_Robot.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>ca.mcgill</groupId>
 			<artifactId>Sholl_Analysis</artifactId>
-			<version>${Sholl_Analysis.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>SPIM_Registration</artifactId>
-			<version>${SPIM_Registration.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>AnalyzeSkeleton_</artifactId>
-			<version>${AnalyzeSkeleton.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Stitching_</artifactId>
-			<version>${Stitching.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>TrackMate_</artifactId>
-			<version>${TrackMate.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Vaa3d_Writer</artifactId>
-			<version>${Vaa3d_Writer.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Colocalisation_Analysis</artifactId>
-			<version>${Colocalisation_Analysis.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>javac</artifactId>
-			<version>${javac.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>TopoJ_</artifactId>
-			<version>${TopoJ_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bUnwarpJ_</artifactId>
-			<version>${bUnwarpJ_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Trainable_Segmentation</artifactId>
-			<version>${Trainable_Segmentation.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Siox_Segmentation</artifactId>
-			<version>${Siox_Segmentation.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>imageware</artifactId>
-			<version>${imageware.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>mij</artifactId>
-			<version>${mij.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>imagescience</artifactId>
-			<version>${imagescience.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>level_sets</artifactId>
-			<version>${level_sets.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>pal-optimization</artifactId>
-			<version>${pal-optimization.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>wavelets</artifactId>
-			<version>${wavelets.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Arrow_</artifactId>
-			<version>${Arrow_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Samples_</artifactId>
-			<version>${Samples_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Analyze_Reader_Writer</artifactId>
-			<version>${Analyze_Reader_Writer.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Viewer</artifactId>
-			<version>${ImageJ_3D_Viewer.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Blob_Segmentation</artifactId>
-			<version>${Fiji_3D_Blob_Segmentation.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Objects_Counter</artifactId>
-			<version>${ImageJ_3D_Objects_Counter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Anisotropic_Diffusion_2D</artifactId>
-			<version>${Anisotropic_Diffusion_2D.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Archipelago_Plugins</artifactId>
-			<version>${Archipelago_Plugins.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Auto_Threshold</artifactId>
-			<version>${Auto_Threshold.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>BalloonSegmentation_</artifactId>
-			<version>${BalloonSegmentation_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>BeanShell_Interpreter</artifactId>
-			<version>${BeanShell_Interpreter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Bug_Submitter</artifactId>
-			<version>${Bug_Submitter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>CLI_</artifactId>
-			<version>${CLI_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>CPU_Meter</artifactId>
-			<version>${CPU_Meter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Calculator_Plus</artifactId>
-			<version>${Calculator_Plus.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Clojure_Interpreter</artifactId>
-			<version>${Clojure_Interpreter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Color_Histogram</artifactId>
-			<version>${Color_Histogram.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Color_Inspector_3D</artifactId>
-			<version>${Color_Inspector_3D.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Colour_Deconvolution</artifactId>
-			<version>${Colour_Deconvolution.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>CorrectBleach_</artifactId>
-			<version>${CorrectBleach_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Descriptor_based_registration</artifactId>
-			<version>${Descriptor_based_registration.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Dichromacy_</artifactId>
-			<version>${Dichromacy_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Differentials_</artifactId>
-			<version>${Differentials_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Directionality_</artifactId>
-			<version>${Directionality_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Extended_Depth_Field</artifactId>
-			<version>${Extended_Depth_Field.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>FS_Align_TrakEM2</artifactId>
-			<version>${FS_Align_TrakEM2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>FeatureJ_</artifactId>
-			<version>${FeatureJ_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Feature_Detection</artifactId>
-			<version>${Feature_Detection.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Archipelago</artifactId>
-			<version>${Fiji_Archipelago.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Developer</artifactId>
-			<version>${Fiji_Developer.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Package_Maker</artifactId>
-			<version>${Fiji_Package_Maker.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Plugins</artifactId>
-			<version>${Fiji_Plugins.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Updater</artifactId>
-			<version>${Fiji_Updater.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>FlowJ_</artifactId>
-			<version>${FlowJ_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Graph_Cut</artifactId>
-			<version>${Graph_Cut.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Gray_Morphology</artifactId>
-			<version>${Gray_Morphology.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Helmholtz_Analysis</artifactId>
-			<version>${Helmholtz_Analysis.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>IO_</artifactId>
-			<version>${IO_.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>Image_5D</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Image_Expression_Parser</artifactId>
-			<version>${Image_Expression_Parser.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Interactive_3D_Surface_Plot</artifactId>
-			<version>${Interactive_3D_Surface_Plot.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>IsoData_Classifier</artifactId>
-			<version>${IsoData_Classifier.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>JRuby_Interpreter</artifactId>
-			<version>${JRuby_Interpreter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Javascript_</artifactId>
-			<version>${Javascript_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Jython_Interpreter</artifactId>
-			<version>${Jython_Interpreter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Kuwahara_Filter</artifactId>
-			<version>${Kuwahara_Filter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Lasso_and_Blow_Tool</artifactId>
-			<version>${Lasso_and_Blow_Tool.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Linear_Kuwahara</artifactId>
-			<version>${Linear_Kuwahara.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>LocalThickness_</artifactId>
-			<version>${LocalThickness_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>MTrack2_</artifactId>
-			<version>${MTrack2_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>MTrackJ_</artifactId>
-			<version>${MTrackJ_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>M_I_P</artifactId>
-			<version>${M_I_P.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Manual_Tracking</artifactId>
-			<version>${Manual_Tracking.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>MosaicJ_</artifactId>
-			<version>${MosaicJ_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Multi_Kymograph</artifactId>
-			<version>${Multi_Kymograph.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>PointPicker_</artifactId>
-			<version>${PointPicker_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>QuickPALM_</artifactId>
-			<version>${QuickPALM_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>RATS_</artifactId>
-			<version>${RATS_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>RandomJ_</artifactId>
-			<version>${RandomJ_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Reconstruct_Reader</artifactId>
-			<version>${Reconstruct_Reader.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Refresh_Javas</artifactId>
-			<version>${Refresh_Javas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>SPIM_Opener</artifactId>
-			<version>${SPIM_Opener.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Scala_Interpreter</artifactId>
-			<version>${Scala_Interpreter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Series_Labeler</artifactId>
-			<version>${Series_Labeler.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>SheppLogan_</artifactId>
-			<version>${SheppLogan_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Simple_Neurite_Tracer</artifactId>
-			<version>${Simple_Neurite_Tracer.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Skeletonize3D_</artifactId>
-			<version>${Skeletonize3D_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Snakuscule_</artifactId>
-			<version>${Snakuscule_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>SplineDeformationGenerator_</artifactId>
-			<version>${SplineDeformationGenerator_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>StackReg_</artifactId>
-			<version>${StackReg_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Stack_Manipulation</artifactId>
-			<version>${Stack_Manipulation.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Statistical_Region_Merging</artifactId>
-			<version>${Statistical_Region_Merging.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Sync_Win</artifactId>
-			<version>${Sync_Win.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Thread_Killer</artifactId>
-			<version>${Thread_Killer.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Threshold_Colour</artifactId>
-			<version>${Threshold_Colour.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Time_Lapse</artifactId>
-			<version>${Time_Lapse.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Time_Stamper</artifactId>
-			<version>${Time_Stamper.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>ToAST_</artifactId>
-			<version>${ToAST_.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>TrakEM2_</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>TrakEM2_Archipelago</artifactId>
-			<version>${TrakEM2_Archipelago.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>TransformJ_</artifactId>
-			<version>${TransformJ_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>TurboReg_</artifactId>
-			<version>${TurboReg_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>UnwarpJ_</artifactId>
-			<version>${UnwarpJ_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>VIB-lib</artifactId>
-			<version>${VIB-lib.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>VIB_</artifactId>
-			<version>${VIB_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Vaa3d_Reader</artifactId>
-			<version>${Vaa3d_Reader.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Video_Editing</artifactId>
-			<version>${Video_Editing.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>View5D_</artifactId>
-			<version>${View5D_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Volume_Calculator</artifactId>
-			<version>${Volume_Calculator.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Volume_Viewer</artifactId>
-			<version>${Volume_Viewer.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>blockmatching_</artifactId>
-			<version>${blockmatching_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-compat</artifactId>
-			<version>${fiji-compat.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-lib</artifactId>
-			<version>${fiji-lib.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-scripting</artifactId>
-			<version>${fiji-scripting.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>panorama_</artifactId>
-			<version>${panorama_.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>register_virtual_stack_slices</artifactId>
-			<version>${register_virtual_stack_slices.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>registration_3d</artifactId>
-			<version>${registration_3d.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>weave_jy2java</artifactId>
-			<version>${weave_jy2java.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>PIV_analyser</artifactId>
-			<version>${PIV_analyser.version}</version>
 		</dependency>
 	</dependencies>
 
