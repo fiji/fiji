@@ -816,6 +816,11 @@
 				<version>${beanshell.version}</version>
 			</dependency>
 			<dependency>
+				<groupId>org.beanshell</groupId>
+				<artifactId>bsh</artifactId>
+				<version>${beanshell.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>org.clojure</groupId>
 				<artifactId>clojure</artifactId>
 				<version>${clojure.version}</version>
