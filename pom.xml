@@ -955,6 +955,11 @@
 				<artifactId>weka</artifactId>
 				<version>${weka.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>nz.ac.waikato.cms.weka</groupId>
+				<artifactId>weka-dev</artifactId>
+				<version>${weka.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
