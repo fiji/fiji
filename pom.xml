@@ -139,6 +139,7 @@
 		<TopoJ.version>2.0.0-SNAPSHOT</TopoJ.version>
 		<TrackMate.version>2.3.0-SNAPSHOT</TrackMate.version>
 		<Trainable_Segmentation.version>2.0.0</Trainable_Segmentation.version>
+		<TrakEM2.version>1.0b-SNAPSHOT</TrakEM2.version>
 		<TrakEM2_Archipelago.version>2.0.0-SNAPSHOT</TrakEM2_Archipelago.version>
 		<TransformJ.version>2.8.1-SNAPSHOT</TransformJ.version>
 		<TurboReg.version>2.0.0-SNAPSHOT</TurboReg.version>
@@ -627,6 +628,11 @@
 				<groupId>sc.fiji</groupId>
 				<artifactId>Trainable_Segmentation</artifactId>
 				<version>${Trainable_Segmentation.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>sc.fiji</groupId>
+				<artifactId>TrakEM2_</artifactId>
+				<version>${TrakEM2.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>sc.fiji</groupId>

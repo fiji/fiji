@@ -429,6 +429,10 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
+			<artifactId>TrakEM2_</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
 			<artifactId>TrakEM2_Archipelago</artifactId>
 		</dependency>
 		<dependency>
