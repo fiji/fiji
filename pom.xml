@@ -26,7 +26,6 @@
 
 		<batik.version>1.8</batik.version>
 		<beanshell.version>2.0b4</beanshell.version>
-		<bunwarpj.version>2.6.1-SNAPSHOT</bunwarpj.version>
 		<clojure.version>1.3.0</clojure.version>
 		<commons-math.version>3.2</commons-math.version>
 		<edu.mines.version>20100113</edu.mines.version>
