@@ -21,9 +21,6 @@
 	<description></description>
 
 	<properties>
-		<!-- Temporary, until pom-scijava 2.5 comes out -->
-		<minimaven.version>2.1.2</minimaven.version>
-
 		<batik.version>1.8</batik.version>
 		<beanshell.version>2.0b4</beanshell.version>
 		<clojure.version>1.3.0</clojure.version>
