@@ -24,7 +24,6 @@
 		<!-- Temporary, until pom-scijava 2.5 comes out -->
 		<minimaven.version>2.1.2</minimaven.version>
 
-		<autocomplete.version>2.0.2</autocomplete.version>
 		<batik.version>1.8</batik.version>
 		<beanshell.version>2.0b4</beanshell.version>
 		<bunwarpj.version>2.6.1-SNAPSHOT</bunwarpj.version>
@@ -51,7 +50,6 @@
 		<jython.version>2.5.2</jython.version>
 		<jzlib.version>1.0.7</jzlib.version>
 		<mpicbg.version>0.6.1</mpicbg.version>
-		<rsyntaxtextarea.version>2.0.4.1</rsyntaxtextarea.version>
 		<scala.version>2.10.0</scala.version>
 		<weka.version>3.7.6</weka.version>
 
