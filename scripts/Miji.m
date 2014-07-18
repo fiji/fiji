@@ -18,8 +18,8 @@ function Miji(open_imagej)
     % Switch off warning
     warning_state = warning('off');
     
-    add_to_classpath(classpath, strcat([fiji_directory filesep 'jars']));
-    add_to_classpath(classpath, strcat([fiji_directory filesep 'plugins']));
+    add_to_classpath(classpath, fullfile(fiji_directory,'jars'));
+    add_to_classpath(classpath, fullfile(fiji_directory,'plugins'));
     
     % Switch warning back to initial settings
     warning(warning_state)
