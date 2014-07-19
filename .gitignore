@@ -4,7 +4,6 @@
 
 # Maven #
 /bin/apache-maven-*/
-/src-plugins/*/target/
 
 # Fiji Build #
 /bin/maven-helper.sh
