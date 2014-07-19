@@ -3,6 +3,7 @@
 *~
 
 # Maven #
+/target/
 /bin/apache-maven-*/
 
 # Fiji Build #
@@ -360,6 +361,3 @@ hs_err*.log
 /jars/j3d-core-[0-9]*.jar
 /jars/j3d-core-utils-[0-9]*.jar
 /jars/vecmath-[0-9]*.jar
-
-# Miscellaneous #
-/jars/meta-fiji-external-plugins-[0-9]*.jar
