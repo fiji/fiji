@@ -3,8 +3,8 @@
 *~
 
 # Maven #
+/target/
 /bin/apache-maven-*/
-/src-plugins/*/target/
 
 # Fiji Build #
 /bin/maven-helper.sh
@@ -85,12 +85,6 @@ hs_err*.log
 /jars/slf4j-log4j12-[0-9]*.jar
 /plugins/Fiji_Updater.jar
 
-# Former submodules #
-/modules/TrakEM2/
-/modules/ij-plugins/
-/modules/imglib/
-/modules/mpicbg/
-
 # Files generated from submodules #
 /jars/VectorString-[0-9]*.jar
 /jars/autocomplete-[0-9]*.jar
@@ -108,7 +102,9 @@ hs_err*.log
 
 # Dependencies copied by MiniMaven #
 /jars/VIB-lib-[0-9]*.jar
+/jars/VectorString-[0-9]*.jar
 /jars/base64-[0-9]*.jar
+/jars/batik-[0-9]*.jar
 /jars/bcmail-jdk14-[0-9]*.jar
 /jars/bcprov-jdk14-[0-9]*.jar
 /jars/bsh-[0-9]*.jar
@@ -118,10 +114,14 @@ hs_err*.log
 /jars/fiji-compat-[0-9]*.jar
 /jars/fiji-lib-[0-9]*.jar
 /jars/fiji-scripting-[0-9]*.jar
+/jars/ij-[0-9]*.jar
+/jars/imagej-launcher-[0-9]*.jar
 /jars/imagescience-[0-9]*.jar
 /jars/imageware-[0-9]*.jar
 /jars/itext-[0-9]*.jar
 /jars/itextpdf-[0-9]*.jar
+/jars/jai-codec-[0-9]*.jar
+/jars/jai-core-[0-9]*.jar
 /jars/jama-[0-9]*.jar
 /jars/java-cup-[0-9]*.jar
 /jars/javac-[0-9]*.jar
@@ -136,13 +136,17 @@ hs_err*.log
 /jars/jruby-complete-[0-9]*.jar
 /jars/js-[0-9]*.jar
 /jars/jsch-[0-9]*.jar
+/jars/jython-[0-9]*.jar
 /jars/jzlib-[0-9]*.jar
 /jars/legacy-imglib1-[0-9]*.jar
 /jars/mij-[0-9]*.jar
+/jars/minimaven-[0-9]*.jar
 /jars/mines-jtk-[0-9]*.jar
+/jars/mpicbg-[0-9]*.jar
 /jars/pal-optimization-[0-9]*.jar
 /jars/pentaho-package-manager-[0-9]*.jar
 /jars/postgresql-[0-9]*.jar
+/jars/rsyntaxtextarea-[0-9]*.jar
 /jars/tools-[0-9]*.jar
 /jars/udunits-[0-9]*.jar
 /jars/wavelets-[0-9]*.jar
@@ -187,6 +191,7 @@ hs_err*.log
 /plugins/Helmholtz_Analysis-[0-9]*.jar
 /plugins/IJ_Robot-[0-9]*.jar
 /plugins/IO_-[0-9]*.jar
+/plugins/Image_5D-[0-9]*.jar
 /plugins/Image_Expression_Parser-[0-9]*.jar
 /plugins/Interactive_3D_Surface_Plot-[0-9]*.jar
 /plugins/IsoData_Classifier-[0-9]*.jar
@@ -235,6 +240,7 @@ hs_err*.log
 /plugins/TopoJ_-[0-9]*.jar
 /plugins/TrackMate_-[0-9]*.jar
 /plugins/Trainable_Segmentation-[0-9]*.jar
+/plugins/TrakEM2_-[0-9]*.jar
 /plugins/TrakEM2_Archipelago-[0-9]*.jar
 /plugins/TransformJ_-[0-9]*.jar
 /plugins/TurboReg_-[0-9]*.jar
@@ -249,12 +255,10 @@ hs_err*.log
 /plugins/bUnwarpJ_-[0-9]*.jar
 /plugins/blockmatching_-[0-9]*.jar
 /plugins/level_sets-[0-9]*.jar
+/plugins/mpicbg_-[0-9]*.jar
 /plugins/panorama_-[0-9]*.jar
 /plugins/register_virtual_stack_slices-[0-9]*.jar
 /plugins/registration_3d-[0-9]*.jar
-
-# For maven-download.sh
-/jars/minimaven-[0-9]*.jar
 
 # SciJava
 /jars/eventbus-[0-9]*.jar
@@ -357,6 +361,3 @@ hs_err*.log
 /jars/j3d-core-[0-9]*.jar
 /jars/j3d-core-utils-[0-9]*.jar
 /jars/vecmath-[0-9]*.jar
-
-# Miscellaneous #
-/jars/meta-fiji-external-plugins-[0-9]*.jar
