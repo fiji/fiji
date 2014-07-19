@@ -84,12 +84,6 @@ hs_err*.log
 /jars/slf4j-log4j12-[0-9]*.jar
 /plugins/Fiji_Updater.jar
 
-# Former submodules #
-/modules/TrakEM2/
-/modules/ij-plugins/
-/modules/imglib/
-/modules/mpicbg/
-
 # Files generated from submodules #
 /jars/VectorString-[0-9]*.jar
 /jars/autocomplete-[0-9]*.jar
