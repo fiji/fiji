@@ -139,6 +139,7 @@ hs_err*.log
 /jars/jzlib-[0-9]*.jar
 /jars/legacy-imglib1-[0-9]*.jar
 /jars/mij-[0-9]*.jar
+/jars/minimaven-[0-9]*.jar
 /jars/mines-jtk-[0-9]*.jar
 /jars/mpicbg-[0-9]*.jar
 /jars/pal-optimization-[0-9]*.jar
@@ -257,9 +258,6 @@ hs_err*.log
 /plugins/panorama_-[0-9]*.jar
 /plugins/register_virtual_stack_slices-[0-9]*.jar
 /plugins/registration_3d-[0-9]*.jar
-
-# For maven-download.sh
-/jars/minimaven-[0-9]*.jar
 
 # SciJava
 /jars/eventbus-[0-9]*.jar
