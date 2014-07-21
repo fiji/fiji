@@ -16,6 +16,11 @@
  * sharper result.  Setting target sigma to values smaller than 0.5 makes the
  * result appear sharper and therefore eventually aliased.
  */
+
+importClass(Packages.ij.IJ);
+importClass(Packages.ij.WindowManager);
+importClass(Packages.ij.gui.GenericDialog);
+
 var imp = WindowManager.getCurrentImage();
 var width = 0;
 var height = 0;

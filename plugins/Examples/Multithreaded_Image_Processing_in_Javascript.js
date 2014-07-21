@@ -26,6 +26,14 @@
 //
 // Have fun!
 
+importClass(Packages.ij.IJ);
+importClass(Packages.ij.ImagePlus);
+importClass(Packages.ij.process.FloatProcessor);
+
+importClass(Packages.java.lang.Runnable);
+importClass(Packages.java.lang.Runtime);
+importClass(Packages.java.lang.System);
+importClass(Packages.java.lang.Thread);
 importClass(Packages.java.util.concurrent.atomic.AtomicInteger);
 
 // Print all numbers from start to end (inclusive), multithreaded

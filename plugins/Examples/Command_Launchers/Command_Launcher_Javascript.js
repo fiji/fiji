@@ -1,5 +1,7 @@
 // Crude java-like version by Albert Cardona
-
+importClass(Packages.ij.IJ);
+importClass(Packages.ij.Menus);
+importClass(Packages.ij.gui.GenericDialog);
 importClass(Packages.java.util.ArrayList);
 commands = Menus.getCommands();
 keys = new ArrayList(commands.keySet());
