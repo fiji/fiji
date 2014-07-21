@@ -6,6 +6,14 @@
 // dots per inch (DPI) with a specified width and height in inches.
 // It also updates the spatial calibration accordingly.
 
+importClass(Packages.ij.IJ);
+importClass(Packages.ij.process.ImageProcessor);
+importClass(Packages.ij.WindowManager);
+importClass(java.lang.Class);
+importClass(Packages.ij.gui.GenericDialog);
+importClass(java.lang.Integer);
+importClass(java.lang.StringBuilder);
+
 scaleToDPI();
 
 function scaleToDPI() {
