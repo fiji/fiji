@@ -7,10 +7,10 @@
 // It also updates the spatial calibration accordingly.
 
 importClass(Packages.ij.IJ);
-importClass(Packages.ij.process.ImageProcessor);
 importClass(Packages.ij.WindowManager);
-importClass(java.lang.Class);
 importClass(Packages.ij.gui.GenericDialog);
+importClass(Packages.ij.process.ImageProcessor);
+importClass(java.lang.Class);
 importClass(java.lang.Integer);
 importClass(java.lang.StringBuilder);
 
