@@ -1,11 +1,13 @@
 from java.awt import Color
 from java.awt.event import TextListener
-import ij
+from ij import IJ
+from ij import Menus
+from ij.gui import GenericDialog
 
 #commands = [c for c in ij.Menus.getCommands().keySet()]
 # Above, equivalent list as below:
-commands = ij.Menus.getCommands().keySet().toArray()
-gd = ij.gui.GenericDialog('Command Launcher')
+commands = Menus.getCommands().keySet().toArray()
+gd = GenericDialog('Command Launcher')
 gd.addStringField('Command: ', '');
 prompt = gd.getStringFields().get(0)
 prompt.setForeground(Color.red)
@@ -26,7 +28,7 @@ class TypeListener(TextListener):
 
 prompt.addTextListener(TypeListener())
 gd.showDialog()
-if not gd.wasCanceled(): ij.IJ.doCommand(gd.getNextString())
+if not gd.wasCanceled(): IJ.doCommand(gd.getNextString())
 
 # This python version does not encapsulate the values of the variables, so they are all global when defined outside the class definition.
 # In contrast, the lisp 'let' definitions encapsulates them in full

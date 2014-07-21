@@ -7,14 +7,15 @@
 # 23/1/13 -
 # added user dialog to make use of virtual stack an option
 
-from ij import VirtualStack, IJ, CompositeImage, ImageStack
+from ij import VirtualStack, IJ, CompositeImage, ImageStack, ImagePlus
 from ij.process import ColorProcessor
 from ij.io import DirectoryChooser
-from ij.gui import YesNoCancelDialog
+from ij.gui import GenericDialog, YesNoCancelDialog
 from mpicbg.imglib.image import ImagePlusAdapter
 from mpicbg.imglib.algorithm.fft import PhaseCorrelation
 from javax.vecmath import Point3i
 from java.io import File, FilenameFilter
+from java.lang import Integer
 
 # imp stands for ij.ImagePlus instance
 
