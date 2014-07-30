@@ -29,13 +29,13 @@ function Miji(open_imagej)
     java.lang.System.setProperty('plugins.dir', fiji_directory);
 
     %% Maybe open the ImageJ window
+    import net.imagej.matlab.ImageJMATLAB;
     if open_imagej
         cd ..;
-        fprintf('\n\nUse MIJ.exit to end the session\n\n');
-        MIJ.start();
+        ImageJMATLAB.start();
     else
         % initialize ImageJ with the NO_SHOW flag (== 2)
-        ij.ImageJ([], 2);
+        ImageJMATLAB.start('--headless');
     end
 
     % Make sure that the scripts are found.
