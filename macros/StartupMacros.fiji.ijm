@@ -53,7 +53,7 @@ macro "AutoRun" {
 		// make sure startup order is consistent
 		Array.sort(list);
 		for (i = 0; i < list.length; i++) {
-			if (endsWith(list[i], ".ijm")) {
+			if (endsWith(list[i], ".ijm") || endsWith(list[i], ".js")) {
 				runMacro(autoRunDirectory + list[i]);
 			}
 		}
