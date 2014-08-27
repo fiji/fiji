@@ -1,3 +1,23 @@
+# We provide useful ij package imports by default.
+# We can not provide general ij.* imports as this is not well
+# supported in jruby. Thus each class must be individually
+# declared as an import.
+
+java_import "ij.CompositeImage"
+java_import "ij.IJ"
+java_import "ij.ImageJ"
+java_import "ij.ImagePlus"
+java_import "ij.ImageStack"
+java_import "ij.Macro"
+java_import "ij.Menus"
+java_import "ij.Prefs"
+java_import "ij.RecentOpener"
+java_import "ij.VirtualStack"
+java_import "ij.WindowManager"
+java_import "ij.process.ColorProcessor"
+
+# -----------------------------------------------------------------------
+
 # The functions in this file are reimplementations of the functions
 # built into the classic ImageJ macro language.  These are provided
 # to help in porting exisiting ImageJ macros to JRuby scripts.
