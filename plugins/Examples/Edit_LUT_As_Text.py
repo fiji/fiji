@@ -1,3 +1,5 @@
+from ij import IJ, WindowManager
+from ij.plugin.frame import Editor 
 import jarray
 from java.awt import Font, Menu, MenuItem
 from java.awt.event import ActionListener
