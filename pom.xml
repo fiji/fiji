@@ -341,10 +341,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>PointPicker_</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>QuickPALM_</artifactId>
 		</dependency>
 		<dependency>
@@ -374,10 +370,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Series_Labeler</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>SheppLogan_</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -446,10 +438,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>TurboReg_</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>UnwarpJ_</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
