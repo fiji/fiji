@@ -1,4 +1,4 @@
-from ij import IJ
+from ij import IJ, ImagePlus, ImageStack
 from ij.io import FileSaver
 from mpicbg.ij.integral import Scale
 import os

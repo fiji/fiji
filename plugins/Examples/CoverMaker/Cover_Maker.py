@@ -1,8 +1,10 @@
 # Cover Maker was written by PAvel Tomancak with minor help of
 # Albert Cardona & Johannes Schindelin (Pop & Mom)
 
-from ij import IJ
+from ij import IJ, ImagePlus, ImageStack
+from ij.gui import Roi
 from ij.io import FileSaver
+from ij.process import ColorProcessor
 from math import sqrt, pow
 import os
 from os import path
@@ -13,6 +15,7 @@ from fiji.scripting import Weaver
 from fiji.util.gui import GenericDialogPlus
 from mpicbg.ij.integral import Scale
 from java.awt.event import ActionListener, TextListener
+from java.lang import Float
 from loci.formats.gui import BufferedImageReader
 import zipfile
 import zlib
