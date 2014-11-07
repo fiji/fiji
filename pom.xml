@@ -53,15 +53,7 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>SPIM_Registration</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>AnalyzeSkeleton_</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>Stitching_</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -86,10 +78,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bUnwarpJ_</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>Trainable_Segmentation</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -189,10 +177,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>Descriptor_based_registration</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>Dichromacy_</artifactId>
 		</dependency>
 		<dependency>
@@ -209,15 +193,7 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>FS_Align_TrakEM2</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>FeatureJ_</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>Feature_Detection</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -242,10 +218,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>FlowJ_</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>Graph_Cut</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -329,10 +301,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>Reconstruct_Reader</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>SPIM_Opener</artifactId>
 		</dependency>
 		<dependency>
@@ -393,14 +361,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>TrakEM2_</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>TrakEM2_Archipelago</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>TransformJ_</artifactId>
 		</dependency>
 		<dependency>
@@ -437,10 +397,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>blockmatching_</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-compat</artifactId>
 		</dependency>
 		<dependency>
@@ -450,10 +406,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>panorama_</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>register_virtual_stack_slices</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
