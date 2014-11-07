@@ -20,8 +20,6 @@
 	<description>This project is just an aggregator for all the Fiji projects.</description>
 
 	<properties>
-		<!-- TEMP: take out once new pom-imagej is released -->
-		<minimaven.version>2.1.3</minimaven.version>
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
 	</properties>
 
