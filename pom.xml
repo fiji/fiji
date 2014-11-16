@@ -446,6 +446,29 @@
 		</repository>
 	</repositories>
 
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<configuration>
+					<rules>
+						<banDuplicateClasses>
+							<dependencies>
+								<dependency>
+									<artifactId>*</artifactId>
+									<ignoreClasses>
+										<ignoreClass>*</ignoreClass>
+									</ignoreClasses>
+								</dependency>
+							</dependencies>
+						</banDuplicateClasses>
+					</rules>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
 	<profiles>
 		<profile>
 			<id>cumulative-javadocs</id>
