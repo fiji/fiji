@@ -101,12 +101,14 @@ hs_err*.log
 /plugins/Directionality_-[0-9]*.jar
 /plugins/Extended_Depth_Field-[0-9]*.jar
 /plugins/FeatureJ_-[0-9]*.jar
+/plugins/Feature_Detection-[0-9]*.jar
 /plugins/Fiji_Archipelago-[0-9]*.jar
 /plugins/Fiji_Developer-[0-9]*.jar
 /plugins/Fiji_Package_Maker-[0-9]*.jar
 /plugins/Fiji_Plugins-[0-9]*.jar
 /plugins/Fiji_Updater.jar
 /plugins/FlowJ_-[0-9]*.jar
+/plugins/Graph_Cut-[0-9]*.jar
 /plugins/Gray_Morphology-[0-9]*.jar
 /plugins/Helmholtz_Analysis-[0-9]*.jar
 /plugins/IJ_Robot-[0-9]*.jar
@@ -126,12 +128,14 @@ hs_err*.log
 /plugins/MosaicJ_-[0-9]*.jar
 /plugins/Multi_Kymograph-[0-9]*.jar
 /plugins/PIV_analyser-[0-9]*.jar
+/plugins/PointPicker_-[0-9]*.jar
 /plugins/QuickPALM_-[0-9]*.jar
 /plugins/RATS_-[0-9]*.jar
 /plugins/RandomJ_-[0-9]*.jar
 /plugins/SPIM_Opener-[0-9]*.jar
 /plugins/Samples_-[0-9]*.jar
 /plugins/Series_Labeler-[0-9]*.jar
+/plugins/SheppLogan_-[0-9]*.jar
 /plugins/Sholl_Analysis-[0-9]*.jar
 /plugins/Simple_Neurite_Tracer-[0-9]*.jar
 /plugins/Siox_Segmentation-[0-9]*.jar
@@ -141,6 +145,7 @@ hs_err*.log
 /plugins/StackReg_-[0-9]*.jar
 /plugins/Stack_Manipulation-[0-9]*.jar
 /plugins/Statistical_Region_Merging-[0-9]*.jar
+/plugins/Stitching_-[0-9]*.jar
 /plugins/Sync_Win-[0-9]*.jar
 /plugins/Thread_Killer-[0-9]*.jar
 /plugins/Threshold_Colour-[0-9]*.jar
@@ -152,6 +157,7 @@ hs_err*.log
 /plugins/Trainable_Segmentation-[0-9]*.jar
 /plugins/TransformJ_-[0-9]*.jar
 /plugins/TurboReg_-[0-9]*.jar
+/plugins/UnwarpJ_-[0-9]*.jar
 /plugins/VIB_-[0-9]*.jar
 /plugins/Vaa3d_Reader-[0-9]*.jar
 /plugins/Vaa3d_Writer-[0-9]*.jar

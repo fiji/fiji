@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>5.1</version>
+		<version>6.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -119,6 +119,10 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
+			<artifactId>Feature_Detection</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Archipelago</artifactId>
 		</dependency>
 		<dependency>
@@ -140,6 +144,10 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>FlowJ_</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Graph_Cut</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -215,6 +223,10 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
+			<artifactId>PointPicker_</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
 			<artifactId>QuickPALM_</artifactId>
 		</dependency>
 		<dependency>
@@ -236,6 +248,10 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Series_Labeler</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>SheppLogan_</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -268,6 +284,10 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Statistical_Region_Merging</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Stitching_</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -308,6 +328,10 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>TurboReg_</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>UnwarpJ_</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -364,6 +388,10 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>javac</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>legacy-imglib1</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
