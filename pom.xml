@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>6.0.0</version>
+		<version>6.1.0</version>
 		<relativePath />
 	</parent>
 
@@ -23,7 +23,43 @@
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
 	</properties>
 
+	<dependencyManagement>
+		<dependencies>
+			<!-- BigDataViewer BOM -->
+			<dependency>
+				<groupId>sc.fiji</groupId>
+				<artifactId>pom-bigdataviewer</artifactId>
+				<version>1.0.2</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
+		<!-- BigDataViewer dependencies -->
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Descriptor_based_registration</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>SPIM_Registration</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bigdataviewer-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bigdataviewer_fiji</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>spim_data</artifactId>
+		</dependency>
+
+		<!-- TrakEM2 dependencies -->
+
 		<!-- Fiji dependencies -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -408,6 +444,13 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>panorama_</artifactId>
+			<!-- NB: Temporary, until a new mpicbg is released. -->
+			<exclusions>
+				<exclusion>
+					<groupId>jama</groupId>
+					<artifactId>jama</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>

@@ -76,6 +76,13 @@ hs_err*.log
 /fiji-win64.exe
 /fiji.exe
 
+# BigDataViewer #
+/jars/bigdataviewer-core-[0-9]*.jar
+/jars/spim_data-[0-9]*.jar
+/plugins/Descriptor_based_registration-[0-9]*.jar
+/plugins/SPIM_Registration-[0-9]*.jar
+/plugins/bigdataviewer_fiji-[0-9]*.jar
+
 # Fiji #
 /jars/VIB-lib-[0-9]*.jar
 /plugins/3D_Blob_Segmentation-[0-9]*.jar
@@ -195,6 +202,7 @@ hs_err*.log
 /jars/imglib2-ops-[0-9]*.jar
 /jars/imglib2-realtransform-[0-9]*.jar
 /jars/imglib2-roi-[0-9]*.jar
+/jars/imglib2-ui-[0-9]*.jar
 
 # SCIFIO #
 /jars/scifio-[0-9]*.jar
@@ -248,6 +256,7 @@ hs_err*.log
 /jars/fiji-lib-[0-9]*.jar
 /jars/gentyref-[0-9]*.jar
 /jars/groovy-[0-9]*.jar
+/jars/gson-[0-9]*.jar
 /jars/ij-[0-9]*.jar
 /jars/imagescience-[0-9]*.jar
 /jars/imageware-[0-9]*.jar
@@ -269,6 +278,7 @@ hs_err*.log
 /jars/jgoodies-forms-[0-9]*.jar
 /jars/jgrapht-[0-9]*.jar
 /jars/jgraphx-[0-9]*.jar
+/jars/jhdf5-[0-9]*.jar
 /jars/jhotdraw-[0-9]*.jar
 /jars/jna-[0-9]*.jar
 /jars/jnr-constants-[0-9]*.jar
