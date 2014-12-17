@@ -487,6 +487,13 @@
 			<artifactId>bio-formats_plugins</artifactId>
 		</dependency>
 
+		<!-- SciJava dependencies -->
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-config</artifactId>
+			<scope>optional</scope>
+		</dependency>
+
 		<!-- Third party dependencies -->
 		<dependency>
 			<groupId>ca.mcgill</groupId>
