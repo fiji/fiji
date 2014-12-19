@@ -23,6 +23,14 @@
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
 	</properties>
 
+	<repositories>
+		<!-- NB: for project parent -->
+		<repository>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
+		</repository>
+	</repositories>
+
 	<dependencyManagement>
 		<dependencies>
 			<!-- BigDataViewer BOM -->
@@ -623,14 +631,6 @@
 		</dependency>
 	</dependencies>
 
-	<repositories>
-		<!-- NB: for project parent -->
-		<repository>
-			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
-		</repository>
-	</repositories>
-
 	<profiles>
 		<profile>
 			<id>cumulative-javadocs</id>
@@ -662,4 +662,3 @@
 	</profiles>
 
 </project>
-
