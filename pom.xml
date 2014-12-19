@@ -19,6 +19,21 @@
 	<name>Top-level Fiji project</name>
 	<description>This project is just an aggregator for all the Fiji projects.</description>
 
+	<scm>
+		<connection>scm:git:git://github.com/fiji/fiji</connection>
+		<developerConnection>scm:git:git@github.com:fiji/fiji</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/fiji/fiji</url>
+	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/fiji/fiji/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>Jenkins</system>
+		<url>http://jenkins.imagej.net/job/Fiji/</url>
+	</ciManagement>
+
 	<properties>
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
 	</properties>
