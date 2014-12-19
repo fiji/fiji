@@ -214,6 +214,7 @@ hs_err*.log
 
 # SciJava
 /jars/scijava-common-[0-9]*.jar
+/jars/scijava-config-[0-9]*.jar
 /jars/scijava-plugins-commands-[0-9]*.jar
 /jars/scijava-plugins-platforms-[0-9]*.jar
 /jars/scijava-plugins-text-markdown-[0-9]*.jar
