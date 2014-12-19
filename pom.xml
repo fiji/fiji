@@ -16,8 +16,8 @@
 	<version>2.0.0-beta-1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
-	<name>Top-level Fiji project</name>
-	<description>This project is just an aggregator for all the Fiji projects.</description>
+	<name>Fiji</name>
+	<description>Fiji is a distribution of ImageJ for the life sciences.</description>
 
 	<scm>
 		<connection>scm:git:git://github.com/fiji/fiji</connection>
