@@ -14,7 +14,6 @@
 
 	<artifactId>fiji</artifactId>
 	<version>2.0.0-beta-1-SNAPSHOT</version>
-	<packaging>pom</packaging>
 
 	<name>Fiji</name>
 	<description>Fiji is a distribution of ImageJ for the life sciences.</description>
@@ -58,32 +57,28 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+
 	<dependencies>
 		<!-- BigDataViewer dependencies -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Descriptor_based_registration</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>SPIM_Registration</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-core</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer_fiji</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>spim_data</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 
 		<!-- TrakEM2 dependencies -->
@@ -92,152 +87,122 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Blob_Segmentation</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Objects_Counter</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Viewer</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>AnalyzeSkeleton_</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Analyze_Reader_Writer</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Anisotropic_Diffusion_2D</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Archipelago_Plugins</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Arrow_</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Auto_Threshold</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>BalloonSegmentation_</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Bug_Submitter</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>CPU_Meter</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Calculator_Plus</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Colocalisation_Analysis</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Color_Histogram</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Color_Inspector_3D</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Colour_Deconvolution</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>CorrectBleach_</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Dichromacy_</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Differentials_</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Directionality_</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Extended_Depth_Field</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>FeatureJ_</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Feature_Detection</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Archipelago</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Developer</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Package_Maker</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Plugins</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Updater</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>FlowJ_</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -646,34 +611,25 @@
 		</dependency>
 	</dependencies>
 
-	<profiles>
-		<profile>
-			<id>cumulative-javadocs</id>
 			<build>
 				<plugins>
 					<plugin>
 						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>2.9.1</version>
 						<executions>
 							<execution>
-								<id>attach-javadocs</id>
+								<id>javadoc-jar</id>
+								<phase>package</phase>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+								<configuration>
+									<!-- switch on dependency-driven aggregation -->
+									<includeDependencySources>true</includeDependencySources>
+								</configuration>
 							</execution>
 						</executions>
-						<configuration>
-							<!-- switch on dependency-driven aggregation -->
-							<includeDependencySources>true</includeDependencySources>
-
-							<dependencySourceExcludes>
-								<!-- No need to include the tools -->
-								<dependencySourceExclude>com.sun:*</dependencySourceExclude>
-								<!-- OME does not attach sources nor javadocs -->
-								<dependencySourceExclude>ome:bio-formats_plugins:*</dependencySourceExclude>
-							</dependencySourceExcludes>
-						</configuration>
 					</plugin>
 				</plugins>
 			</build>
-		</profile>
-	</profiles>
 
 </project>
