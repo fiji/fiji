@@ -56,6 +56,14 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+			<!-- TrakEM2 BOM -->
+			<dependency>
+				<groupId>sc.fiji</groupId>
+				<artifactId>pom-trakem2</artifactId>
+				<version>1.2.0</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 	<dependencies>
@@ -87,6 +95,60 @@
 		</dependency>
 
 		<!-- TrakEM2 dependencies -->
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>mpicbg-trakem2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>T2-NIT</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>T2-TreelineGraph</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>TrakEM2_</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>VectorString</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>FS_Align_TrakEM2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Reconstruct_Reader</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>TrakEM2_Archipelago</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>blockmatching_</artifactId>
+			<!-- TEMP: Until pom-trakem2 1.2.1+ is released. -->
+			<version>2.0.3</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>register_virtual_stack_slices</artifactId>
+			<!-- TEMP: Until pom-trakem2 1.2.1+ is released. -->
+			<version>2.0.2</version>
+			<scope>runtime</scope>
+		</dependency>
 
 		<!-- Fiji dependencies -->
 		<dependency>

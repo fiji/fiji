@@ -83,6 +83,18 @@ hs_err*.log
 /plugins/SPIM_Registration-[0-9]*.jar
 /plugins/bigdataviewer_fiji-[0-9]*.jar
 
+# TrakEM2 #
+/jars/T2-NIT-[0-9]*.jar
+/jars/T2-TreelineGraph-[0-9]*.jar
+/jars/VectorString-[0-9]*.jar
+/jars/mpicbg-trakem2-[0-9]*.jar
+/plugins/FS_Align_TrakEM2-[0-9]*.jar
+/plugins/Reconstruct_Reader-[0-9]*.jar
+/plugins/TrakEM2_-[0-9]*.jar
+/plugins/TrakEM2_Archipelago-[0-9]*.jar
+/plugins/blockmatching_-[0-9]*.jar
+/plugins/register_virtual_stack_slices-[0-9]*.jar
+
 # Fiji #
 /jars/VIB-lib-[0-9]*.jar
 /plugins/3D_Blob_Segmentation-[0-9]*.jar
@@ -264,6 +276,8 @@ hs_err*.log
 /jars/invokebinder-[0-9]*.jar
 /jars/itext-[0-9]*.jar
 /jars/itextpdf-[0-9]*.jar
+/jars/jai-codec-[0-9]*.jar
+/jars/jai-core-[0-9]*.jar
 /jars/jama-[0-9]*.jar
 /jars/java-cup-[0-9]*.jar
 /jars/javac-[0-9]*.jar
@@ -317,6 +331,7 @@ hs_err*.log
 /jars/pal-optimization-[0-9]*.jar
 /jars/pentaho-package-manager-[0-9]*.jar
 /jars/perf4j-[0-9]*.jar
+/jars/postgresql-[0-9]*.jar
 /jars/rsyntaxtextarea-[0-9]*.jar
 /jars/serializer-[0-9]*.jar
 /jars/slf4j-api-[0-9]*.jar
