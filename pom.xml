@@ -67,7 +67,7 @@
 		</dependencies>
 	</dependencyManagement>
 	<dependencies>
-		<!-- BigDataViewer dependencies -->
+		<!-- BigDataViewer projects -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Descriptor_based_registration</artifactId>
@@ -94,7 +94,7 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- TrakEM2 dependencies -->
+		<!-- Core TrakEM2 projects -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>mpicbg-trakem2</artifactId>
@@ -120,6 +120,8 @@
 			<artifactId>VectorString</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+
+		<!-- Other TrakEM2 projects -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>FS_Align_TrakEM2</artifactId>
@@ -150,7 +152,7 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Fiji dependencies -->
+		<!-- Fiji projects -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Blob_Segmentation</artifactId>
@@ -649,14 +651,14 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- ImageJ dependencies -->
+		<!-- ImageJ projects -->
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>Image_5D</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- SCIFIO dependencies -->
+		<!-- SCIFIO projects -->
 		<dependency>
 			<groupId>io.scif</groupId>
 			<artifactId>scifio-bf-compat</artifactId>
@@ -673,14 +675,14 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Bio-Formats dependencies -->
+		<!-- Bio-Formats projects -->
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>bio-formats_plugins</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- SciJava dependencies -->
+		<!-- SciJava projects -->
 		<dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>scijava-config</artifactId>
@@ -688,7 +690,7 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- Third party dependencies -->
+		<!-- Third party projects -->
 		<dependency>
 			<groupId>ca.mcgill</groupId>
 			<artifactId>Sholl_Analysis</artifactId>
