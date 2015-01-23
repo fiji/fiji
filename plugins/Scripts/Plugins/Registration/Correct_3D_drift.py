@@ -9,7 +9,7 @@
 
 from ij import VirtualStack, IJ, CompositeImage, ImageStack, ImagePlus
 from ij.process import ColorProcessor
-from ij.io import DirectoryChooser
+from ij.io import DirectoryChooser, FileSaver
 from ij.gui import GenericDialog, YesNoCancelDialog
 from mpicbg.imglib.image import ImagePlusAdapter
 from mpicbg.imglib.algorithm.fft import PhaseCorrelation
