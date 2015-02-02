@@ -220,6 +220,7 @@ hs_err*.log
 /jars/scifio-[0-9]*.jar
 /jars/scifio-bf-compat-[0-9]*.jar
 /jars/scifio-cli-[0-9]*.jar
+/jars/scifio-hdf5-[0-9]*.jar
 /jars/scifio-jai-imageio-[0-9]*.jar
 /jars/scifio-lifesci-[0-9]*.jar
 /jars/scifio-ome-xml-[0-9]*.jar

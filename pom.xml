@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>6.4.0</version>
+		<version>6.5.0</version>
 		<relativePath />
 	</parent>
 
@@ -662,6 +662,11 @@
 		<dependency>
 			<groupId>io.scif</groupId>
 			<artifactId>scifio-bf-compat</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.scif</groupId>
+			<artifactId>scifio-hdf5</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
