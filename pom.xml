@@ -702,6 +702,15 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Other things that ship with Fiji -->
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>LSM_Toolbox</artifactId>
+			<version>4.0g</version>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+
 		<!--	NB: At the moment, Bio-Formats currently brings this in. But
 					regardless we should define an slf4j logging implementation.
 					If a new Bio-Formats version updates its logger, this should
