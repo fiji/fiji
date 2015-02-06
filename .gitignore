@@ -140,6 +140,8 @@ hs_err*.log
 /plugins/Lasso_and_Blow_Tool-[0-9]*.jar
 /plugins/Linear_Kuwahara-[0-9]*.jar
 /plugins/LocalThickness_-[0-9]*.jar
+/plugins/LSM_Reader-[0-9]*.jar
+/plugins/LSM_Toolbox-[0-9]*.jar
 /plugins/MTrack2_-[0-9]*.jar
 /plugins/MTrackJ_-[0-9]*.jar
 /plugins/M_I_P-[0-9]*.jar
