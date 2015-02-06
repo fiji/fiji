@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>6.7.0</version>
+		<version>6.8.0</version>
 		<relativePath />
 	</parent>
 
@@ -346,6 +346,16 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Kuwahara_Filter</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>LSM_Reader</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>LSM_Toolbox</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -700,15 +710,6 @@
 			<groupId>ca.mcgill</groupId>
 			<artifactId>Sholl_Analysis</artifactId>
 			<scope>runtime</scope>
-		</dependency>
-
-		<!-- Other things that ship with Fiji -->
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>LSM_Toolbox</artifactId>
-			<version>4.0g</version>
-			<scope>runtime</scope>
-			<optional>true</optional>
 		</dependency>
 
 		<!--	NB: At the moment, Bio-Formats currently brings this in. But
