@@ -1,5 +1,15 @@
 #!/bin/sh
 
+###
+# -----------------------------------------------------------
+# NB: This is a deprecated version of this script!
+# It exists here for backwards compatibility only.
+#
+# The most recent version can be found at:
+# https://github.com/imagej/imagej/blob/master/bin/ImageJ.sh
+# -----------------------------------------------------------
+###
+
 # A fallback shell script to launch Fiji without the ImageJ launcher
 # (i.e. when all else fails)
 
