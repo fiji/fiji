@@ -23,25 +23,6 @@ jars/bio-formats/turbojpeg
 plugins/bio-formats_plugins
 "
 
-# Excluded due to already-matching version:
-#jars/JWlz-1.4.0
-#jars/forms-1.3.0
-#jars/joda-time-2.2
-#jars/kryo-2.21-shaded
-#jars/logback-classic-1.0.9
-#jars/logback-core-1.0.9
-#jars/netcdf-4.3.19
-#jars/perf4j-0.9.13
-#jars/serializer-2.7.1
-#jars/xalan-2.7.1
-
-# Excluded due to naming mismatch:
-#jars/commons-logging
-
-# Excluded due to version downgrade:
-#jars/native-lib-loader-2.0-SNAPSHOT
-#jars/xml-apis-1.3.02
-
 export UPDATE_SITE_NAME="Bio-Formats"
 export UPDATE_SITE_USER="Bio-Formats"
 export UPDATE_SITE_URL="http://sites.imagej.net/$UPDATE_SITE_USER/"
