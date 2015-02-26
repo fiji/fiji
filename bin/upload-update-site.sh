@@ -5,7 +5,7 @@
 #
 
 # Uploads JARs from an external location to an ImageJ update site.
-# See upload-bf4.sh and upload-bf5.sh for examples of usage.
+# See upload-bf.sh for an example of usage.
 
 # -- Constants --
 
