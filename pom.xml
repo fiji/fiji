@@ -330,6 +330,11 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
+			<artifactId>Image_5D</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
 			<artifactId>Image_Expression_Parser</artifactId>
 			<scope>runtime</scope>
 		</dependency>
@@ -658,13 +663,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>wavelets</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-
-		<!-- ImageJ projects -->
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>Image_5D</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 
