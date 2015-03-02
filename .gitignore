@@ -110,6 +110,7 @@ hs_err*.log
 /plugins/Bug_Submitter-[0-9]*.jar
 /plugins/CPU_Meter-[0-9]*.jar
 /plugins/Calculator_Plus-[0-9]*.jar
+/plugins/Cell_Counter-[0-9]*.jar
 /plugins/Colocalisation_Analysis-[0-9]*.jar
 /plugins/Color_Histogram-[0-9]*.jar
 /plugins/Color_Inspector_3D-[0-9]*.jar
