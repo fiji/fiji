@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# --- DEPRECATED --
+# use upload-plugins-by-gav.sh
 # Downloads a plugin's newest snapshot version and uploads it to the
 # specified update site.
 #
@@ -9,6 +11,8 @@ die () {
 	echo "$*" >&2
 	exit 1
 }
+
+echo "WARNING: This script is deprecated. Use upload-plugins-by-gav.sh instead"
 
 test $# = 4 ||
 die "Usage: $0 <groupId> <artifactId> <update-site> <webdav-user>"
