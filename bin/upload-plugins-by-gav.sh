@@ -38,7 +38,8 @@ maven_helper=bin/maven-helper.sh
 imagejMavenVer="$(sh $maven_helper latest-version net.imagej:imagej-maven-plugin:RELEASE)"
 
 # install all gavs
-while (( "$#" )); do
+while test $# -gt 0
+do
 	groupId="${1%%:*}"
 	artifactId="${1##*:}"
 
