@@ -51,7 +51,7 @@ while (( "$#" )); do
 	mvn -Ddelete.other.versions=true -Dforce=true -Dimagej.app.directory=$(pwd) \
 		net.imagej:imagej-maven-plugin:$imagejMavenVer:install-artifact \
 		-Dartifact=$groupId:$artifactId:$version
-	
+
 	shift
 done
 
