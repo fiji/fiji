@@ -6,6 +6,8 @@
 import thread
 import time
 
+from ij import IJ, ImagePlus, ImageStack
+
 from java.awt import Robot, Rectangle
 
 def run(title):

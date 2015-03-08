@@ -15,6 +15,11 @@ import thread
 import time
 import sys
 
+from ij import IJ, ImageJ, ImagePlus, ImageStack, VirtualStack
+from ij.gui import GenericDialog, NonBlockingGenericDialog
+from ij.io import DirectoryChooser, FileSaver
+from ij.plugin import FileInfoVirtualStack, ListVirtualStack
+
 from java.awt import Robot, Rectangle, Frame
 from java.awt.image import BufferedImage
 from javax.swing import SwingUtilities

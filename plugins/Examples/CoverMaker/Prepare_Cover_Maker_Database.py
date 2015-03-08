@@ -1,5 +1,6 @@
 from ij import IJ, ImagePlus, ImageStack
 from ij.io import FileSaver
+from ij.process import ImageConverter, StackConverter
 from mpicbg.ij.integral import Scale
 import os
 import sys
