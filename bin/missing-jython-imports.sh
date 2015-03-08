@@ -23,6 +23,7 @@ candidates="$(printf "%s\n%s\n%s\n" "$candidates" "$imported" "$imported" |
 
 ij1classes="$(tar tf jars/ij-1*.jar |
 	sed -n 's/\.class$//p' |
+	grep -v '/ColorPanel$' |
 	tr '/' '.' |
 	sort |
 	uniq)"
