@@ -9,7 +9,15 @@ import color.CIELAB;
 
 import fiji.util.gui.GenericDialogPlus;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.gui.ImageCanvas;
 import ij.gui.Overlay;
+import ij.gui.Roi;
+import ij.gui.ShapeRoi;
+import ij.gui.TextRoi;
+import ij.process.ColorProcessor;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
