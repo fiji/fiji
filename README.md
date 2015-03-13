@@ -1,6 +1,8 @@
 This is Fiji
 ============
 
+[![Join the chat at https://gitter.im/fiji/fiji](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fiji/fiji?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [ Fiji Is Just ImageJ ]
 
 Fiji is a distribution of [ImageJ](http://imagej.net/), a popular, free
