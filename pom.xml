@@ -727,6 +727,21 @@
 			<optional>true</optional>
 		</dependency>
 
+		<!-- Exclusions -->
+
+		<!-- Explicitly exclude the jama inherited transitively
+				 from mpicbg until we can consume 1.X -->
+		<dependency>
+			<groupId>mpicbg</groupId>
+			<artifactId>mpicbg_</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>jama</groupId>
+					<artifactId>jama</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
     <!-- Bio-Formats brings this in but we have some version skew.
          This is now managed in pom-scijava so we can ensure a
          consistent version is used in Fiji. -->
