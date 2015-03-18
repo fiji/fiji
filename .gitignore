@@ -231,6 +231,7 @@ hs_err*.log
 # SciJava
 /jars/scijava-common-[0-9]*.jar
 /jars/scijava-config-[0-9]*.jar
+/jars/scijava-expression-parser-[0-9]*.jar
 /jars/scijava-plugins-commands-[0-9]*.jar
 /jars/scijava-plugins-platforms-[0-9]*.jar
 /jars/scijava-plugins-text-markdown-[0-9]*.jar
@@ -341,6 +342,7 @@ hs_err*.log
 /jars/slf4j-api-[0-9]*.jar
 /jars/slf4j-log4j12-[0-9]*.jar
 /jars/snakeyaml-[0-9]*.jar
+/jars/trove4j-[0-9]*.jar
 /jars/udunits-[0-9]*.jar
 /jars/wavelets-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
