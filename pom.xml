@@ -715,10 +715,12 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!--	NB: At the moment, Bio-Formats currently brings this in. But
-					regardless we should define an slf4j logging implementation.
-					If a new Bio-Formats version updates its logger, this should
-					be updated accordingly. -->
+		<!--
+		NB: At the moment, Bio-Formats currently brings this in. But
+		regardless we should define an slf4j logging implementation.
+		If a new Bio-Formats version updates its logger, this should
+		be updated accordingly.
+		-->
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
@@ -729,8 +731,10 @@
 
 		<!-- Exclusions -->
 
-		<!-- Explicitly exclude the jama inherited transitively
-				 from mpicbg until we can consume 1.X -->
+		<!--
+		Explicitly exclude the jama inherited transitively
+		from mpicbg until we can consume 1.X.
+		-->
 		<dependency>
 			<groupId>mpicbg</groupId>
 			<artifactId>mpicbg_</artifactId>
@@ -742,9 +746,11 @@
 			</exclusions>
 		</dependency>
 
-    <!-- Bio-Formats brings this in but we have some version skew.
-         This is now managed in pom-scijava so we can ensure a
-         consistent version is used in Fiji. -->
+		<!--
+		Bio-Formats brings this in but we have some version skew. This
+		is now managed in pom-scijava so we can ensure a consistent
+		version is used in Fiji.
+		-->
 		<dependency>
 			<groupId>joda-time</groupId>
 			<artifactId>joda-time</artifactId>
