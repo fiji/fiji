@@ -66,6 +66,10 @@ cd "$FIJI_DIR"
 
 # -- First, make sure that Fiji is up-to-date --
 
+if [ -z "$FIJI_INITIALIZED" ]
+then
+	./$EXE --update add-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL"
+fi
 ./$EXE --update update-force-pristine
 
 # -- Download JAR files and install into local Fiji --
