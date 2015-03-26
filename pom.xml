@@ -67,6 +67,13 @@
 		</dependencies>
 	</dependencyManagement>
 	<dependencies>
+		<!-- Fiji Is Just ImageJ! -->
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
 		<!-- BigDataViewer projects -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
