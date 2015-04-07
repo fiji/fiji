@@ -128,6 +128,16 @@
 			<artifactId>VectorString</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>jitk</groupId>
+			<artifactId>jitk-tps</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>trakem2_tps</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 
 		<!-- Other TrakEM2 projects -->
 		<dependency>
@@ -724,23 +734,6 @@
 			<version>1.1.1</version>
 			<scope>runtime</scope>
 			<optional>true</optional>
-		</dependency>
-
-		<!-- Exclusions -->
-
-		<!--
-		Explicitly exclude the jama inherited transitively
-		from mpicbg until we can consume 1.X.
-		-->
-		<dependency>
-			<groupId>mpicbg</groupId>
-			<artifactId>mpicbg_</artifactId>
-			<exclusions>
-				<exclusion>
-					<groupId>jama</groupId>
-					<artifactId>jama</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<!--
