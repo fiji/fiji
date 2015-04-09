@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>8.2.0</version>
+		<version>9.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -52,7 +52,7 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>pom-bigdataviewer</artifactId>
-				<version>1.0.11</version>
+				<version>${pom-bigdataviewer.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -60,12 +60,13 @@
 			<dependency>
 				<groupId>sc.fiji</groupId>
 				<artifactId>pom-trakem2</artifactId>
-				<version>1.2.0</version>
+				<version>${pom-trakem2.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+	
 	<dependencies>
 		<!-- Fiji Is Just ImageJ! -->
 		<dependency>
@@ -127,6 +128,16 @@
 			<artifactId>VectorString</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>jitk</groupId>
+			<artifactId>jitk-tps</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>trakem2_tps</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 
 		<!-- Other TrakEM2 projects -->
 		<dependency>
@@ -147,15 +158,11 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>blockmatching_</artifactId>
-			<!-- TEMP: Until pom-trakem2 1.2.1+ is released. -->
-			<version>2.0.3</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>register_virtual_stack_slices</artifactId>
-			<!-- TEMP: Until pom-trakem2 1.2.1+ is released. -->
-			<version>2.0.2</version>
 			<scope>runtime</scope>
 		</dependency>
 
@@ -658,13 +665,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>panorama_</artifactId>
-			<!-- NB: Temporary, until a new mpicbg is released. -->
-			<exclusions>
-				<exclusion>
-					<groupId>jama</groupId>
-					<artifactId>jama</artifactId>
-				</exclusion>
-			</exclusions>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -734,23 +734,6 @@
 			<version>1.1.1</version>
 			<scope>runtime</scope>
 			<optional>true</optional>
-		</dependency>
-
-		<!-- Exclusions -->
-
-		<!--
-		Explicitly exclude the jama inherited transitively
-		from mpicbg until we can consume 1.X.
-		-->
-		<dependency>
-			<groupId>mpicbg</groupId>
-			<artifactId>mpicbg_</artifactId>
-			<exclusions>
-				<exclusion>
-					<groupId>jama</groupId>
-					<artifactId>jama</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<!--
