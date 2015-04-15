@@ -87,6 +87,7 @@ hs_err*.log
 /jars/T2-NIT-[0-9]*.jar
 /jars/T2-TreelineGraph-[0-9]*.jar
 /jars/VectorString-[0-9]*.jar
+/jars/jitk-tps-[0-9]*.jar
 /jars/mpicbg-trakem2-[0-9]*.jar
 /plugins/FS_Align_TrakEM2-[0-9]*.jar
 /plugins/Reconstruct_Reader-[0-9]*.jar
@@ -94,6 +95,7 @@ hs_err*.log
 /plugins/TrakEM2_Archipelago-[0-9]*.jar
 /plugins/blockmatching_-[0-9]*.jar
 /plugins/register_virtual_stack_slices-[0-9]*.jar
+/plugins/trakem2_tps-[0-9]*.jar
 
 # Fiji #
 /jars/VIB-lib-[0-9]*.jar
@@ -266,15 +268,18 @@ hs_err*.log
 /jars/bsh-[0-9]*.jar
 /jars/bytelist-[0-9]*.jar
 /jars/clojure-[0-9]*.jar
+/jars/commons-codec-[0-9]*.jar
 /jars/commons-lang3-[0-9]*.jar
 /jars/commons-logging-[0-9]*.jar
 /jars/commons-math3-[0-9]*.jar
+/jars/ejml-[0-9]*.jar
 /jars/eventbus-[0-9]*.jar
 /jars/fiji-compat-[0-9]*.jar
 /jars/fiji-lib-[0-9]*.jar
 /jars/gentyref-[0-9]*.jar
 /jars/groovy-[0-9]*.jar
 /jars/gson-[0-9]*.jar
+/jars/guava-[0-9]*.jar
 /jars/ij-[0-9]*.jar
 /jars/imagescience-[0-9]*.jar
 /jars/imageware-[0-9]*.jar
@@ -323,15 +328,19 @@ hs_err*.log
 /jars/logback-core-[0-9]*.jar
 /jars/mapdb-[0-9]*.jar
 /jars/markdownj-[0-9]*.jar
+/jars/metadata-extractor-[0-9]*.jar
 /jars/miglayout-[0-9]*.jar
 /jars/mij-[0-9]*.jar
 /jars/mines-jtk-[0-9]*.jar
 /jars/minimaven-[0-9]*.jar
+/jars/minlog-[0-9]*.jar
 /jars/mpicbg-[0-9]*.jar
 /jars/nailgun-server-[0-9]*.jar
 /jars/native-lib-loader-[0-9]*.jar
 /jars/netcdf-[0-9]*.jar
 /jars/object-inspector-[0-9]*.jar
+/jars/objenesis-[0-9]*.jar
+/jars/opencsv-[0-9]*.jar
 /jars/options-[0-9]*.jar
 /jars/pal-optimization-[0-9]*.jar
 /jars/pentaho-package-manager-[0-9]*.jar
@@ -347,5 +356,7 @@ hs_err*.log
 /jars/wavelets-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
 /jars/xalan-[0-9]*.jar
+/jars/xercesImpl-[0-9]*.jar
 /jars/xml-apis-[0-9]*.jar
+/jars/xmpcore-[0-9]*.jar
 /jars/yecht-[0-9]*.jar
