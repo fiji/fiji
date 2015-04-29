@@ -1,3 +1,5 @@
+![](http://jenkins.imagej.net/job/Fiji/lastBuild/badge/icon)
+
 This is Fiji
 ============
 
