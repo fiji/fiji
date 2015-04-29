@@ -1,4 +1,4 @@
-![](http://jenkins.imagej.net/job/Fiji/lastBuild/badge/icon)
+[![](http://jenkins.imagej.net/job/Fiji/lastBuild/badge/icon)](http://jenkins.imagej.net/job/Fiji/)
 
 This is Fiji
 ============
