@@ -529,11 +529,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>Threshold_Colour</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>Time_Lapse</artifactId>
 			<scope>runtime</scope>
 		</dependency>
