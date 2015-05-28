@@ -1,4 +1,4 @@
-function Miji(open_imagej)
+function [mij] = Miji(open_imagej)
     %% This script sets up the classpath to Fiji and optionally starts MIJ
     % Author: Jacques Pecreaux, Johannes Schindelin, Jean-Yves Tinevez
 
@@ -32,7 +32,9 @@ function Miji(open_imagej)
     if open_imagej
         cd ..;
         fprintf('\n\nUse MIJ.exit to end the session\n\n');
-        MIJ.start();
+        % EB change May 2015
+        mij = MIJ;
+        mij.start();
     else
         % initialize ImageJ with the NO_SHOW flag (== 2)
         ij.ImageJ([], 2);
