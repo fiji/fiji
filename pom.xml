@@ -35,6 +35,7 @@
 	</ciManagement>
 
 	<properties>
+		<main-class>net.imagej.Main</main-class>
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
 	</properties>
 
