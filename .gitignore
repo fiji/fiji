@@ -324,6 +324,7 @@ hs_err*.log
 /jars/jruby-core-[0-9]*.jar
 /jars/jruby-stdlib-[0-9]*.jar
 /jars/jsch-[0-9]*.jar
+/jars/junit-[0-9]*.jar
 /jars/jython-shaded-[0-9]*.jar
 /jars/jzlib-[0-9]*.jar
 /jars/kryo-[0-9]*.jar
