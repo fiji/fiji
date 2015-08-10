@@ -132,6 +132,7 @@ hs_err*.log
 /plugins/FlowJ_-[0-9]*.jar
 /plugins/Graph_Cut-[0-9]*.jar
 /plugins/Gray_Morphology-[0-9]*.jar
+/plugins/H5J_Loader_Plugin-[0-9]*.jar
 /plugins/Helmholtz_Analysis-[0-9]*.jar
 /plugins/IJ_Robot-[0-9]*.jar
 /plugins/IO_-[0-9]*.jar
@@ -274,12 +275,14 @@ hs_err*.log
 /jars/commons-math3-[0-9]*.jar
 /jars/ejml-[0-9]*.jar
 /jars/eventbus-[0-9]*.jar
+/jars/ffmpeg-[0-9]*.jar
 /jars/fiji-compat-[0-9]*.jar
 /jars/fiji-lib-[0-9]*.jar
 /jars/gentyref-[0-9]*.jar
 /jars/groovy-[0-9]*.jar
 /jars/gson-[0-9]*.jar
 /jars/guava-[0-9]*.jar
+/jars/hamcrest-core-[0-9]*.jar
 /jars/ij-[0-9]*.jar
 /jars/imagescience-[0-9]*.jar
 /jars/imageware-[0-9]*.jar
@@ -291,6 +294,7 @@ hs_err*.log
 /jars/jama-[0-9]*.jar
 /jars/java-cup-[0-9]*.jar
 /jars/javac-[0-9]*.jar
+/jars/javacpp-[0-9]*.jar
 /jars/javassist-[0-9]*.jar
 /jars/jcodings-[0-9]*.jar
 /jars/jcommon-[0-9]*.jar
@@ -314,6 +318,7 @@ hs_err*.log
 /jars/jnr-unixsocket-[0-9]*.jar
 /jars/jnr-x86asm-[0-9]*.jar
 /jars/joda-time-[0-9]*.jar
+/jars/joda-timezones-[0-9]*.jar
 /jars/joni-[0-9]*.jar
 /jars/jpedalSTD-[0-9]*.jar
 /jars/jruby-core-[0-9]*.jar
