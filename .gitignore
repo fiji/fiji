@@ -206,6 +206,7 @@ hs_err*.log
 /jars/imagej-plugins-tools-[0-9]*.jar
 /jars/imagej-plugins-uploader-ssh-[0-9]*.jar
 /jars/imagej-plugins-uploader-webdav-[0-9]*.jar
+/jars/imagej-scripting-[0-9]*.jar
 /jars/imagej-ui-awt-[0-9]*.jar
 /jars/imagej-ui-swing-[0-9]*.jar
 /jars/imagej-updater-[0-9]*.jar
