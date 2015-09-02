@@ -262,6 +262,7 @@ hs_err*.log
 /jars/asm-commons-[0-9]*.jar
 /jars/asm-tree-[0-9]*.jar
 /jars/asm-util-[0-9]*.jar
+/jars/autocomplete-[0-9]*.jar
 /jars/base64-[0-9]*.jar
 /jars/batik-[0-9]*.jar
 /jars/bcmail-jdk14-[0-9]*.jar
