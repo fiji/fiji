@@ -137,6 +137,13 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>trakem2_tps</artifactId>
+			<!-- NB: this can be removed once trakem2_tps and bigwarp_fiji are updated to use pom-fiji 15.5.0 -->
+			<exclusions>
+				<exclusion>
+					<groupId>net.sf.opencsv</groupId> <!-- Exclude Project-D from Project-B -->
+					<artifactId>opencsv</artifactId>
+				</exclusion>
+			</exclusions>
 			<scope>runtime</scope>
 		</dependency>
 
