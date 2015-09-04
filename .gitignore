@@ -29,6 +29,9 @@
 # Cached sample images #
 /samples/
 
+# Melting Pot #
+/melting-pot/
+
 # ImageJ Launcher #
 /jvm.cfg
 
@@ -190,6 +193,7 @@ hs_err*.log
 /plugins/View5D_-[0-9]*.jar
 /plugins/Volume_Calculator-[0-9]*.jar
 /plugins/Volume_Viewer-[0-9]*.jar
+/plugins/bigwarp_fiji-[0-9]*.jar
 /plugins/bUnwarpJ_-[0-9]*.jar
 /plugins/level_sets-[0-9]*.jar
 /plugins/mpicbg_-[0-9]*.jar
@@ -249,6 +253,7 @@ hs_err*.log
 /jars/scripting-javascript-[0-9]*.jar
 /jars/scripting-jruby-[0-9]*.jar
 /jars/scripting-jython-[0-9]*.jar
+/jars/scripting-matlab-[0-9]*.jar
 /jars/swing-checkbox-tree-[0-9]*.jar
 
 # Bio-Formats #
@@ -336,6 +341,7 @@ hs_err*.log
 /jars/logback-classic-[0-9]*.jar
 /jars/logback-core-[0-9]*.jar
 /jars/mapdb-[0-9]*.jar
+/jars/matlabcontrol-[0-9]*.jar
 /jars/markdownj-[0-9]*.jar
 /jars/metadata-extractor-[0-9]*.jar
 /jars/miglayout-[0-9]*.jar
