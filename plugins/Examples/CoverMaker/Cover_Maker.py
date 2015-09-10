@@ -11,7 +11,7 @@ from os import path
 import sys
 import re
 import random
-from fiji.scripting import Weaver
+from fiji.util import CoverMakerUtils
 from fiji.util.gui import GenericDialogPlus
 from mpicbg.ij.integral import Scale
 from java.awt.event import ActionListener, TextListener
@@ -42,26 +42,6 @@ def SplitImage(ip, width, height):
 			ip2 = ip.crop()
 			stack.addSlice(None, ip2)
 	return stack
-
-# inlines Java code doing the main comparison calculations
-def Inline(arrays):
-	return Weaver.inline(
-		"""
-		int[] pixelst = (int[])arrays.get(0);
-		int[] pixelsd = (int[])arrays.get(1);
-		double sum = 0;
-		for (int i=0; i<pixelst.length; i++) {
-			int t = pixelst[i];
-			int d = pixelsd[i];
-			int red = ((t >> 16)&0xff) - ((d >> 16)&0xff);
-			int green = ((t >> 8)&0xff) - ((d >> 8)&0xff);
-			int blue = (t&0xff) - (d&0xff);
-			//sum += Math.sqrt(red * red + green * green + blue * blue);
-			sum += red * red + green * green + blue * blue;
-		}
-		return sum;
-		""",
-		{"arrays" : arrays})
 
 #compare all tiles to all downsampled database images of the same size
 #iterate through template slices
@@ -95,7 +75,6 @@ def CreateCover(ip, width, height, dbpath):
 	y = 0
 
 	arrays = [None, None] # a list of two elements
-	cruncher = Inline(arrays)
 	tileNames = {}
 	tileIndex = {}
 	placed = {}
@@ -124,7 +103,7 @@ def CreateCover(ip, width, height, dbpath):
 				j +=1
 				continue
 			arrays[1] = stackd.getPixels(j)
-			diff = cruncher.call()
+			diff = CoverMakerUtils.tileTemplateDifference(arrays)
 			if diff < minimum:
 				minimum = diff
 				indexOfBestMatch = j
