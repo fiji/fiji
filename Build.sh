@@ -73,13 +73,15 @@ Linux)
 	FIJILAUNCHER=fiji-$platform
 	FIJILAUNCHER=${FIJILAUNCHER%32}
 	;;
-MINGW*|CYGWIN*)
+MINGW*|CYGWIN*|MSYS*)
 	CWD="$(cd "$CWD" && pwd)"
 	PATHSEP=\;
-	case "$PROCESSOR_ARCHITEW6432" in
-	'') platform=win32; java_submodule=$platform;;
-	*) platform=win64; java_submodule=$platform;;
-	esac
+	if [ "$PROCESSOR_ARCHITECTURE" = "AMD64" ] || [ "$PROCESSOR_ARCHITEW6432" = "AMD64" ];  then
+		platform=win64
+	else
+		platform=win32
+	fi
+	java_submodule=$platform
 	exe=.exe
 	LAUNCHER=ImageJ-$platform.exe
 	FIJILAUNCHER=fiji-$platform.exe
