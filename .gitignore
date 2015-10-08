@@ -204,6 +204,7 @@ hs_err*.log
 /jars/ij1-patcher-[0-9]*.jar
 /jars/imagej-[0-9]*.jar
 /jars/imagej-common-[0-9]*.jar
+/jars/imagej-deprecated-[0-9]*.jar
 /jars/imagej-legacy-[0-9]*.jar
 /jars/imagej-ops-[0-9]*.jar
 /jars/imagej-plugins-commands-[0-9]*.jar
