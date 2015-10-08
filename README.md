@@ -72,6 +72,8 @@ Participating
 [Pull Requests](https://help.github.com/articles/using-pull-requests)
 are very welcome!
 
+See the [Contributing](http://imagej.net/Contributing) page of the ImageJ wiki.
+
 Authors
 -------
 
@@ -79,8 +81,7 @@ Fiji was created and is maintained by Johannes Schindelin, ImageJ 1.x
 was created and is maintained by Wayne Rasband, ImageJ2 was created and
 is maintained and actively developed by Curtis Rueden. For a list of
 most recent contributors, please refer to the
-[Contributors](http://imagej.net/Contributors) page of the Fiji/ImageJ
-wiki.
+[Contributors](http://imagej.net/Contributors) page of the ImageJ wiki.
 
 Thanks
 ------
@@ -90,7 +91,7 @@ developer of ImageJ 1.x; he also fosters an active and friendly
 community around ImageJ.
 
 We are especially grateful to be part of an outstanding
-[community](http://imagej.net/Mailing_Lists) who is active, friendly and
+[community](http://imagej.net/Community) who is active, friendly and
 helping to scientists understanding and analysing images every day.
 
 Oh, and Fiji is also an island. We just wanted to let you know.
