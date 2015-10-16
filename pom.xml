@@ -14,7 +14,6 @@
 
 	<artifactId>fiji</artifactId>
 	<version>2.0.0-SNAPSHOT</version>
-	<packaging>pom</packaging>
 
 	<name>Fiji</name>
 	<description>Fiji is a distribution of ImageJ for the life sciences.</description>
@@ -69,6 +68,12 @@
 	</dependencyManagement>
 	
 	<dependencies>
+		<!-- SciJava dependencies -->
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-common</artifactId>
+		</dependency>
+
 		<!-- Fiji Is Just ImageJ! -->
 		<dependency>
 			<groupId>net.imagej</groupId>
