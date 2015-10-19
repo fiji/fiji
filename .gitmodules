@@ -1,15 +1,15 @@
 [submodule "java/linux"]
 	path = java/linux
-	url = http://fiji.sc/java/linux.git
+	url = http://git.imagej.net/java/linux.git
 [submodule "java/linux-amd64"]
 	path = java/linux-amd64
-	url = http://fiji.sc/java/linux-amd64.git
+	url = http://git.imagej.net/java/linux-amd64.git
 [submodule "java/macosx-java3d"]
 	path = java/macosx-java3d
-	url = http://fiji.sc/java/macosx-java3d.git
+	url = http://git.imagej.net/java/macosx-java3d.git
 [submodule "java/win32"]
 	path = java/win32
-	url = http://fiji.sc/java/win32.git
+	url = http://git.imagej.net/java/win32.git
 [submodule "java/win64"]
 	path = java/win64
-	url = http://fiji.sc/java/win64.git
+	url = http://git.imagej.net/java/win64.git
