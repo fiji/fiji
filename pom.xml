@@ -14,7 +14,6 @@
 
 	<artifactId>fiji</artifactId>
 	<version>2.0.0-SNAPSHOT</version>
-	<packaging>pom</packaging>
 
 	<name>Fiji</name>
 	<description>Fiji is a distribution of ImageJ for the life sciences.</description>
@@ -69,6 +68,12 @@
 	</dependencyManagement>
 	
 	<dependencies>
+		<!-- SciJava dependencies -->
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-common</artifactId>
+		</dependency>
+
 		<!-- Fiji Is Just ImageJ! -->
 		<dependency>
 			<groupId>net.imagej</groupId>
@@ -140,7 +145,7 @@
 			<!-- NB: this can be removed once trakem2_tps and bigwarp_fiji are updated to use pom-fiji 15.5.0 -->
 			<exclusions>
 				<exclusion>
-					<groupId>net.sf.opencsv</groupId> <!-- Exclude Project-D from Project-B -->
+					<groupId>net.sf.opencsv</groupId>
 					<artifactId>opencsv</artifactId>
 				</exclusion>
 			</exclusions>
@@ -759,35 +764,5 @@
 			<scope>runtime</scope>
 		</dependency>
 	</dependencies>
-
-	<profiles>
-		<profile>
-			<id>cumulative-javadocs</id>
-			<build>
-				<plugins>
-					<plugin>
-						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>2.9.1</version>
-						<executions>
-							<execution>
-								<id>attach-javadocs</id>
-							</execution>
-						</executions>
-						<configuration>
-							<!-- switch on dependency-driven aggregation -->
-							<includeDependencySources>true</includeDependencySources>
-
-							<dependencySourceExcludes>
-								<!-- No need to include the tools -->
-								<dependencySourceExclude>com.sun:*</dependencySourceExclude>
-								<!-- OME does not attach sources nor javadocs -->
-								<dependencySourceExclude>ome:bio-formats_plugins:*</dependencySourceExclude>
-							</dependencySourceExcludes>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 
 </project>
