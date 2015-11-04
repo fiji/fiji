@@ -765,34 +765,4 @@
 		</dependency>
 	</dependencies>
 
-	<profiles>
-		<profile>
-			<id>cumulative-javadocs</id>
-			<build>
-				<plugins>
-					<plugin>
-						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>2.9.1</version>
-						<executions>
-							<execution>
-								<id>attach-javadocs</id>
-							</execution>
-						</executions>
-						<configuration>
-							<!-- switch on dependency-driven aggregation -->
-							<includeDependencySources>true</includeDependencySources>
-
-							<dependencySourceExcludes>
-								<!-- No need to include the tools -->
-								<dependencySourceExclude>com.sun:*</dependencySourceExclude>
-								<!-- OME does not attach sources nor javadocs -->
-								<dependencySourceExclude>ome:bio-formats_plugins:*</dependencySourceExclude>
-							</dependencySourceExcludes>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
-
 </project>
