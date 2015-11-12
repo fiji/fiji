@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleExecutable</key>
-	<string>ImageJ-tiger</string>
+	<string>ImageJ-macosx</string>
 	<key>CFBundleGetInfoString</key>
 	<string>Fiji for Mac OS X</string>
 	<key>CFBundleIconFile</key>
