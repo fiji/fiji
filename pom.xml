@@ -738,6 +738,32 @@
 			<optional>true</optional>
 		</dependency>
 
+		<!-- JOGL libraries, for Java 3D -->
+		<dependency>
+			<groupId>org.jogamp.gluegen</groupId>
+			<artifactId>gluegen-rt-main</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.jogamp.joal</groupId>
+			<artifactId>joal-main</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.jogamp.jocl</groupId>
+			<artifactId>jocl-main</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.jogamp.jogl</groupId>
+			<artifactId>jogl-all-main</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+
 		<!--
 		NB: At the moment, Bio-Formats currently brings this in. But
 		regardless we should define an slf4j logging implementation.
