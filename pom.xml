@@ -68,12 +68,6 @@
 	</dependencyManagement>
 	
 	<dependencies>
-		<!-- SciJava dependencies -->
-		<dependency>
-			<groupId>org.scijava</groupId>
-			<artifactId>scijava-common</artifactId>
-		</dependency>
-
 		<!-- Fiji Is Just ImageJ! -->
 		<dependency>
 			<groupId>net.imagej</groupId>
@@ -81,105 +75,15 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- BigDataViewer projects -->
+		<!-- SciJava dependencies -->
 		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>Descriptor_based_registration</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>SPIM_Registration</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>bigdataviewer-core</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>bigdataviewer_fiji</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>spim_data</artifactId>
-			<scope>runtime</scope>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-common</artifactId>
 		</dependency>
 
-		<!-- Core TrakEM2 projects -->
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>mpicbg-trakem2</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>T2-NIT</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>T2-TreelineGraph</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>TrakEM2_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>VectorString</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>jitk</groupId>
-			<artifactId>jitk-tps</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>trakem2_tps</artifactId>
-			<!-- NB: this can be removed once trakem2_tps and bigwarp_fiji are updated to use pom-fiji 15.5.0 -->
-			<exclusions>
-				<exclusion>
-					<groupId>net.sf.opencsv</groupId>
-					<artifactId>opencsv</artifactId>
-				</exclusion>
-			</exclusions>
-			<scope>runtime</scope>
-		</dependency>
+		<!-- Runtime dependencies -->
 
-		<!-- Other TrakEM2 projects -->
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>FS_Align_TrakEM2</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>Reconstruct_Reader</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>TrakEM2_Archipelago</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>blockmatching_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>register_virtual_stack_slices</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-
-		<!-- Fiji projects -->
+		<!-- Standard Fiji projects -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Blob_Segmentation</artifactId>
@@ -622,11 +526,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>bigwarp_fiji</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>bUnwarpJ_</artifactId>
 			<scope>runtime</scope>
 		</dependency>
@@ -696,6 +595,110 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- External Fiji projects -->
+		<dependency>
+			<groupId>ca.mcgill</groupId>
+			<artifactId>Sholl_Analysis</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>jitk</groupId>
+			<artifactId>jitk-tps</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bigwarp_fiji</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>trakem2_tps</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- BigDataViewer-based projects -->
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Descriptor_based_registration</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>SPIM_Registration</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bigdataviewer-core</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bigdataviewer_fiji</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>spim_data</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Core TrakEM2 projects -->
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>mpicbg-trakem2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>T2-NIT</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>T2-TreelineGraph</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>TrakEM2_</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>VectorString</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- TrakEM2-based projects -->
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>FS_Align_TrakEM2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Reconstruct_Reader</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>TrakEM2_Archipelago</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>blockmatching_</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>register_virtual_stack_slices</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+
 		<!-- SCIFIO projects -->
 		<dependency>
 			<groupId>io.scif</groupId>
@@ -725,19 +728,14 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Optional runtime dependencies -->
+
 		<!-- SciJava projects -->
 		<dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>scijava-config</artifactId>
 			<scope>runtime</scope>
 			<optional>true</optional>
-		</dependency>
-
-		<!-- Third party projects -->
-		<dependency>
-			<groupId>ca.mcgill</groupId>
-			<artifactId>Sholl_Analysis</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 
 		<!--
