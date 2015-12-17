@@ -76,7 +76,7 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- SciJava dependencies -->
+		<!-- SciJava dependencies - https://github.com/scijava -->
 		<dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>scijava-common</artifactId>
@@ -84,7 +84,7 @@
 
 		<!-- Runtime dependencies -->
 
-		<!-- Standard Fiji projects -->
+		<!-- Standard Fiji projects - https://github.com/fiji -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Blob_Segmentation</artifactId>
@@ -182,6 +182,11 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
+			<artifactId>Descriptor_based_registration</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
 			<artifactId>Dichromacy_</artifactId>
 			<scope>runtime</scope>
 		</dependency>
@@ -198,6 +203,11 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Extended_Depth_Field</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>FS_Align_TrakEM2</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -372,7 +382,17 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
+			<artifactId>Reconstruct_Reader</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
 			<artifactId>SPIM_Opener</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>SPIM_Registration</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -472,6 +492,11 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
+			<artifactId>TrakEM2_Archipelago</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
 			<artifactId>TransformJ_</artifactId>
 			<scope>runtime</scope>
 		</dependency>
@@ -532,6 +557,11 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
+			<artifactId>blockmatching_</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-compat</artifactId>
 			<scope>runtime</scope>
 		</dependency>
@@ -587,6 +617,11 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
+			<artifactId>register_virtual_stack_slices</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
 			<artifactId>registration_3d</artifactId>
 			<scope>runtime</scope>
 		</dependency>
@@ -597,26 +632,37 @@
 		</dependency>
 
 		<!-- External Fiji projects -->
+		<!-- https://github.com/tferr/ASA -->
 		<dependency>
 			<groupId>ca.mcgill</groupId>
 			<artifactId>Sholl_Analysis</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- https://github.com/saalfeldlab/jitk-tps -->
 		<dependency>
 			<groupId>jitk</groupId>
 			<artifactId>jitk-tps</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- https://github.com/axtimwalde/mpicbg -->
 		<dependency>
 			<groupId>mpicbg</groupId>
 			<artifactId>mpicbg_</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- https://github.com/openmicroscopy/bioformats -->
+		<dependency>
+			<groupId>ome</groupId>
+			<artifactId>bio-formats_plugins</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<!-- https://github.com/saalfeldlab/bigwarp -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigwarp_fiji</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- https://github.com/saalfeldlab/trakem2-tps -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>trakem2_tps</artifactId>
@@ -629,17 +675,7 @@
 			</exclusions>
 		</dependency>
 
-		<!-- BigDataViewer-based projects -->
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>Descriptor_based_registration</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>SPIM_Registration</artifactId>
-			<scope>runtime</scope>
-		</dependency>
+		<!-- BigDataViewer projects - https://github.com/bigdataviewer -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-core</artifactId>
@@ -656,7 +692,7 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Core TrakEM2 projects -->
+		<!-- TrakEM2 projects - https://github.com/trakem2 -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>mpicbg-trakem2</artifactId>
@@ -683,35 +719,7 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- TrakEM2-based projects -->
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>FS_Align_TrakEM2</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>Reconstruct_Reader</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>TrakEM2_Archipelago</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>blockmatching_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>register_virtual_stack_slices</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-
-
-		<!-- SCIFIO projects -->
+		<!-- SCIFIO projects - https://github.com/scifio -->
 		<dependency>
 			<groupId>io.scif</groupId>
 			<artifactId>scifio-bf-compat</artifactId>
@@ -733,16 +741,9 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Bio-Formats projects -->
-		<dependency>
-			<groupId>ome</groupId>
-			<artifactId>bio-formats_plugins</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-
 		<!-- Optional runtime dependencies -->
 
-		<!-- SciJava projects -->
+		<!-- SciJava projects - https://github.com/scijava -->
 		<dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>scijava-config</artifactId>
@@ -750,7 +751,7 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- JOGL libraries, for Java 3D -->
+		<!-- JOGL libraries, for Java 3D - https://github.com/jogamp -->
 		<dependency>
 			<groupId>org.jogamp.gluegen</groupId>
 			<artifactId>gluegen-rt-main</artifactId>
