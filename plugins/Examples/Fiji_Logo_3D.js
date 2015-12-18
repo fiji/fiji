@@ -2,8 +2,8 @@ importClass(Packages.ij3d.Image3DUniverse);
 
 importClass(Packages.java.util.ArrayList);
 
-importClass(Packages.javax.vecmath.Color3f);
-importClass(Packages.javax.vecmath.Point3f);
+importClass(Packages.org.scijava.vecmath.Color3f);
+importClass(Packages.org.scijava.vecmath.Point3f);
 
 /*
  * This function assumes that the rectangle is parallel to exactly two axes,
