@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>17.0.0</version>
+		<version>19.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -34,6 +34,7 @@
 	</ciManagement>
 
 	<properties>
+		<scijava.jvm.version>1.8</scijava.jvm.version>
 		<main-class>net.imagej.Main</main-class>
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
 	</properties>
@@ -615,6 +616,12 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>trakem2_tps</artifactId>
 			<scope>runtime</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>net.sf.opencsv</groupId>
+					<artifactId>opencsv</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<!-- BigDataViewer-based projects -->
