@@ -1,15 +1,15 @@
 [![](http://jenkins.imagej.net/job/Fiji/lastBuild/badge/icon)](http://jenkins.imagej.net/job/Fiji/)
-
-This is Fiji
-============
-
 [![Join the chat at https://gitter.im/fiji/fiji](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fiji/fiji?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 [ Fiji Is Just ImageJ ]
+=======================
 
-Fiji is a distribution of [ImageJ](http://imagej.net/), a popular, free
-scientific image processing application. Fiji adds a couple of plugins
-that are useful to life scientists analysing images.
+Fiji is a "batteries-included" distribution of
+[ImageJ](http://imagej.net/)—a popular, free scientific image processing
+application—which includes a lot of plugins organized into a coherent
+menu structure. Fiji compares to ImageJ as Ubuntu compares to Linux.
+
+The main focus of Fiji is to assist research in life sciences.
 
 At the moment, the following platforms are supported:
 
