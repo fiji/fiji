@@ -36,7 +36,6 @@
 	<properties>
 		<scijava.jvm.version>1.8</scijava.jvm.version>
 		<main-class>net.imagej.Main</main-class>
-		<imagej.app.directory>${rootdir}</imagej.app.directory>
 	</properties>
 
 	<repositories>
