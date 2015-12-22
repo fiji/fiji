@@ -34,7 +34,24 @@
 	</ciManagement>
 
 	<properties>
-		<scijava.jvm.version>1.8</scijava.jvm.version>
+		<!-- NB: Pinned versions, for Java 6 compatibility -->
+		<imagej-ops.version>0.23.0</imagej-ops.version>
+		<imagej-ui-swing.version>0.16.0</imagej-ui-swing.version>
+		<imagej.version>2.0.0-rc-43</imagej.version>
+		<mines-jtk.version>20100113</mines-jtk.version>
+		<legacy-imglib1.version>1.1.4-DEPRECATED</legacy-imglib1.version>
+		<Fiji_3D_Blob_Segmentation.version>2.0.2</Fiji_3D_Blob_Segmentation.version>
+		<ImageJ_3D_Viewer.version>3.1.0</ImageJ_3D_Viewer.version>
+		<Descriptor_based_registration.version>2.0.11</Descriptor_based_registration.version>
+		<Fiji_Developer.version>2.0.3</Fiji_Developer.version>
+		<SPIM_Registration.version>3.0.5</SPIM_Registration.version>
+		<Simple_Neurite_Tracer.version>2.0.4</Simple_Neurite_Tracer.version>
+		<TrackMate.version>2.8.1</TrackMate.version>
+		<Trainable_Segmentation.version>2.3.0</Trainable_Segmentation.version>
+		<TrakEM2_Archipelago.version>2.0.0</TrakEM2_Archipelago.version>
+		<VIB.version>2.0.3</VIB.version>
+		<Volume_Calculator.version>1.0.2</Volume_Calculator.version>
+
 		<main-class>net.imagej.Main</main-class>
 	</properties>
 
