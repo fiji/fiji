@@ -211,11 +211,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>FeatureJ_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>Feature_Detection</artifactId>
 			<scope>runtime</scope>
 		</dependency>
@@ -331,11 +326,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>MTrackJ_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>M_I_P</artifactId>
 			<scope>runtime</scope>
 		</dependency>
@@ -372,11 +362,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>RATS_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>RandomJ_</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -496,11 +481,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>TransformJ_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>TurboReg_</artifactId>
 			<scope>runtime</scope>
 		</dependency>
@@ -572,11 +552,6 @@
 		<dependency>
 			<groupId>org.janelia</groupId>
 			<artifactId>H5J_Loader_Plugin</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>imagescience</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
