@@ -66,7 +66,6 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-	
 	<dependencies>
 		<!-- Fiji Is Just ImageJ! -->
 		<dependency>
@@ -775,5 +774,4 @@
 			<scope>runtime</scope>
 		</dependency>
 	</dependencies>
-
 </project>
