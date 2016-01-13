@@ -3,6 +3,9 @@
 # When used from an existing ImageJ.app directory, uploads
 # the current ImageJ.app state to the specified ImageJ wiki
 # update site.
+#
+# REQUIRED: WIKI_UPLOAD_PASS environment variable to be set
+#           appropriately
 
 die () {
 	echo "$*" >&2
