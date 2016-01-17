@@ -71,7 +71,6 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 
 		<!-- SciJava dependencies - https://github.com/scijava -->
