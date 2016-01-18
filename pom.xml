@@ -81,6 +81,13 @@
 
 		<!-- Runtime dependencies -->
 
+		<!-- Fiji Incorporates Jointly ImageJ1 ;-) -->
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-legacy</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
 		<!-- Standard Fiji projects - https://github.com/fiji -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
