@@ -22,8 +22,8 @@ from ij.io import DirectoryChooser, FileSaver
 from ij.gui import GenericDialog, YesNoCancelDialog, Roi
 from mpicbg.imglib.image import ImagePlusAdapter
 from mpicbg.imglib.algorithm.fft import PhaseCorrelation
-from javax.vecmath import Point3i
-from javax.vecmath import Point3f
+from org.scijava.vecmath import Point3i
+from org.scijava.vecmath import Point3f
 from java.io import File, FilenameFilter
 from java.lang import Integer
 
