@@ -66,7 +66,7 @@ def extract_frame_process_roi(imp, frame, channel, process, roi):
     IJ.run(imp_frame, "Crop", "")
   # process  
   if process:
-    IJ.run(imp_frame, "Mean 3D...", "x=2 y=2 z=0");
+    IJ.run(imp_frame, "Mean 3D...", "x=1 y=1 z=0");
     IJ.run(imp_frame, "Find Edges", "stack");
   # return
   return imp_frame
@@ -138,7 +138,8 @@ def compute_and_update_frame_translations_dt(imp, channel, dt, process, shifts =
   nt = imp.getNFrames()
   # get roi (could be None)
   roi = imp.getRoi()
-  print "ROI is at",roi.getBounds()   
+  if roi:
+    print "ROI is at",roi.getBounds()
   # init shifts
   if shifts == None:
     shifts = []
@@ -555,8 +556,10 @@ def run():
   # multi-time-scale computation
   if multi_time_scale is True:
     dt_max = imp.getNFrames()-1
-    dts = [3,9,27,81,243,1001,dt_max] 
-    #dts = [2,4,8,16,32,64,dt_max] 
+    # computing drifts on exponentially increasing time scales 3^i up to 3^6
+    # ..one could also do this with 2^i or 4^i
+    # ..maybe make this a user choice? did not do this to keep it simple.
+    dts = [3,9,27,81,243,729,dt_max]
     for dt in dts:
       if dt < dt_max:
         IJ.log("     at frame shifts of "+str(dt)) 
