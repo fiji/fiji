@@ -10,14 +10,6 @@
 % we try to use the surface plot mode of the 3D viewer with a surface well
 % known to MATLAB users.
 
-
-%% Make sure Java3D is installed
-% If not, try to install it
-
-if ~IsJava3DInstalled(true)
-    return
-end
-
 %% Generate elevation data in MATLAB
 % This is the well known *membrane* dataset, that serves as a generator for
 % the MATLAB logo.
