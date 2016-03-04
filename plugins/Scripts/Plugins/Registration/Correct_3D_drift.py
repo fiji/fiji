@@ -28,8 +28,6 @@ from java.io import File, FilenameFilter
 from java.lang import Integer
 import math
 
-from jarray import zeros, array
-
 # sub-pixel translation using imglib2
 from net.imagej.axis import Axes
 from net.imglib2.img.display.imagej import ImageJFunctions
