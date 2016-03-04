@@ -22,16 +22,42 @@ from ij.io import DirectoryChooser, FileSaver
 from ij.gui import GenericDialog, YesNoCancelDialog, Roi
 from mpicbg.imglib.image import ImagePlusAdapter
 from mpicbg.imglib.algorithm.fft import PhaseCorrelation
-from org.scijava.vecmath import Point3i
-from org.scijava.vecmath import Point3f
+from javax.vecmath import Point3i
+from javax.vecmath import Point3f
 from java.io import File, FilenameFilter
 from java.lang import Integer
-
 import math
-from imagescience.image import Image
-from imagescience.transform import Translate
 
-# imp stands for ij.ImagePlus instance
+# sub-pixel translation using imglib2
+from net.imagej.axis import Axes
+from net.imglib2.img.display.imagej import ImageJFunctions
+from net.imglib2.realtransform import RealViews, Translation3D
+from net.imglib2.view import Views
+from net.imglib2.img.imageplus import ImagePlusImgs
+from net.imglib2.converter import Converters
+from net.imglib2.converter.readwrite import RealFloatSamplerConverter
+from net.imglib2.interpolation.randomaccess import NLinearInterpolatorFactory
+
+def translate_single_stack_using_imglib2(imp, dx, dy, dz):
+  # wrap into a float imglib2 and translate
+  #   conversiong into float is necessary due to "overflow of n-linear interpolation due to accuracy limits of unsigned bytes"
+  #   see: https://github.com/fiji/fiji/issues/136#issuecomment-173831951
+  img = ImagePlusImgs.from(imp.duplicate())
+  extended = Views.extendBorder(img)
+  converted = Converters.convert(extended, RealFloatSamplerConverter())
+  interpolant = Views.interpolate(converted, NLinearInterpolatorFactory())
+  transformed = RealViews.affine(interpolant, Translation3D(dx, dy, dz))
+  cropped = Views.interval(transformed, img)
+  # wrap back into bit depth of input image and return
+  bd = imp.getBitDepth()
+  if bd==8:
+    return(ImageJFunctions.wrapUnsignedByte(cropped,"imglib2"))
+  elif bd == 16:
+    return(ImageJFunctions.wrapUnsignedShort(cropped,"imglib2"))
+  elif bd == 32:
+    return(ImageJFunctions.wrapFloat(cropped,"imglib2"))
+  else:
+    return None    
 
 def compute_stitch(imp1, imp2):
   """ Compute a Point3i that expressed the translation of imp2 relative to imp1."""
@@ -139,7 +165,7 @@ def compute_and_update_frame_translations_dt(imp, channel, dt, process, shifts =
   # get roi (could be None)
   roi = imp.getRoi()
   if roi:
-    print "ROI is at",roi.getBounds()
+    print "ROI is at",roi.getBounds()   
   # init shifts
   if shifts == None:
     shifts = []
@@ -174,8 +200,8 @@ def compute_and_update_frame_translations_dt(imp, channel, dt, process, shifts =
     # update shifts from t-dt to the end (assuming that the measured local shift will presist till the end)
     for i,tt in enumerate(range(t-dt,nt)):
       # for i>dt below expression basically is a linear drift predicition for the frames at tt>t
-      # this is only important for predicting the best shift of the ROIs 
-      # as the drifts will be corrected by the next measurements
+      # this is only important for predicting the best shift of the ROI 
+      # the drifts for i>dt will be corrected by the next measurements
       shifts[tt].x += 1.0*i/dt * add_shift.x
       shifts[tt].y += 1.0*i/dt * add_shift.y
       shifts[tt].z += 1.0*i/dt * add_shift.z
@@ -226,6 +252,7 @@ def invert_shifts(shifts):
     shift.y *= -1
     shift.z *= -1
   return shifts
+
 
 def register_hyperstack(imp, channel, shifts, target_folder, virtual):
   """ Takes the imp, determines the x,y,z drift for each pair of time points, using the preferred given channel,
@@ -346,9 +373,7 @@ def register_hyperstack(imp, channel, shifts, target_folder, virtual):
     mode = imp.getMode()
   else:
     return registeredstack_imp
-  return CompositeImage(registeredstack_imp, mode)
-
-
+  return CompositeImage(registeredstack_imp, mode)      
 
 def register_hyperstack_subpixel(imp, channel, shifts, target_folder, virtual):
   """ Takes the imp, determines the x,y,z drift for each pair of time points, using the preferred given channel,
@@ -384,64 +409,56 @@ def register_hyperstack_subpixel(imp, channel, shifts, target_folder, virtual):
   empty = imp.getProcessor().createProcessor(width, height)
 
   IJ.showProgress(0)
-  
+
+  # get raw data as stack
+  stack = imp.getStack()
+
+  # loop across frames
   for frame in range(1, imp.getNFrames()+1):
       
     IJ.showProgress(frame / float(imp.getNFrames()+1))
     fr = "t" + zero_pad(frame, len(str(imp.getNFrames()))) # for saving files in a virtual stack
     
-    # init
+    # get and report current shift
     shift = shifts[frame-1]
-    registeredstackthisframe = ImageStack(width, height, imp.getProcessor().getColorModel())
-
     print "frame",frame,"correcting drift",-shift.x-minx,-shift.y-miny,-shift.z-minz
     IJ.log("    frame "+str(frame)+" correcting drift "+str(round(-shift.x-minx,2))+","+str(round(-shift.y-miny,2))+","+str(round(-shift.z-minz,2)))
-        
-    # Add all slices of this frame
-    stack = imp.getStack()
-    for s in range(1, imp.getNSlices()+1):
-      for ch in range(1, imp.getNChannels()+1):
-         ip = stack.getProcessor(imp.getStackIndex(ch, s, frame))
-         ip2 = ip.createProcessor(width, height) # potentially larger
-         ip2.insert(ip, 0, 0)
-         registeredstackthisframe.addSlice("", ip2)
 
-    # Pad the end (in z) of this frame
-    for s in range(imp.getNSlices(), slices):
-      for ch in range(1, imp.getNChannels()+1):
-         registeredstackthisframe.addSlice("", empty)
+    # loop across channels
+    for ch in range(1, imp.getNChannels()+1):      
+      
+      tmpstack = ImageStack(width, height, imp.getProcessor().getColorModel())
 
-    # Set correct dimensions as below Translate() function needs this
-    # ..it is important *not* to set the calibration as Translate() works with units if present
-    registeredstackthisframe_imp = ImagePlus("registered time points", registeredstackthisframe)
-    registeredstackthisframe_imp.setProperty("Info", imp.getProperty("Info"))
-    registeredstackthisframe_imp.setDimensions(imp.getNChannels(), slices, 1)
-    registeredstackthisframe_imp.setOpenAsHyperStack(True)
-    
-    # Translate and set dimensions to translated result
-    translator = Translate()
-    output = translator.run(Image.wrap(registeredstackthisframe_imp),shift.x,shift.y,shift.z,Translate.LINEAR)
-    imp_translated = output.imageplus()
-    imp_translated.setProperty("Info", imp.getProperty("Info"))
-    imp_translated.setDimensions(imp.getNChannels(), slices, 1)
-    imp_translated.setOpenAsHyperStack(True)
-    
-    # Add the translated frame to the final time-series
-    stack = imp_translated.getStack()
-    for s in range(1, imp_translated.getNSlices()+1):
-      ss = "_z" + zero_pad(s, len(str(slices)))
-      for ch in range(1, imp_translated.getNChannels()+1):
-         ip = stack.getProcessor(imp_translated.getStackIndex(ch, s, 1))
-         if virtual is True:
-           name = fr + ss + "_c" + zero_pad(ch, len(str(imp.getNChannels()))) +".tif"
-           names.append(name)
-           currentslice = ImagePlus("", ip)
-           currentslice.setCalibration(imp.getCalibration().copy())
-           currentslice.setProperty("Info", imp.getProperty("Info"));
-           FileSaver(currentslice).saveAsTiff(target_folder + "/" + name)
-         else:
-           registeredstack.addSlice("", ip)
-  
+      # get all slices of this channel and frame
+      for s in range(1, imp.getNSlices()+1):
+        ip = stack.getProcessor(imp.getStackIndex(ch, s, frame))
+        ip2 = ip.createProcessor(width, height) # potentially larger
+        ip2.insert(ip, 0, 0)
+        tmpstack.addSlice("", ip2)
+
+      # Pad the end (in z) of this channel and frame
+      for s in range(imp.getNSlices(), slices):
+        tmpstack.addSlice("", empty)
+
+      # subpixel translation
+      imp_tmpstack = ImagePlus("", tmpstack)
+      imp_translated = translate_single_stack_using_imglib2(imp_tmpstack, shift.x, shift.y, shift.z)
+      
+      # Add translated frame to final time-series
+      translated_stack = imp_translated.getStack()
+      for s in range(1, translated_stack.getSize()+1):
+        ss = "_z" + zero_pad(s, len(str(slices)))
+        ip = translated_stack.getProcessor(s).duplicate() # duplicate is important as otherwise it will only be a reference that can change its content  
+        if virtual is True:
+          name = fr + ss + "_c" + zero_pad(ch, len(str(imp.getNChannels()))) +".tif"
+          names.append(name)
+          currentslice = ImagePlus("", ip)
+          currentslice.setCalibration(imp.getCalibration().copy())
+          currentslice.setProperty("Info", imp.getProperty("Info"));
+          FileSaver(currentslice).saveAsTiff(target_folder + "/" + name)
+        else:
+          registeredstack.addSlice("", ip)    
+          
   IJ.showProgress(1)
 
   if virtual is True:
@@ -550,7 +567,7 @@ def run():
   # compute shifts
   IJ.log("  computing drifts..."); print("\nCOMPUTING SHIFTS:")
 
-  IJ.log("     at frame shifts of 1"); 
+  IJ.log("    at frame shifts of 1"); 
   dt = 1; shifts = compute_and_update_frame_translations_dt(imp, channel, dt, process)
   
   # multi-time-scale computation
@@ -559,13 +576,13 @@ def run():
     # computing drifts on exponentially increasing time scales 3^i up to 3^6
     # ..one could also do this with 2^i or 4^i
     # ..maybe make this a user choice? did not do this to keep it simple.
-    dts = [3,9,27,81,243,729,dt_max]
+    dts = [3,9,27,81,243,729,dt_max] 
     for dt in dts:
       if dt < dt_max:
-        IJ.log("     at frame shifts of "+str(dt)) 
+        IJ.log("    at frame shifts of "+str(dt)) 
         shifts = compute_and_update_frame_translations_dt(imp, channel, dt, process, shifts)
       else: 
-        IJ.log("     at frame shifts of "+str(dt_max));
+        IJ.log("    at frame shifts of "+str(dt_max));
         shifts = compute_and_update_frame_translations_dt(imp, channel, dt_max, process, shifts)
         break
 
