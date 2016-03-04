@@ -22,8 +22,8 @@ from ij.io import DirectoryChooser, FileSaver
 from ij.gui import GenericDialog, YesNoCancelDialog, Roi
 from mpicbg.imglib.image import ImagePlusAdapter
 from mpicbg.imglib.algorithm.fft import PhaseCorrelation
-from javax.vecmath import Point3i
-from javax.vecmath import Point3f
+from org.scijava.vecmath import Point3i  #from javax.vecmath import Point3i # java6
+from org.scijava.vecmath import Point3f  #from javax.vecmath import Point3f # java6
 from java.io import File, FilenameFilter
 from java.lang import Integer
 import math
@@ -40,7 +40,7 @@ from net.imglib2.interpolation.randomaccess import NLinearInterpolatorFactory
 
 def translate_single_stack_using_imglib2(imp, dx, dy, dz):
   # wrap into a float imglib2 and translate
-  #   conversiong into float is necessary due to "overflow of n-linear interpolation due to accuracy limits of unsigned bytes"
+  #   conversion into float is necessary due to "overflow of n-linear interpolation due to accuracy limits of unsigned bytes"
   #   see: https://github.com/fiji/fiji/issues/136#issuecomment-173831951
   img = ImagePlusImgs.from(imp.duplicate())
   extended = Views.extendBorder(img)
@@ -131,7 +131,6 @@ def shift_roi(imp, roi, dr):
     return roi
   else:
     r = roi.getBounds()
-    #print r, dr.x, dr.y, imp.width, imp.height
     # init x,y coordinates of new shifted roi
     sx = 0
     sy = 0
@@ -151,7 +150,6 @@ def shift_roi(imp, roi, dr):
       sy = r.y + int(dr.y)
     # return shifted roi
     shifted_roi = Roi(sx, sy, r.width, r.height)
-    #print shifted_roi
     return shifted_roi   
   
 def compute_and_update_frame_translations_dt(imp, channel, dt, process, shifts = None):
@@ -165,7 +163,7 @@ def compute_and_update_frame_translations_dt(imp, channel, dt, process, shifts =
   # get roi (could be None)
   roi = imp.getRoi()
   if roi:
-    print "ROI is at",roi.getBounds()   
+    print "ROI is at", roi.getBounds()   
   # init shifts
   if shifts == None:
     shifts = []
