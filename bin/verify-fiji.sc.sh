@@ -8,7 +8,10 @@ echo Fiji Wiki
 curl http://fiji.sc | grep "Fiji is just ImageJ"
 
 echo Fiji Wiki legacy
-curl http://fiji.sc/wiki/Fiji | grep "Fiji Is Just ImageJ"
+curl http://fiji.sc/wiki/Fiji | grep "301"
+
+echo Fiji Wiki legacy
+curl http://fiji.sc/Fiji | grep "301"
 
 echo Fiji Wiki legacy \#2
 curl -L http://fiji.sc/mediawiki/phase3/Fiji | grep "Fiji is just ImageJ"
