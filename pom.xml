@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>21.3.0</version>
+		<version>22.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -658,6 +658,11 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-core</artifactId>
+			<!--
+			TEMP: Pin to older version, until bigwarp_fiji stops
+			shipping a duplicate copy of ARGBARGBColorConverter.
+			-->
+			<version>2.1.0</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
