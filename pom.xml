@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>22.2.0</version>
+		<version>23.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -646,23 +646,12 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>trakem2_tps</artifactId>
 			<scope>runtime</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>net.sf.opencsv</groupId>
-					<artifactId>opencsv</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<!-- BigDataViewer projects - https://github.com/bigdataviewer -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-core</artifactId>
-			<!--
-			TEMP: Pin to older version, until bigwarp_fiji stops
-			shipping a duplicate copy of ARGBARGBColorConverter.
-			-->
-			<version>2.1.0</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
