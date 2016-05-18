@@ -88,6 +88,13 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Op-Finder is currently GPL -->
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>op-finder</artifactId>
+      <scope>runtime</scope>
+		</dependency>
+
 		<!-- Standard Fiji projects - https://github.com/fiji -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
