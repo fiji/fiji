@@ -1,4 +1,4 @@
-function [mij] = Miji(open_imagej)
+function [mij] = Miji(open_imagej, verbose)
     %% This script sets up the classpath to Fiji and optionally starts MIJ
     % Author: Jacques Pecreaux, Johannes Schindelin, Jean-Yves Tinevez
     % GNU Octave compatibility added by Eric Barnhill, Jul 2016
@@ -7,6 +7,9 @@ function [mij] = Miji(open_imagej)
         open_imagej = true;
     end
     
+    if nargin < 2
+        verbose = false;
+    end
 
     %% Get the Fiji directory
     fiji_directory = fileparts(fileparts(mfilename('fullpath')));
@@ -17,10 +20,10 @@ function [mij] = Miji(open_imagej)
     %% Add all libraries in jars/ and plugins/ to the classpath
     
     % Switch off warning
-    warning_state = warning('off');
+    warning_state = warning('off','MATLAB:javaclasspath:jarAlreadySpecified');
     
-    add_to_classpath(classpath, fullfile(fiji_directory,'jars'));
-    add_to_classpath(classpath, fullfile(fiji_directory,'plugins'));
+    add_to_classpath(classpath, fullfile(fiji_directory,'jars'), verbose);
+    add_to_classpath(classpath, fullfile(fiji_directory,'plugins'), verbose);
     
     % Switch warning back to initial settings
     warning(warning_state)
@@ -31,7 +34,6 @@ function [mij] = Miji(open_imagej)
 
     %% Maybe open the ImageJ window
     if open_imagej
-        cd ..;
         fprintf('\n\nUse MIJ.exit to end the session\n\n');
         mij = javaObject('MIJ');
         mij.start();
@@ -52,7 +54,7 @@ function [mij] = Miji(open_imagej)
     % %    fiji.User_Plugins.installScripts();
 end
 
-function add_to_classpath(classpath, directory)
+function add_to_classpath(classpath, directory, verbose)
 
     isoctave = exist('octave_config_info') > 0;
 
@@ -62,8 +64,10 @@ function add_to_classpath(classpath, directory)
     jarlist = dir(fullfile(directory,'*.jar'));
     path_= cell(0);
     for i = 1:length(jarlist)
-      %disp(jarlist(i).name);
         if not_yet_in_classpath(classpath, jarlist(i).name)
+            if verbose
+                disp(strcat(['Adding: ',jarlist(i).name]));
+            end
             path_{length(path_) + 1} = fullfile(directory,jarlist(i).name);
         end
     end
@@ -88,7 +92,7 @@ function add_to_classpath(classpath, directory)
 
     for iDir = find(validIndex)
       nextDir = fullfile(directory,subDirs{iDir});
-      add_to_classpath(classpath, nextDir);
+      add_to_classpath(classpath, nextDir, verbose);
     end
 end
 
