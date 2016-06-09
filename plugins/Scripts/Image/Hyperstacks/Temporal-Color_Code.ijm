@@ -34,6 +34,7 @@ var Glut = "Fire";	//default LUT
 var Gstartf = 1;
 var Gendf = 10;
 var GFrameColorScaleCheck = 1;
+var GbatchMode = 0;
 
 macro "Time-Lapse Color Coder" {
 	Stack.getDimensions(ww, hh, channels, slices, frames);
@@ -128,7 +129,9 @@ macro "Time-Lapse Color Coder" {
 	close();
 
 	selectImage(resultImageID);
-	setBatchMode("exit and display");
+	
+	if (GbatchMode == 0)
+		setBatchMode("exit and display");
 
 	if (GFrameColorScaleCheck)
 		CreateScale(Glut, Gstartf, Gendf);
@@ -179,11 +182,13 @@ function showDialog() {
 	Dialog.addNumber("start frame", Gstartf);
 	Dialog.addNumber("end frame", Gendf);
 	Dialog.addCheckbox("Create Time Color Scale Bar", GFrameColorScaleCheck);
+	Dialog.addCheckbox("Batch mode? (no image output)", GbatchMode);
 	Dialog.show();
  	Glut = Dialog.getChoice();
 	Gstartf = Dialog.getNumber();
 	Gendf = Dialog.getNumber();
 	GFrameColorScaleCheck = Dialog.getCheckbox();
+	GbatchMode = Dialog.getCheckbox();
 }
 
 function CreateScale(lutstr, beginf, endf){
