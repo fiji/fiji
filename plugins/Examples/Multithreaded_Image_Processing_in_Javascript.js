@@ -38,7 +38,7 @@ importClass(Packages.java.util.concurrent.atomic.AtomicInteger);
 
 // Print all numbers from start to end (inclusive), multithreaded
 function doItMultithreaded(start, end) {
-	var threads = new java.lang.reflect.Array.newInstance(java.lang.Thread, Runtime.getRuntime().availableProcessors());
+	var threads = java.lang.reflect.Array.newInstance(java.lang.Thread.class, Runtime.getRuntime().availableProcessors());
 	var ai = new AtomicInteger(start);
 	var body = {
 		run: function() {
@@ -65,7 +65,7 @@ function doItMultithreaded(start, end) {
 // Now, abstract away the multithreading framework into a function
 // that takes another function as argument:
 function multithreader(fun, start, end) {
-	var threads = new java.lang.reflect.Array.newInstance(java.lang.Thread, Runtime.getRuntime().availableProcessors());
+	var threads = java.lang.reflect.Array.newInstance(java.lang.Thread.class, Runtime.getRuntime().availableProcessors());
 	var ai = new AtomicInteger(start);
 	// Prepare arguments: all other arguments passed to this function
 	// beyond the mandatory arguments fun, start and end:
