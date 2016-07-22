@@ -1,6 +1,7 @@
 function [mij] = Miji(open_imagej)
     %% This script sets up the classpath to Fiji and optionally starts MIJ
     % Author: Jacques Pecreaux, Johannes Schindelin, Jean-Yves Tinevez
+    % GNU Octave compatibility added by Eric Barnhill, Jul 2016
 
     if nargin < 1
         open_imagej = true;
@@ -25,15 +26,14 @@ function [mij] = Miji(open_imagej)
     warning(warning_state)
 
     % Set the Fiji directory (and plugins.dir which is not Fiji.app/plugins/)
-    java.lang.System.setProperty('ij.dir', fiji_directory);
-    java.lang.System.setProperty('plugins.dir', fiji_directory);
+    javaMethod('setProperty', 'java.lang.System', 'ij.dir', fiji_directory);
+    javaMethod('setProperty', 'java.lang.System', 'plugins.dir', fiji_directory);
 
     %% Maybe open the ImageJ window
     if open_imagej
         cd ..;
         fprintf('\n\nUse MIJ.exit to end the session\n\n');
-        % EB change May 2015
-        mij = MIJ;
+        mij = javaObject('MIJ');
         mij.start();
     else
         % initialize ImageJ with the NO_SHOW flag (== 2)
@@ -53,13 +53,16 @@ function [mij] = Miji(open_imagej)
 end
 
 function add_to_classpath(classpath, directory)
+
+    isoctave = exist('octave_config_info') > 0;
+
     % Get all .jar files in the directory
     dirData = dir(directory);
     dirIndex = [dirData.isdir];
     jarlist = dir(fullfile(directory,'*.jar'));
     path_= cell(0);
     for i = 1:length(jarlist)
-      disp(jarlist(i).name);
+      %disp(jarlist(i).name);
         if not_yet_in_classpath(classpath, jarlist(i).name)
             path_{length(path_) + 1} = fullfile(directory,jarlist(i).name);
         end
@@ -67,8 +70,17 @@ function add_to_classpath(classpath, directory)
 
     %% Add them to the classpath
     if ~isempty(path_)
-        javaaddpath(path_, '-end');
-    end
+      if isoctave
+        for n = 1:numel(path_)
+              err_code = javaMethod('addClassPath', 'org.octave.ClassHelper', path_{n});
+              if err_code == 0
+                  display(['Error importing ', path_{n}]);
+              end
+        end
+      else
+          javaaddpath(path_, '-end');
+      end
+     end
 
     %# Recurse over subdirectories
     subDirs = {dirData(dirIndex).name};
@@ -85,3 +97,4 @@ function test = not_yet_in_classpath(classpath, filename)
 expression = strcat([filesep filename '$']);
 test = isempty(cell2mat(regexp(classpath, expression)));
 end
+
