@@ -118,11 +118,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>Analyze_Reader_Writer</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>Anisotropic_Diffusion_2D</artifactId>
 			<scope>runtime</scope>
 		</dependency>
