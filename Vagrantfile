@@ -12,7 +12,7 @@ VAGRANTFILE_API_VERSION = "2"
 
 $provision = <<PROVISION
 apt-get update
-apt-get install -y openjdk-7-jdk maven
+apt-get install -y openjdk-8-jdk maven
 
 cat >> /home/vagrant/.profile << \EOF
 
