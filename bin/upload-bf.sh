@@ -6,7 +6,7 @@
 
 # Uploads Bio-Formats development builds to the Bio-Formats update site.
 
-export JAR_URL="http://ci.openmicroscopy.org/job/BIOFORMATS-5.1-latest/lastSuccessfulBuild/artifact/artifacts/"
+export JAR_URL="https://ci.openmicroscopy.org/job/BIOFORMATS-DEV-latest/lastSuccessfulBuild/artifact/artifacts/"
 
 export JAR_FILES="
 jars/bio-formats/formats-api
@@ -16,6 +16,7 @@ jars/bio-formats/formats-gpl
 jars/bio-formats/jai_imageio
 jars/bio-formats/mdbtools-java
 jars/bio-formats/metakit
+jars/bio-formats/ome-jxr
 jars/bio-formats/ome-poi
 jars/bio-formats/ome-xml
 jars/bio-formats/specification
