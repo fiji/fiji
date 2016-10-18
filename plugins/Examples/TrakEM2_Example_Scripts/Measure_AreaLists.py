@@ -23,6 +23,8 @@ from ij import IJ, ImageJ, ImagePlus
 from ij.gui import ShapeRoi
 from ij.measure import Calibration, Measurements, ResultsTable
 
+from ini.trakem2.display import Display
+
 from java.awt.geom import AffineTransform
 
 """
