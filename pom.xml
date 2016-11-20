@@ -6,17 +6,147 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>sc.fiji</groupId>
-		<artifactId>pom-fiji</artifactId>
-		<version>26.1.1</version>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>12.0.0</version>
 		<relativePath />
 	</parent>
 
+	<groupId>sc.fiji</groupId>
 	<artifactId>fiji</artifactId>
 	<version>2.0.0-SNAPSHOT</version>
 
 	<name>Fiji</name>
 	<description>Fiji is a distribution of ImageJ for the life sciences.</description>
+	<url>http://fiji.sc/</url>
+	<inceptionYear>2007</inceptionYear>
+	<organization>
+		<name>Fiji</name>
+		<url>http://fiji.sc/</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>GNU General Public License v3+</name>
+			<url>http://www.gnu.org/licenses/gpl.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>ctrueden</id>
+			<name>Curtis Rueden</name>
+			<url>http://imagej.net/User:Rueden</url>
+			<roles>
+				<role>founder</role>
+				<role>lead</role>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>Johannes Schindelin</name>
+			<url>http://imagej.net/User:Schindelin</url>
+			<roles><role>founder</role></roles>
+			<properties><id>dscho</id></properties>
+		</contributor>
+		<contributor>
+			<name>Ignacio Arganda-Carreras</name>
+			<url>http://imagej.net/User:Iarganda</url>
+			<properties><id>iarganda</id></properties>
+		</contributor>
+		<contributor>
+			<name>Eric Barnhill</name>
+			<url>http://imagej.net/User:Ericbarnhill</url>
+			<properties><id>ericbarnhill</id></properties>
+		</contributor>
+		<contributor>
+			<name>Albert Cardona</name>
+			<url>http://imagej.net/User:Albertcardona</url>
+			<properties><id>acardona</id></properties>
+		</contributor>
+		<contributor>
+			<name>Michael Doube</name>
+			<url>http://imagej.net/User:Michaeldoube</url>
+			<properties><id>mdoube</id></properties>
+		</contributor>
+		<contributor>
+			<name>Jan Eglinger</name>
+			<url>http://imagej.net/User:Eglinger</url>
+			<properties><id>imagejan</id></properties>
+		</contributor>
+		<contributor>
+			<name>Michael Entrup</name>
+			<url>http://imagej.net/User:M-entrup</url>
+			<properties><id>m-entrup</id></properties>
+		</contributor>
+		<contributor>
+			<name>Tiago Ferreira</name>
+			<url>http://imagej.net/User:Tiago</url>
+			<properties><id>tferr</id></properties>
+		</contributor>
+		<contributor>
+			<name>Mark Hiner</name>
+			<url>http://imagej.net/User:Hinerm</url>
+			<properties><id>hinerm</id></properties>
+		</contributor>
+		<contributor>
+			<name>Gabriel Landini</name>
+			<url>http://imagej.net/User:Landini</url>
+			<properties><id>landinig</id></properties>
+		</contributor>
+		<contributor>
+			<name>Nicholas Mei</name>
+		</contributor>
+		<contributor>
+			<name>Kota Miura</name>
+			<url>http://imagej.net/User:Miura</url>
+			<properties><id>cmci</id></properties>
+		</contributor>
+		<contributor>
+			<name>Aparna Pal</name>
+			<url>http://imagej.net/Users:Apal4</url>
+			<properties><id>apal4</id></properties>
+		</contributor>
+		<contributor>
+			<name>Jacques Pecreaux</name>
+		</contributor>
+		<contributor>
+			<name>Stephan Saalfeld</name>
+			<url>http://imagej.net/User:Saalfeld</url>
+			<properties><id>axtimwalde</id></properties>
+		</contributor>
+		<contributor>
+			<name>Benjamin Schmid</name>
+			<url>http://imagej.net/User:Bene</url>
+			<properties><id>bene51</id></properties>
+		</contributor>
+		<contributor>
+			<name>Jean-Yves Tinevez</name>
+			<url>http://imagej.net/User:JeanYvesTinevez</url>
+			<properties><id>tinevez</id></properties>
+		</contributor>
+		<contributor>
+			<name>Pavel Tomancak</name>
+			<url>http://imagej.net/User:Tomancak</url>
+			<properties><id>tomancak</id></properties>
+		</contributor>
+		<contributor>
+			<name>Lachlan Whitehead</name>
+		</contributor>
+	</contributors>
+
+	<mailingLists>
+		<mailingList>
+			<name>ImageJ Forum</name>
+			<archive>http://forum.imagej.net/</archive>
+		</mailingList>
+	</mailingLists>
 
 	<scm>
 		<connection>scm:git:git://github.com/fiji/fiji</connection>
@@ -34,7 +164,12 @@
 	</ciManagement>
 
 	<properties>
-		<main-class>net.imagej.Main</main-class>
+		<main-class>sc.fiji.Main</main-class>
+		<package-name>sc.fiji</package-name>
+
+		<license.licenseName>gpl_v3</license.licenseName>
+		<license.copyrightOwners>Fiji development team</license.copyrightOwners>
+		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
 	</properties>
 
 	<repositories>
@@ -45,26 +180,6 @@
 		</repository>
 	</repositories>
 
-	<dependencyManagement>
-		<dependencies>
-			<!-- BigDataViewer BOM -->
-			<dependency>
-				<groupId>sc.fiji</groupId>
-				<artifactId>pom-bigdataviewer</artifactId>
-				<version>${pom-bigdataviewer.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-			<!-- TrakEM2 BOM -->
-			<dependency>
-				<groupId>sc.fiji</groupId>
-				<artifactId>pom-trakem2</artifactId>
-				<version>${pom-trakem2.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 	<dependencies>
 		<!-- Fiji Is Just ImageJ! -->
 		<dependency>
