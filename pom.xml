@@ -206,7 +206,7 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>op-finder</artifactId>
-      <scope>runtime</scope>
+			<scope>runtime</scope>
 		</dependency>
 
 		<!-- Standard Fiji projects - https://github.com/fiji -->
