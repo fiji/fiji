@@ -826,6 +826,12 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>TrakEM2_</artifactId>
 			<scope>runtime</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.scijava</groupId>
+					<artifactId>jython-shaded</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
