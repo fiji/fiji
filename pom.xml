@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>12.0.0</version>
+		<version>14.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -170,8 +170,6 @@
 		<license.licenseName>gpl_v3</license.licenseName>
 		<license.copyrightOwners>Fiji development team</license.copyrightOwners>
 		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
-
-		<H5J_Loader_Plugin.version>1.0.6</H5J_Loader_Plugin.version>
 	</properties>
 
 	<repositories>
@@ -305,7 +303,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Correct_3D_Drift</artifactId>
-			<version>1.0.0</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -507,6 +504,16 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>SPIM_Registration</artifactId>
 			<scope>runtime</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>ome</groupId>
+					<artifactId>formats-common</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ome</groupId>
+					<artifactId>ome-xml</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -567,6 +574,16 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>Stitching_</artifactId>
 			<scope>runtime</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>ome</groupId>
+					<artifactId>formats-common</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ome</groupId>
+					<artifactId>ome-xml</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
