@@ -22,11 +22,13 @@
 
 package sc.fiji;
 
+import net.imagej.ImageJ;
+
 /**
  * Launches Fiji.
  * 
  * @author Curtis Rueden
- * @see net.imagej.Main
+ * @see net.imagej.ImageJ
  */
 public final class Main {
 
@@ -45,7 +47,7 @@ public final class Main {
 		// installation's plugins folder over the JARs on the classpath!
 		System.setProperty("plugins.dir", "/path/to/your/Fiji.app");
 
-		net.imagej.Main.launch(args);
+		new ImageJ().launch(args);
 	}
 
 }
