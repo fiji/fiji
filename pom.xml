@@ -170,6 +170,9 @@
 		<license.licenseName>gpl_v3</license.licenseName>
 		<license.copyrightOwners>Fiji development team</license.copyrightOwners>
 		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
+		
+		<bigdataviewer-core.version>3.0.4-SNAPSHOT</bigdataviewer-core.version>
+		<bigdataviewer_fiji.version>4.0.0-SNAPSHOT</bigdataviewer_fiji.version>
 	</properties>
 
 	<repositories>
