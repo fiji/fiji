@@ -2,6 +2,8 @@ language: java
 jdk: oraclejdk8
 branches:
   only: master
+git:
+  submodules: false
 install: true
 script: ".travis/build.sh"
 after_success: ".travis/notify.sh Travis-Success"
