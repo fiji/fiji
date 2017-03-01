@@ -1,4 +1,4 @@
-[![](http://jenkins.imagej.net/job/Fiji/lastBuild/badge/icon)](http://jenkins.imagej.net/job/Fiji/)
+[![](https://travis-ci.org/fiji/fiji.svg?branch=master)](https://travis-ci.org/fiji/fiji)
 [![Join the chat at https://gitter.im/fiji/fiji](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fiji/fiji?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 [ Fiji Is Just ImageJ ]
