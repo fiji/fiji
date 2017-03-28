@@ -405,6 +405,79 @@ end
 alias_to_lower_camel_case "set_min_max"
 
 # ........................................................................
+
+def set_auto_threshold
+  imp = IJ.getImage()
+  IJ.setAutoThreshold(imp, "Default")
+end
+
+alias_to_lower_camel_case "set_auto_threshold"
+
+# ........................................................................
+
+def set_tool
+  IJ.setTool(name)
+end
+
+alias_to_lower_camel_case "set_tool"
+
+# ........................................................................
+
+def show_message
+  IJ.showMessage("Title", "Message")
+end
+
+alias_to_lower_camel_case "show_message"
+
+# ........................................................................
+
+def show_message_with_cancel
+  IJ.showMessageWithCancel("Title", "Message")
+end
+
+alias_to_lower_camel_case "show_message_with_cancel"
+
+# ........................................................................
+
+def invert
+  IJ.run("Invert")
+end
+
+alias_to_lower_camel_case "invert"
+
+# ........................................................................
+
+def close
+  IJ.run("Close")
+end
+
+alias_to_lower_camel_case "close"
+
+# ........................................................................
+
+def print
+  print(string)
+end
+
+alias_to_lower_camel_case "print"
+
+# ........................................................................
+
+def round
+  print(string.round(n))
+end
+
+alias_to_lower_camel_case "round"
+
+# ........................................................................
+
+def floor
+  print(string.floor)
+end
+
+alias_to_lower_camel_case "floor"
+
+# ........................................................................
 # I think these are all the ImageJ macro functions we would have to
 # implement to be completely equivalent.  I have prefixed with "+"
 # those which I have already written.
@@ -416,18 +489,18 @@ alias_to_lower_camel_case "set_min_max"
 # 
 # -----------------------------------------------------------------------
 # +RUN=300:"run":RUN
-#  INVERT=301:"invert":INVERT
+# +INVERT=301:"invert":INVERT
 # +SELECT=302:"selectWindow":SELECT
 # +WAIT=303:"wait":WAIT
 # +BEEP=304:"beep":BEEP
 # +RESET_MIN_MAX=305:"resetMinAndMax":RESET_MIN_MAX
 # +RESET_THRESHOLD=306:"resetThreshold":RESET_THRESHOLD
-#  PRINT=307:"print":PRINT
+# +PRINT=307:"print":PRINT
 #  WRITE=308:"write":WRITE
 # +DO_WAND=309:"doWand":DO_WAND
 # +SET_MIN_MAX=310:"setMinAndMax":SET_MIN_MAX
 # +SET_THRESHOLD=311:"setThreshold":SET_THRESHOLD
-#  SET_TOOL=312:"setTool":SET_TOOL
+# +SET_TOOL=312:"setTool":SET_TOOL
 # +SET_FOREGROUND=313:"setForegroundColor":SET_FOREGROUND
 # +SET_BACKGROUND=314:"setBackgroundColor":SET_BACKGROUND
 #  MAKE_LINE=315:"makeLine":MAKE_LINE
@@ -445,7 +518,7 @@ alias_to_lower_camel_case "set_min_max"
 #  DO_COMMAND=327:"doCommand":DO_COMMAND
 #  SHOW_STATUS=328:"showStatus":SHOW_STATUS
 # +SHOW_PROGRESS=329:"showProgress":SHOW_PROGRESS
-#  SHOW_MESSAGE=330:"showMessage":SHOW_MESSAGE
+# +SHOW_MESSAGE=330:"showMessage":SHOW_MESSAGE
 #  PUT_PIXEL=331:"putPixel":PUT_PIXEL
 #  SET_PIXEL=332:"setPixel":SET_PIXEL
 # +SNAPSHOT=333:"snapshot":SNAPSHOT
@@ -466,7 +539,7 @@ alias_to_lower_camel_case "set_min_max"
 #  GET_LUT=348:"getLut":GET_LUT
 #  SET_LUT=349:"setLut":SET_LUT
 # +GET_COORDINATES=350:"getSelectionCoordinates":GET_COORDINATES
-#  SHOW_MESSAGE_WITH_CANCEL=351:"showMessageWithCancel":SHOW_MESSAGE_WITH_CANCEL
+# +SHOW_MESSAGE_WITH_CANCEL=351:"showMessageWithCancel":SHOW_MESSAGE_WITH_CANCEL
 #  MAKE_SELECTION=352:"makeSelection":MAKE_SELECTION
 #  SET_RESULT=353:"setResult":SET_RESULT
 #  UPDATE_RESULTS=354:"updateResults":UPDATE_RESULTS
@@ -483,12 +556,12 @@ alias_to_lower_camel_case "set_min_max"
 # +OPEN=365:"open":OPEN
 #  SET_FONT=366:"setFont":SET_FONT
 #  GET_MIN_AND_MAX=367:"getMinAndMax":GET_MIN_AND_MAX
-#  CLOSE=368:"close":CLOSE
+# +CLOSE=368:"close":CLOSE
 #  SET_SLICE=369:"setSlice":SET_SLICE
 #  NEW_IMAGE=370:"newImage":NEW_IMAGE
 #  SAVE_AS=371:"saveAs":SAVE_AS
 #  SAVE=372:"save":SAVE
-#  SET_AUTO_THRESHOLD=373:"setAutoThreshold":SET_AUTO_THRESHOLD
+# +SET_AUTO_THRESHOLD=373:"setAutoThreshold":SET_AUTO_THRESHOLD
 #  RENAME=374:"rename":RENAME
 #  GET_BOUNDS=375:"getSelectionBounds":GET_BOUNDS
 #  FILL_RECT=376:"fillRect":FILL_RECT
@@ -516,12 +589,12 @@ alias_to_lower_camel_case "set_min_max"
 #  ABS=1001:"abs":ABS
 #  COS=1002:"cos":COS
 #  EXP=1003:"exp":EXP
-#  FLOOR=1004:"floor":FLOOR
+# +FLOOR=1004:"floor":FLOOR
 #  LOG=1005:"log":LOG
 #  MAX_OF=1006:"maxOf":MAX_OF
 #  MIN_OF=1007:"minOf":MIN_OF
 #  POW=1008:"pow":POW
-#  ROUND=1009:"round":ROUND
+# +ROUND=1009:"round":ROUND
 #  SIN=1010:"sin":SIN
 #  SQRT=1011:"sqrt":SQRT
 #  TAN=1012:"tan":TAN
