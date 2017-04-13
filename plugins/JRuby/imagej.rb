@@ -494,6 +494,48 @@ end
 alias_to_lower_camel_case "get_date_and_time"
 
 # ........................................................................
+
+def get_histogram
+  imp = IJ.getImage()
+  IJ.run(imp, "Histogram" "")
+end
+
+alias_to_lower_camel_case "get_histogram"
+
+# ........................................................................
+
+def save
+  IJ.run("Save", path)
+end
+
+alias_to_lower_camel_case "save"
+
+# ........................................................................
+
+def fill
+  IJ.run("Fill")
+end
+
+alias_to_lower_camel_case "fill"
+
+# ........................................................................
+
+def set_slice
+  IJ.setSlice(n)
+end
+
+alias_to_lower_camel_case "set_slice"
+
+# ........................................................................
+
+def rename
+  imp = IJ.getImage()
+  imp.setTitle(name)
+end
+
+alias_to_lower_camel_case "rename"
+
+# ........................................................................
 # I think these are all the ImageJ macro functions we would have to
 # implement to be completely equivalent.  I have prefixed with "+"
 # those which I have already written.
@@ -539,7 +581,7 @@ alias_to_lower_camel_case "get_date_and_time"
 #  SET_PIXEL=332:"setPixel":SET_PIXEL
 # +SNAPSHOT=333:"snapshot":SNAPSHOT
 # +RESET=334:"reset":RESET
-#  FILL=335:"fill":FILL
+# +FILL=335:"fill":FILL
 #  SET_COLOR=336:"setColor":SET_COLOR
 #  SET_LINE_WIDTH=337:"setLineWidth":SET_LINE_WIDTH
 #  CHANGE_VALUES=338:"changeValues":CHANGE_VALUES
@@ -549,7 +591,7 @@ alias_to_lower_camel_case "get_date_and_time"
 #  GET_CURSOR_LOC=342:"getCursorLoc":GET_CURSOR_LOC
 #  GET_LINE=343:"getLine":GET_LINE
 #  GET_VOXEL_SIZE=344:"getVoxelSize":GET_VOXEL_SIZE
-#  GET_HISTOGRAM=345:"getHistogram":GET_HISTOGRAM
+# +GET_HISTOGRAM=345:"getHistogram":GET_HISTOGRAM
 #  GET_STATISTICS=346:"getStatistics":GET_STATISTICS
 #  GET_BOUNDING_RECT=347:"getBoundingRect":GET_BOUNDING_RECT
 #  GET_LUT=348:"getLut":GET_LUT
@@ -573,12 +615,12 @@ alias_to_lower_camel_case "get_date_and_time"
 #  SET_FONT=366:"setFont":SET_FONT
 #  GET_MIN_AND_MAX=367:"getMinAndMax":GET_MIN_AND_MAX
 # +CLOSE=368:"close":CLOSE
-#  SET_SLICE=369:"setSlice":SET_SLICE
+# +SET_SLICE=369:"setSlice":SET_SLICE
 #  NEW_IMAGE=370:"newImage":NEW_IMAGE
 #  SAVE_AS=371:"saveAs":SAVE_AS
-#  SAVE=372:"save":SAVE
+# +SAVE=372:"save":SAVE
 # +SET_AUTO_THRESHOLD=373:"setAutoThreshold":SET_AUTO_THRESHOLD
-#  RENAME=374:"rename":RENAME
+# +RENAME=374:"rename":RENAME
 #  GET_BOUNDS=375:"getSelectionBounds":GET_BOUNDS
 #  FILL_RECT=376:"fillRect":FILL_RECT
 #  GET_RAW_STATISTICS=377:"getRawStatistics":GET_RAW_STATISTICS
