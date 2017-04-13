@@ -480,7 +480,7 @@ alias_to_lower_camel_case "floor"
 # ........................................................................
 
 def get_version
-  IJ.getVersion()
+  print(IJ.getVersion())
 end
 
 alias_to_lower_camel_case "get_version"
@@ -488,7 +488,8 @@ alias_to_lower_camel_case "get_version"
 # ........................................................................
 
 def get_date_and_time
-  Time.now
+  t = Time.new
+  print t.inspect
 end
 
 alias_to_lower_camel_case "get_date_and_time"
