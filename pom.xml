@@ -710,11 +710,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>javac</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>legacy-imglib1</artifactId>
 			<scope>runtime</scope>
 		</dependency>
