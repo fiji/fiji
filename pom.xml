@@ -320,17 +320,7 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>Differentials_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>Directionality_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>Extended_Depth_Field</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -460,22 +450,12 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>MosaicJ_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>Multi_Kymograph</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>PIV_analyser</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>PointPicker_</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -525,11 +505,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>SheppLogan_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>Simple_Neurite_Tracer</artifactId>
 			<scope>runtime</scope>
 		</dependency>
@@ -545,17 +520,7 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>Snakuscule_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>SplineDeformationGenerator_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>StackReg_</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -625,16 +590,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>TurboReg_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>UnwarpJ_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>VIB-lib</artifactId>
 			<scope>runtime</scope>
 		</dependency>
@@ -700,22 +655,12 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>imageware</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>legacy-imglib1</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>level_sets</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>mij</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -736,11 +681,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>registration_3d</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>wavelets</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 
