@@ -77,11 +77,16 @@ See the [Contributing](http://imagej.net/Contributing) page of the ImageJ wiki.
 Authors
 -------
 
-Fiji was created and is maintained by Johannes Schindelin, ImageJ 1.x
-was created and is maintained by Wayne Rasband, ImageJ2 was created and
-is maintained and actively developed by Curtis Rueden. For a list of
-most recent contributors, please refer to the
-[Contributors](http://imagej.net/Contributors) page of the ImageJ wiki.
+* Fiji was created by
+  [Johannes Schindelin](https://imagej.net/User:Schindelin).
+  It is currently maintained by [Curtis Rueden](https://imagej.net/User:Rueden)
+  of [LOCI](https://imagej.net/LOCI) at the University of Wisconsin-Madison.
+* ImageJ 1.x was created and is maintained by
+  [Wayne Rasband](https://imagej.net/Wayne_Rasband).
+* ImageJ2 was created and is maintained and actively developed by
+  Curtis Rueden.
+* For a list of most recent contributors, please refer to the
+  [Contributors](http://imagej.net/Contributors) page of the ImageJ wiki.
 
 Thanks
 ------
