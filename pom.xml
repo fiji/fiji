@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>14.0.0</version>
+		<version>16.1.0</version>
 		<relativePath />
 	</parent>
 
@@ -482,16 +482,6 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>SPIM_Registration</artifactId>
 			<scope>runtime</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>ome</groupId>
-					<artifactId>formats-common</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>ome</groupId>
-					<artifactId>ome-xml</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -537,16 +527,6 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>Stitching_</artifactId>
 			<scope>runtime</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>ome</groupId>
-					<artifactId>formats-common</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>ome</groupId>
-					<artifactId>ome-xml</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -586,6 +566,11 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>TrakEM2_Archipelago</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Trainable_Segmentation</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -747,11 +732,6 @@
 		<!-- TrakEM2 projects - https://github.com/trakem2 -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>mpicbg-trakem2</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>T2-NIT</artifactId>
 			<scope>runtime</scope>
 		</dependency>
@@ -765,6 +745,7 @@
 			<artifactId>TrakEM2_</artifactId>
 			<scope>runtime</scope>
 			<exclusions>
+				<!-- TEMP: Until TrakEM2_ 1.0j is released. -->
 				<exclusion>
 					<groupId>org.scijava</groupId>
 					<artifactId>jython-shaded</artifactId>
@@ -774,6 +755,11 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>VectorString</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>trakem2-transform</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 
