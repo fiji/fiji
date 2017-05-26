@@ -171,6 +171,8 @@
 		<license.licenseName>gpl_v3</license.licenseName>
 		<license.copyrightOwners>Fiji developers.</license.copyrightOwners>
 		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
+
+		<Interactive_3D_Surface_Plot.version>3.0.0</Interactive_3D_Surface_Plot.version>
 	</properties>
 
 	<repositories>
