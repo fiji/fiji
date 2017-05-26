@@ -564,12 +564,12 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>TrakEM2_Archipelago</artifactId>
+			<artifactId>Trainable_Segmentation</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>Trainable_Segmentation</artifactId>
+			<artifactId>TrakEM2_Archipelago</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
