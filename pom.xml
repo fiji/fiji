@@ -667,6 +667,16 @@
 			<artifactId>registration_3d</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>weave_jy2java</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>z_spacing</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 
 		<!-- External Fiji projects -->
 		<!-- https://github.com/tferr/ASA -->
