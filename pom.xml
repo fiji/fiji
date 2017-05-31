@@ -409,6 +409,11 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
+			<artifactId>KymographBuilder</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
 			<artifactId>LSM_Reader</artifactId>
 			<scope>runtime</scope>
 		</dependency>
