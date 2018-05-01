@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>19.2.0</version>
+		<version>20.3.0</version>
 		<relativePath />
 	</parent>
 
@@ -246,6 +246,11 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Arrow_</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Auto_Local_Threshold</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
