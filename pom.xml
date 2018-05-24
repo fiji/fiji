@@ -190,6 +190,24 @@
 			<artifactId>imagej</artifactId>
 		</dependency>
 
+		<!-- Fiji Incorporates Jointly ImageJ1 ;-) -->
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij1-patcher</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-legacy</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.javassist</groupId>
+			<artifactId>javassist</artifactId>
+		</dependency>
+
 		<!-- SciJava dependencies - https://github.com/scijava -->
 		<dependency>
 			<groupId>org.scijava</groupId>
@@ -197,13 +215,6 @@
 		</dependency>
 
 		<!-- Runtime dependencies -->
-
-		<!-- Fiji Incorporates Jointly ImageJ1 ;-) -->
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej-legacy</artifactId>
-			<scope>runtime</scope>
-		</dependency>
 
 		<!-- Op-Finder is currently GPL -->
 		<dependency>
@@ -636,11 +647,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>blockmatching_</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>fiji-compat</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
