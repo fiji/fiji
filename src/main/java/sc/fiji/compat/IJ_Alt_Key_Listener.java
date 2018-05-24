@@ -84,10 +84,10 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener, Ru
 	public static Runnable getOpener() {
 		try {
 			return getX11Opener();
-		} catch (Exception e) { /* ignore */ }
+		} catch (Throwable t) { /* ignore */ }
 		try {
 			return getAquaOpener();
-		} catch (Exception e) { /* ignore */ }
+		} catch (Throwable t) { /* ignore */ }
 		return null;
 	}
 
@@ -112,7 +112,7 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener, Ru
 				try {
 					method.invoke(ij.getMenuBar().getPeer(),
 						new Object[] { event });
-				} catch (Exception e) { /* ignore */ }
+				} catch (Throwable t) { /* ignore */ }
 			}
 		};
 	}
