@@ -52,6 +52,10 @@ if [ -n "$TRAVIS_TAG" ]; then
 		exit -1
 	fi
 
+	if [ -z "$UPDATE_SITE_USER" ]; then
+		UPDATE_SITE_USER=$UPDATE_SITE_NAME
+	fi
+
 	echo "Setup variables."
 	URL="http://sites.imagej.net/$UPDATE_SITE_NAME/"
 	IJ_PATH="$HOME/Fiji.app"
@@ -75,7 +79,7 @@ if [ -n "$TRAVIS_TAG" ]; then
 	NAME=`mvn help:evaluate -Dexpression=project.name | grep -e '^[^\[]'`
 
 	echo "Adding $URL as an Update Site."
-	$IJ_LAUNCHER --update edit-update-site $UPDATE_SITE_NAME $URL "webdav:$UPDATE_SITE_NAME:$UPDATE_SITE_PASSWORD" .
+	$IJ_LAUNCHER --update edit-update-site $UPDATE_SITE_NAME $URL "webdav:$UPDATE_SITE_USER:$UPDATE_SITE_PASSWORD" .
 
 	if [ "$UPLOAD_WITH_DEPENDENCIES" = false ]; then
 	    echo "Upload only \"jars/$NAME.jar\"."
