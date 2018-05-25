@@ -1,122 +1,89 @@
 #!/bin/sh
 
-#
-# upload-update-site.sh
-#
+# Instructions :
 
-# Uploads JARs from an external location to an ImageJ update site.
-#
-# Here is how this script was once used to update the Bio-Formats update site:
-#
-#   export JAR_URL="https://ci.openmicroscopy.org/job/BIOFORMATS-DEV-latest/lastSuccessfulBuild/artifact/artifacts/"
-#
-#   export JAR_FILES="
-#   jars/bio-formats/formats-api
-#   jars/bio-formats/formats-bsd
-#   jars/bio-formats/formats-common
-#   jars/bio-formats/formats-gpl
-#   jars/bio-formats/jai_imageio
-#   jars/bio-formats/mdbtools-java
-#   jars/bio-formats/metakit
-#   jars/bio-formats/ome-jxr
-#   jars/bio-formats/ome-poi
-#   jars/bio-formats/ome-xml
-#   jars/bio-formats/specification
-#   jars/bio-formats/turbojpeg
-#   plugins/bio-formats_plugins
-#   "
-#
-#   export UPDATE_SITE_NAME="Bio-Formats"
-#   export UPDATE_SITE_USER="Bio-Formats"
-#   export UPDATE_SITE_URL="http://sites.imagej.net/$UPDATE_SITE_USER/"
-#
-#   sh "$(dirname "$0")"/upload-update-site.sh
+# Continous Integration and automatic upload to ImageJ Maven repository.
 
-# -- Constants --
+# - Enable Travis for your GitHub repo at https://travis-ci.org/GITHUB_NAME/GITHUB_REPO.
+# - Run the [travisify.sh](https://github.com/scijava/scijava-scripts/blob/master/travisify.sh) script on your repo.
+# - Starting from here, Travis will build and deploys `SNAPSHOT` build for each new commit pushed to `master` to the [ImageJ Maven repo](http://maven.imagej.net/).
 
-FIJI_ARCHIVE=fiji-linux64.tar.gz
-FIJI_URL=http://jenkins.imagej.net/job/Stable-Fiji/lastSuccessfulBuild/artifact/$FIJI_ARCHIVE
-FIJI_DIR=Fiji.app
+# - To release a new version, you have to run the [`release-version.sh`](https://github.com/scijava/scijava-scripts/blob/master/release-version.sh) script.
 
-# -- Check parameters --
+# Automatic upload to ImageJ update site released artifacts.
 
-if [ -z "$JAR_URL" ]; then echo "No JAR_URL."; exit 1; fi
-if [ -z "$JAR_FILES" ]; then echo "No JAR_FILES."; exit 2; fi
-if [ -z "$UPDATE_SITE_NAME" ]; then echo "No UPDATE_SITE_NAME."; exit 3; fi
-if [ -z "$UPDATE_SITE_URL" ]; then echo "No UPDATE_SITE_URL."; exit 4; fi
-if [ -z "$UPDATE_SITE_USER" ]; then echo "No UPDATE_SITE_USER."; exit 5; fi
+# - Visit the Travis setting page (https://travis-ci.org/GITHUB_NAME/GITHUB_REPO/settings).
+# - Add the following three environment variables:
 
-PASSWD_FILE="$HOME/$UPDATE_SITE_USER-WebDAV.passwd"
+# 	- `UPDATE_SITE_NAME` : The name of the ImageJ update site.
+# 	- `UPDATE_SITE_PASSWORD` : The associated password.
+# 	- `UPLOAD_WITH_DEPENDENCIES` : Wether or not you want to upload only your package with its dependencies. This value should be `true` or `false`.
 
-# -- Download and unpack Fiji if it is not already present --
+# - From the root of your repository run:
 
-if [ -d "$FIJI_DIR" ]
-then
-	FIJI_INITIALIZED=1
+# ```sh
+# cat >> .travis/build.sh <<EOL
+# curl -fsLO https://raw.githubusercontent.com/fiji/fiji/master/bin/upload-update-site.sh
+# sh upload-update-site.sh
+# EOL
+# ```
+
+# - Commit and push your changes to GitHub.
+# - Release a new version.
+# - Your package should be uploaded to your update ImageJ site.
+
+if [ -z "$UPDATE_SITE_NAME" ]; then
+	# Silently exit if UPDATE_SITE_NAME is not set.
+	exit 0
 fi
 
-if [ -z "$FIJI_INITIALIZED" ]
-then
-	wget -nv "$FIJI_URL"
-	tar xf "$FIJI_ARCHIVE"
-	rm "$FIJI_ARCHIVE"
-fi
+if [ -n "$TRAVIS_TAG" ]; then
 
-# -- Identify ImageJ launcher executable --
+	echo "== Travis tag detected. Start uploading the specified update site =="
 
-OS_NAME="$(uname)"
-if [ "$OS_NAME" = "Linux" ]
-then
-	OS_ARCH="$(uname -m)"
-	if [ "$OS_ARCH" = "x86_64" ]
-	then
-		EXE="ImageJ-linux64"
-	else
-		EXE="ImageJ-linux32"
+	if [ -z "$UPDATE_SITE_PASSWORD" ]; then
+		echo "The variable UPDATE_SITE_PASSWORD is not set. You need to set it in the Travis configuration."
+		exit -1
 	fi
-elif [ "$OS_NAME" == "Darwin" ]
-then
-	EXE="Contents/MacOS/ImageJ-macosx"
+
+	if [ -z "$UPLOAD_WITH_DEPENDENCIES" ]; then
+		echo "The variable UPLOAD_WITH_DEPENDENCIES is not set. You need to set it in the Travis configuration."
+		echo "It can be either 'true' or 'false'."
+		exit -1
+	fi
+
+	echo "Setup variables."
+	URL="http://sites.imagej.net/$UPDATE_SITE_NAME/"
+	IJ_PATH="$HOME/Fiji.app"
+	IJ_LAUNCHER="$IJ_PATH/ImageJ-linux64"
+
+	echo "Installing Fiji."
+	mkdir -p $IJ_PATH/
+	cd $HOME/
+	wget -q "https://downloads.imagej.net/fiji/latest/fiji-linux64.zip"
+	unzip -q fiji-linux64.zip
+
+	echo "Updating Fiji."
+	$IJ_LAUNCHER --update update-force-pristine
+
+	echo "Install project to Fiji directory."
+	cd $TRAVIS_BUILD_DIR/
+	mvn clean install -Dimagej.app.directory=$IJ_PATH -Ddelete.other.versions=true
+
+	echo "Gather some project informations."
+	VERSION=`mvn help:evaluate -Dexpression=project.version | grep -e '^[^\[]'`
+	NAME=`mvn help:evaluate -Dexpression=project.name | grep -e '^[^\[]'`
+
+	echo "Adding $URL as an Update Site."
+	$IJ_LAUNCHER --update edit-update-site $UPDATE_SITE_NAME $URL "webdav:$UPDATE_SITE_NAME:$UPDATE_SITE_PASSWORD" .
+
+	if [ "$UPLOAD_WITH_DEPENDENCIES" = false ]; then
+	    echo "Upload only \"jars/$NAME.jar\"."
+	    $IJ_LAUNCHER --update upload --update-site "$UPDATE_SITE_NAME" --force-shadow --forget-missing-dependencies "jars/$NAME.jar"
+	else
+		echo "Upload $NAME with its dependencies."
+		$IJ_LAUNCHER --update upload-complete-site --force-shadow "$UPDATE_SITE_NAME"
+	fi
 else
-	echo "Unsupported OS: $OS_NAME"
-	exit 6
+	echo "== Travis tag not detected. Don't perform upload to update site =="
 fi
-if [ ! -e "$FIJI_DIR/$EXE" ]
-then
-	echo "Cannot find ImageJ launcher: $EXE"
-	exit 7
-fi
-
-cd "$FIJI_DIR"
-
-# -- First, make sure that Fiji is up-to-date --
-
-if [ -z "$FIJI_INITIALIZED" ]
-then
-	./$EXE --update add-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL"
-fi
-./$EXE --update update-force-pristine
-
-# -- Download JAR files and install into local Fiji --
-
-for jar in $JAR_FILES
-do
-	echo
-	echo "--== $jar ==--"
-	echo
-
-	FILENAME="$(echo $jar | sed 's/.*\///').jar"
-	REMOTE_URL="$JAR_URL/$FILENAME"
-	RM_PATHS="$jar.jar $jar-[0-9]*.jar"
-
-	wget -nv "$REMOTE_URL"
-	rm -rf $RM_PATHS
-	mv "$FILENAME" "$jar.jar"
-done
-
-# -- Upload files to the update site! --
-
-./$EXE --update edit-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL" \
-	"webdav:$UPDATE_SITE_USER:$(cat "$PASSWD_FILE")" .
-./$EXE --update upload-complete-site --force-shadow "$UPDATE_SITE_NAME"
-./$EXE --update edit-update-site "$UPDATE_SITE_NAME" "$UPDATE_SITE_URL"
