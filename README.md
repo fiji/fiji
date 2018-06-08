@@ -16,7 +16,7 @@ At the moment, the following platforms are supported:
 - Windows Intel 32-bit/64-bit
 - Linux Intel 32-bit/64-bit
 - MacOSX Intel 32-bit/64-bit (partial support for PowerPC 32-bit)
-- all platforms supporting Java and a POSIX shell, via bin/ImageJ.sh
+- all platforms supporting Java and a POSIX shell, via `bin/ImageJ.sh`
 
 The setup is as easy as unpacking the portable archive and
 double-clicking the [ImageJ
