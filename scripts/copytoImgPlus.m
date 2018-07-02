@@ -51,11 +51,11 @@ DEFAULT_AXES = { 'X', 'Y', 'Z', 'T', 'C' };
 
 try
     MATCHING_AXES = [
-        net.imglib2.meta.Axes.X
-        net.imglib2.meta.Axes.Y
-        net.imglib2.meta.Axes.Z
-        net.imglib2.meta.Axes.TIME
-        net.imglib2.meta.Axes.CHANNEL ];
+        net.imagej.axis.Axes.X
+        net.imagej.axis.Axes.Y
+        net.imagej.axis.Axes.Z
+        net.imagej.axis.Axes.TIME
+        net.imagej.axis.Axes.CHANNEL ];
 catch merr
     if strcmp(merr.identifier, 'MATLAB:undefinedVarOrClass')
         error('MATLAB:copytoImgPlus:undefinedVarOrClass', ...
@@ -133,6 +133,6 @@ end
 
 img = copytoImg(I);
 
-imgplus = net.imglib2.img.ImgPlus(img, name, ax, calibration);
+imgplus = net.imagej.ImgPlus(img, name, ax, calibration);
 
 end
