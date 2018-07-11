@@ -61,14 +61,9 @@ function imp = copytoImagePlus(I,varargin)
 % 03-May-2018 04:57:24
 %
 % See also
-% ijmshow (this requires a net.imagej.matlab.ImageJMATLABCommands object IJM)
-% https://github.com/kouichi-c-nakamura/ijmshow (repository for this function)
-%
 % ImageJ as part of ImageJ-MATLAB (https://github.com/imagej/imagej-matlab/)
-%
-% net.imagej.matlab.ImageJMATLABCommands
-% evalin, assignin
-% https://imagej.net/MATLAB_Scripting
+% copytoImgPlus
+% copytoImg, copytoMatlab
 
 
 import ij.process.ShortProcessor
