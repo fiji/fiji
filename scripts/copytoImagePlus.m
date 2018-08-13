@@ -61,14 +61,9 @@ function imp = copytoImagePlus(I,varargin)
 % 03-May-2018 04:57:24
 %
 % See also
-% ijmshow (this requires a net.imagej.matlab.ImageJMATLABCommands object IJM)
-% https://github.com/kouichi-c-nakamura/ijmshow (repository for this function)
-%
 % ImageJ as part of ImageJ-MATLAB (https://github.com/imagej/imagej-matlab/)
-%
-% net.imagej.matlab.ImageJMATLABCommands
-% evalin, assignin
-% https://imagej.net/MATLAB_Scripting
+% copytoImgPlus
+% copytoImg, copytoMatlab
 
 
 import ij.process.ShortProcessor
@@ -241,10 +236,16 @@ imp.setDisplayMode(ij.IJ.COLOR) %NOTE this is required to enable the next line
 imp.setDisplayMode(ij.IJ.COMPOSITE)
 
 try
-    imp.resetDisplayRanges();
+    if imp.isComposite
+        imp.resetDisplayRanges(); % only for compsite
+    else
+        imp.resetDisplayRange();
+    end
 catch mexc
     if strcmpi(mexc.identifier,'MATLAB:UndefinedFunction')
+      
         warning('resetDisplayRanges did not work')
+
     else
         throw(mexc)
     end
