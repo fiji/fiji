@@ -244,7 +244,7 @@ try
 catch mexc
     if strcmpi(mexc.identifier,'MATLAB:UndefinedFunction')
       
-        warning('resetDisplayRanges did not work') %TODO
+        warning('resetDisplayRanges did not work')
 
     else
         throw(mexc)
