@@ -236,10 +236,16 @@ imp.setDisplayMode(ij.IJ.COLOR) %NOTE this is required to enable the next line
 imp.setDisplayMode(ij.IJ.COMPOSITE)
 
 try
-    imp.resetDisplayRanges();
+    if imp.isComposite
+        imp.resetDisplayRanges(); % only for compsite
+    else
+        imp.resetDisplayRange();
+    end
 catch mexc
     if strcmpi(mexc.identifier,'MATLAB:UndefinedFunction')
-        warning('resetDisplayRanges did not work')
+      
+        warning('resetDisplayRanges did not work') %TODO
+
     else
         throw(mexc)
     end
