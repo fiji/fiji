@@ -33,7 +33,7 @@
 		<developer>
 			<id>ctrueden</id>
 			<name>Curtis Rueden</name>
-			<url>http://imagej.net/User:Rueden</url>
+			<url>https://imagej.net/User:Rueden</url>
 			<roles>
 				<role>founder</role>
 				<role>lead</role>
@@ -48,53 +48,53 @@
 	<contributors>
 		<contributor>
 			<name>Johannes Schindelin</name>
-			<url>http://imagej.net/User:Schindelin</url>
+			<url>https://imagej.net/User:Schindelin</url>
 			<roles><role>founder</role></roles>
 			<properties><id>dscho</id></properties>
 		</contributor>
 		<contributor>
 			<name>Ignacio Arganda-Carreras</name>
-			<url>http://imagej.net/User:Iarganda</url>
+			<url>https://imagej.net/User:Iarganda</url>
 			<properties><id>iarganda</id></properties>
 		</contributor>
 		<contributor>
 			<name>Eric Barnhill</name>
-			<url>http://imagej.net/User:Ericbarnhill</url>
+			<url>https://imagej.net/User:Ericbarnhill</url>
 			<properties><id>ericbarnhill</id></properties>
 		</contributor>
 		<contributor>
 			<name>Albert Cardona</name>
-			<url>http://imagej.net/User:Albertcardona</url>
+			<url>https://imagej.net/User:Albertcardona</url>
 			<properties><id>acardona</id></properties>
 		</contributor>
 		<contributor>
 			<name>Michael Doube</name>
-			<url>http://imagej.net/User:Michaeldoube</url>
+			<url>https://imagej.net/User:Michaeldoube</url>
 			<properties><id>mdoube</id></properties>
 		</contributor>
 		<contributor>
 			<name>Jan Eglinger</name>
-			<url>http://imagej.net/User:Eglinger</url>
+			<url>https://imagej.net/User:Eglinger</url>
 			<properties><id>imagejan</id></properties>
 		</contributor>
 		<contributor>
 			<name>Michael Entrup</name>
-			<url>http://imagej.net/User:M-entrup</url>
+			<url>https://imagej.net/User:M-entrup</url>
 			<properties><id>m-entrup</id></properties>
 		</contributor>
 		<contributor>
 			<name>Tiago Ferreira</name>
-			<url>http://imagej.net/User:Tiago</url>
+			<url>https://imagej.net/User:Tiago</url>
 			<properties><id>tferr</id></properties>
 		</contributor>
 		<contributor>
 			<name>Mark Hiner</name>
-			<url>http://imagej.net/User:Hinerm</url>
+			<url>https://imagej.net/User:Hinerm</url>
 			<properties><id>hinerm</id></properties>
 		</contributor>
 		<contributor>
 			<name>Gabriel Landini</name>
-			<url>http://imagej.net/User:Landini</url>
+			<url>https://imagej.net/User:Landini</url>
 			<properties><id>landinig</id></properties>
 		</contributor>
 		<contributor>
@@ -106,12 +106,12 @@
 		</contributor>
 		<contributor>
 			<name>Kota Miura</name>
-			<url>http://imagej.net/User:Miura</url>
+			<url>https://imagej.net/User:Miura</url>
 			<properties><id>cmci</id></properties>
 		</contributor>
 		<contributor>
 			<name>Aparna Pal</name>
-			<url>http://imagej.net/User:Apal4</url>
+			<url>https://imagej.net/User:Apal4</url>
 			<properties><id>apal4</id></properties>
 		</contributor>
 		<contributor>
@@ -119,22 +119,22 @@
 		</contributor>
 		<contributor>
 			<name>Stephan Saalfeld</name>
-			<url>http://imagej.net/User:Saalfeld</url>
+			<url>https://imagej.net/User:Saalfeld</url>
 			<properties><id>axtimwalde</id></properties>
 		</contributor>
 		<contributor>
 			<name>Benjamin Schmid</name>
-			<url>http://imagej.net/User:Bene</url>
+			<url>https://imagej.net/User:Bene</url>
 			<properties><id>bene51</id></properties>
 		</contributor>
 		<contributor>
 			<name>Jean-Yves Tinevez</name>
-			<url>http://imagej.net/User:JeanYvesTinevez</url>
+			<url>https://imagej.net/User:JeanYvesTinevez</url>
 			<properties><id>tinevez</id></properties>
 		</contributor>
 		<contributor>
 			<name>Pavel Tomancak</name>
-			<url>http://imagej.net/User:Tomancak</url>
+			<url>https://imagej.net/User:Tomancak</url>
 			<properties><id>tomancak</id></properties>
 		</contributor>
 		<contributor>
