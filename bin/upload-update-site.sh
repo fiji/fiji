@@ -91,7 +91,7 @@ if [ -n "$TRAVIS_TAG" ]; then
     else
 
         echo "* Install project to Fiji directory."
-        mvn clean install -Dimagej.app.directory=$IJ_PATH -Ddelete.other.versions=true -Dscijava.ignoreDependencies=true
+        mvn clean install -Dimagej.app.directory=$IJ_PATH -Ddelete.other.versions=true
 
         echo "* Upload $NAME with its dependencies."
         $IJ_LAUNCHER --update upload-complete-site --force-shadow "$UPDATE_SITE_NAME"
