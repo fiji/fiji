@@ -1,4 +1,5 @@
 #!/bin/sh
+set -x
 
 # Instructions :
 
