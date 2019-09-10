@@ -45,7 +45,7 @@ public final class Main {
 		//
 		// However, ImageJ1 will prioritize the plugin JARs in the ImageJ
 		// installation's plugins folder over the JARs on the classpath!
-		System.setProperty("plugins.dir", "/path/to/your/Fiji.app");
+//		System.setProperty("plugins.dir", "/path/to/your/Fiji.app");
 
 		new ImageJ().launch(args);
 	}
