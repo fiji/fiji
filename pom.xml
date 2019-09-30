@@ -821,6 +821,15 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Other runtime dependencies -->
+
+		<!-- JFreeSVG - http://www.jfree.org/jfreesvg/ -->
+		<dependency>
+			<groupId>org.jfree</groupId>
+			<artifactId>jfreesvg</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
 		<!-- Optional runtime dependencies -->
 
 		<!-- SciJava projects - https://github.com/scijava -->
