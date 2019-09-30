@@ -48,7 +48,6 @@ public class DefaultFijiService extends AbstractService implements FijiService {
 						return;
 				}
 			}.start();
-			new IJ_Alt_Key_Listener().run();
 		}
 	}
 
