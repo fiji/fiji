@@ -12,8 +12,10 @@ then
   echo '== Regenerating wiki content =='
 
   # Discern needed component versions.
-  imagej_version=$(mvn dependency:list | grep 'net.imagej:imagej:' | sed 's/.*:\([0-9][^:]*\):.*/\1/')
+  imagej_version=$(mvn help:evaluate -Dexpression=imagej.version -q -DforceStdout)
+  echo "- ImageJ version is $imagej_version"
   fiji_version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+  echo "- Fiji version is $fiji_version"
 
   # Write out the wiki upload credentials.
   echo "machine imagej.net" > ~/.netrc
