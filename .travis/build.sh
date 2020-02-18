@@ -27,7 +27,7 @@ then
   cd mediawiki-maven-info
 
   # Generate the content and upload!
-  mvn -Dinfo.url=https://imagej.net/ \
+  mvn -Dmwmi.url=https://imagej.net/ \
       -Dmwmi.groupId=net.imagej \
       -Dmwmi.artifactId=imagej \
       -Dmwmi.version="$imagej_version" \
