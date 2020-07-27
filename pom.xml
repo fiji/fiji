@@ -886,16 +886,5 @@
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
-
-		<!--
-		Bio-Formats brings this in but we have some version skew. This
-		is now managed in pom-scijava so we can ensure a consistent
-		version is used in Fiji.
-		-->
-		<dependency>
-			<groupId>joda-time</groupId>
-			<artifactId>joda-time</artifactId>
-			<scope>runtime</scope>
-		</dependency>
 	</dependencies>
 </project>
