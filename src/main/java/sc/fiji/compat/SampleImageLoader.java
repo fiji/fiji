@@ -206,32 +206,32 @@ public class SampleImageLoader implements PlugIn {
 		else
 			IJ.showStatus(message);
 		byte[] buffer = new byte[16384];
-		InputStream in = connection.getInputStream();
-		File parent = destination.getParentFile();
-		if (!parent.exists() && !parent.mkdirs())
-			throw new IOException("Could not make directory " + parent);
-		File tmp = File.createTempFile("sample-", ".sample", parent);
-		FileOutputStream out = new FileOutputStream(tmp);
-		for (;;) {
-			int count = in.read(buffer);
-			if (count < 0)
-				break;
-			out.write(buffer, 0, count);
-			if (length < 0)
-				continue;
-			totalRead += count;
-			if (logToStderr)
-				System.err.print("\r" + message + " "
-					+ totalRead + "/" + length);
-			else
-				IJ.showProgress((nr
-					+ totalRead / (float)length) / total);
+		try (InputStream in = connection.getInputStream()) {
+			File parent = destination.getParentFile();
+			if (!parent.exists() && !parent.mkdirs())
+				throw new IOException("Could not make directory " + parent);
+			File tmp = File.createTempFile("sample-", ".sample", parent);
+			try (FileOutputStream out = new FileOutputStream(tmp)) {
+				for (;;) {
+					int count = in.read(buffer);
+					if (count < 0)
+						break;
+					out.write(buffer, 0, count);
+					if (length < 0)
+						continue;
+					totalRead += count;
+					if (logToStderr)
+						System.err.print("\r" + message + " "
+								+ totalRead + "/" + length);
+					else
+						IJ.showProgress((nr
+								+ totalRead / (float)length) / total);
+				}
+			}
+			if (destination.exists())
+				destination.delete(); // bend over for Windows
+			tmp.renameTo(destination);
 		}
-		in.close();
-		out.close();
-		if (destination.exists())
-			destination.delete(); // bend over for Windows
-		tmp.renameTo(destination);
 		if (!logToStderr)
 			IJ.showProgress(nr + 1, total);
 	}
