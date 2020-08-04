@@ -42,7 +42,7 @@ import java.util.List;
 
 public class SampleImageLoader implements PlugIn {
 	protected final static String plugin = "ij.plugin.URLOpener";
-	protected final static String thisPlugin = "fiji.SampleImageLoader";
+	protected final static String thisPlugin = SampleImageLoader.class.getName();
 	protected final static String menuPath = "File>Open Samples";
 	protected final static String menuItemLabel = "Cache Sample Images";
 	protected final static String ij1MenuItemLabel = "Cache Sample Images ";
