@@ -163,7 +163,7 @@ public class SampleImageLoader implements PlugIn {
 	}
 
 	public static void fetchSamples() {
-		final List<String> urls = new ArrayList<String>();
+		final List<String> urls = new ArrayList<>();
 		handleSamples(new SampleHandler() {
 			@Override
 			public void handle(String label, String url) {
