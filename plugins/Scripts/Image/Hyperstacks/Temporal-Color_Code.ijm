@@ -138,40 +138,8 @@ macro "Time-Lapse Color Coder" {
 }
 
 function makeLUTsArray() {
-	eval("script", "importClass(Packages.ij.IJ);\n"
-		+ "\n"
-		+ "result = [];\n"
-		+ "if (IJ.getInstance() != null) {\n"
-		+ "	importClass(Packages.fiji.User_Plugins);\n"
-		+ "	importClass(Packages.ij.Menus);\n"
-		+ "\n"
-		+ "	commands = Menus.getCommands();\n"
-		+ "	lutsMenu = User_Plugins.getMenu('Image>Lookup Tables');\n"
-		+ "	if (lutsMenu != null) {\n"
-		+ "		for (i = 0; i < lutsMenu.getItemCount(); i++) {\n"
-		+ "			menuItem = lutsMenu.getItem(i);\n"
-		+ "			if (menuItem.getActionListeners().length == 0) {\n"
-		+ "				// is a separator\n"
-		+ "				continue;\n"
-		+ "			}\n"
-		+ "			label = menuItem.getLabel();\n"
-		+ "			if (label.equals('Invert LUT') || label.equals('Apply LUT')) {\n"
-		+ "				// no lookup table\n"
-		+ "				continue;\n"
-		+ "			}\n"
-		+ "			command = commands.get(label);\n"
-		+ "			if (command == null || command.startsWith('ij.plugin.LutLoader')) {\n"
-		+ "				result.push(label);\n"
-		+ "			}\n"
-		+ "		}\n"
-		+ "	}\n"
-		+ "}\n"
-		+ "// ImageJ < 1.47n always returned null from eval('script', script)\n"
-		+ "// To work around this, we set a special system property. Hacky, but works.\n"
-		+ "System.setProperty('result', result.join('\\n'));\n"
-		+ "// ImageJ >= 1.47n *does* return the value of the last evaluated statement\n"
-		+ "null;\n");
-	return split(call("java.lang.System.getProperty", "result"), "\n");
+	luts = getList("LUTs");
+	return luts;
 }
 
 function showDialog() {
