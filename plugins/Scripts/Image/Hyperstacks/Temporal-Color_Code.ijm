@@ -137,13 +137,8 @@ macro "Time-Lapse Color Coder" {
 		CreateScale(Glut, Gstartf, Gendf);
 }
 
-function makeLUTsArray() {
-	luts = getList("LUTs");
-	return luts;
-}
-
 function showDialog() {
-	lutA = makeLUTsArray();
+	lutA = getList("LUTs");
 
  	Dialog.create("Color Code Settings");
 	Dialog.addChoice("LUT", lutA);
