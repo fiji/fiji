@@ -26,6 +26,7 @@ from javax.swing import SwingUtilities
 from java.io import File, FilenameFilter
 from java.util.concurrent import Executors
 from java.util import Arrays
+from java.lang import Runnable, System
 
 class PrintAll(Runnable):
 	def __init__(self, frame, g):
@@ -199,7 +200,10 @@ def run(title):
 		IJ.showStatus('Done recording ' + frame.getTitle())
 	except Exception, e:
 		print "Some error ocurred:"
-		print e.printStackTrace()
+		try:
+			print e.printStackTrace()
+		except:
+			print sys.exc_info()
 		IJ.showStatus('')
 		if borders is not None: borders.flush()
 		for snap in snaps: snap.flush()
