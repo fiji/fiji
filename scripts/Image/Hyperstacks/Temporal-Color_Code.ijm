@@ -28,6 +28,7 @@ History
 101122  plugin'ified it
 101123	fixed for cases when slices > 1 and frames == 1
 191025  fixed LUT listing by making use of the getList("LUTs") function
+201215  added Standard Deviation option under Max projection methods
 *****************************************************************************
 */
 
@@ -36,7 +37,7 @@ var Gstartf = 1;
 var Gendf = 10;
 var GFrameColorScaleCheck = 1;
 var GbatchMode = 0;
-
+var Z_proj="Max Intensity"; //default maximum projection method
 macro "Time-Lapse Color Coder" {
 	Stack.getDimensions(ww, hh, channels, slices, frames);
 	if (channels > 1)
@@ -119,7 +120,7 @@ macro "Time-Lapse Color Coder" {
 
 	run("Stack to Hyperstack...", "order=xyctz channels=1 slices="
 		+ totalframes + " frames=" + slices + " display=Color");
-	op = "start=1 stop=" + Gendf + " projection=[Max Intensity] all";
+	op = "start=1 stop=" + Gendf + " projection=[" + Z_proj + "] all";
 	run("Z Project...", op);
 	if (slices > 1)
 		run("Stack to Hyperstack...", "order=xyczt(default) channels=1 slices=" + slices
@@ -140,16 +141,19 @@ macro "Time-Lapse Color Coder" {
 
 function showDialog() {
 	lutA = getList("LUTs");
+	projection = newArray("Max Intensity","Standard Deviation"); //new array for maximum projection methods
  	Dialog.create("Color Code Settings");
 	Dialog.addChoice("LUT", lutA);
 	Dialog.addNumber("start frame", Gstartf);
 	Dialog.addNumber("end frame", Gendf);
+	Dialog.addChoice("Maximum Projection", projection);
 	Dialog.addCheckbox("Create Time Color Scale Bar", GFrameColorScaleCheck);
 	Dialog.addCheckbox("Batch mode? (no image output)", GbatchMode);
 	Dialog.show();
  	Glut = Dialog.getChoice();
 	Gstartf = Dialog.getNumber();
 	Gendf = Dialog.getNumber();
+	Z_proj=Dialog.getChoice(); 
 	GFrameColorScaleCheck = Dialog.getCheckbox();
 	GbatchMode = Dialog.getCheckbox();
 }
