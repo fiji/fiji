@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>29.2.1</version>
+		<version>30.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -174,9 +174,6 @@
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>deploy-to-scijava</releaseProfiles>
-
-		<FilamentDetector.version>1.0.0</FilamentDetector.version>
-		<Kappa.version>2.0.0</Kappa.version>
 	</properties>
 
 	<repositories>
@@ -536,11 +533,6 @@
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>Simple_Neurite_Tracer</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
 			<artifactId>Siox_Segmentation</artifactId>
 			<scope>runtime</scope>
 		</dependency>
@@ -721,10 +713,10 @@
 		</dependency>
 
 		<!-- External Fiji projects -->
-		<!-- https://github.com/tferr/ASA -->
+		<!-- https://github.com/morphonets/SNT -->
 		<dependency>
-			<groupId>ca.mcgill</groupId>
-			<artifactId>Sholl_Analysis</artifactId>
+			<groupId>org.morphonets</groupId>
+			<artifactId>SNT</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<!-- https://github.com/saalfeldlab/jitk-tps -->
