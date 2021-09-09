@@ -713,12 +713,6 @@
 		</dependency>
 
 		<!-- External Fiji projects -->
-		<!-- https://github.com/morphonets/SNT -->
-		<dependency>
-			<groupId>org.morphonets</groupId>
-			<artifactId>SNT</artifactId>
-			<scope>runtime</scope>
-		</dependency>
 		<!-- https://github.com/saalfeldlab/jitk-tps -->
 		<dependency>
 			<groupId>jitk</groupId>
