@@ -15,16 +15,16 @@
 
 	<name>Fiji</name>
 	<description>Fiji is a distribution of ImageJ for the life sciences.</description>
-	<url>http://fiji.sc/</url>
+	<url>https://fiji.sc/</url>
 	<inceptionYear>2007</inceptionYear>
 	<organization>
 		<name>Fiji</name>
-		<url>http://fiji.sc/</url>
+		<url>https://fiji.sc/</url>
 	</organization>
 	<licenses>
 		<license>
 			<name>GNU General Public License v3+</name>
-			<url>http://www.gnu.org/licenses/gpl.html</url>
+			<url>https://www.gnu.org/licenses/gpl-3.0.html</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
@@ -33,7 +33,7 @@
 		<developer>
 			<id>ctrueden</id>
 			<name>Curtis Rueden</name>
-			<url>https://imagej.net/User:Rueden</url>
+			<url>https://imagej.net/people/ctrueden</url>
 			<roles>
 				<role>founder</role>
 				<role>lead</role>
@@ -48,57 +48,58 @@
 	<contributors>
 		<contributor>
 			<name>Johannes Schindelin</name>
-			<url>https://imagej.net/User:Schindelin</url>
+			<url>https://imagej.net/people/dscho</url>
 			<roles><role>founder</role></roles>
 			<properties><id>dscho</id></properties>
 		</contributor>
 		<contributor>
 			<name>Ignacio Arganda-Carreras</name>
-			<url>https://imagej.net/User:Iarganda</url>
+			<url>https://imagej.net/people/iarganda</url>
 			<properties><id>iarganda</id></properties>
 		</contributor>
 		<contributor>
 			<name>Eric Barnhill</name>
-			<url>https://imagej.net/User:Ericbarnhill</url>
+			<url>https://imagej.net/people/ericbarnhill</url>
 			<properties><id>ericbarnhill</id></properties>
 		</contributor>
 		<contributor>
 			<name>Albert Cardona</name>
-			<url>https://imagej.net/User:Albertcardona</url>
+			<url>https://imagej.net/people/acardona</url>
 			<properties><id>acardona</id></properties>
 		</contributor>
 		<contributor>
 			<name>Michael Doube</name>
-			<url>https://imagej.net/User:Michaeldoube</url>
+			<url>https://imagej.net/people/mdoube</url>
 			<properties><id>mdoube</id></properties>
 		</contributor>
 		<contributor>
 			<name>Jan Eglinger</name>
-			<url>https://imagej.net/User:Eglinger</url>
+			<url>https://imagej.net/people/imagejan</url>
 			<properties><id>imagejan</id></properties>
 		</contributor>
 		<contributor>
 			<name>Michael Entrup</name>
-			<url>https://imagej.net/User:M-entrup</url>
+			<url>https://imagej.net/people/m-entrup</url>
 			<properties><id>m-entrup</id></properties>
 		</contributor>
 		<contributor>
 			<name>Tiago Ferreira</name>
-			<url>https://imagej.net/User:Tiago</url>
+			<url>https://imagej.net/people/tferr</url>
 			<properties><id>tferr</id></properties>
 		</contributor>
 		<contributor>
 			<name>Mark Hiner</name>
-			<url>https://imagej.net/User:Hinerm</url>
+			<url>https://imagej.net/people/hinerm</url>
 			<properties><id>hinerm</id></properties>
 		</contributor>
 		<contributor>
 			<name>Gabriel Landini</name>
-			<url>https://imagej.net/User:Landini</url>
+			<url>https://imagej.net/people/landinig</url>
 			<properties><id>landinig</id></properties>
 		</contributor>
 		<contributor>
 			<name>Cameron Lloyd</name>
+			<url>https://imagej.net/people/camlloyd</url>
 			<properties><id>camlloyd</id></properties>
 		</contributor>
 		<contributor>
@@ -106,12 +107,12 @@
 		</contributor>
 		<contributor>
 			<name>Kota Miura</name>
-			<url>https://imagej.net/User:Miura</url>
+			<url>https://imagej.net/people/miura</url>
 			<properties><id>miura</id></properties>
 		</contributor>
 		<contributor>
 			<name>Aparna Pal</name>
-			<url>https://imagej.net/User:Apal4</url>
+			<url>https://imagej.net/people/apal4</url>
 			<properties><id>apal4</id></properties>
 		</contributor>
 		<contributor>
@@ -119,22 +120,22 @@
 		</contributor>
 		<contributor>
 			<name>Stephan Saalfeld</name>
-			<url>https://imagej.net/User:Saalfeld</url>
+			<url>https://imagej.net/people/axtimwalde</url>
 			<properties><id>axtimwalde</id></properties>
 		</contributor>
 		<contributor>
 			<name>Benjamin Schmid</name>
-			<url>https://imagej.net/User:Bene</url>
+			<url>https://imagej.net/people/bene51</url>
 			<properties><id>bene51</id></properties>
 		</contributor>
 		<contributor>
 			<name>Jean-Yves Tinevez</name>
-			<url>https://imagej.net/User:JeanYvesTinevez</url>
+			<url>https://imagej.net/people/tinevez</url>
 			<properties><id>tinevez</id></properties>
 		</contributor>
 		<contributor>
 			<name>Pavel Tomancak</name>
-			<url>https://imagej.net/User:Tomancak</url>
+			<url>https://imagej.net/people/tomancak</url>
 			<properties><id>tomancak</id></properties>
 		</contributor>
 		<contributor>
@@ -145,7 +146,7 @@
 	<mailingLists>
 		<mailingList>
 			<name>Image.sc Forum</name>
-			<archive>https://forum.image.sc/tags/fiji</archive>
+			<archive>https://forum.image.sc/tag/fiji</archive>
 		</mailingList>
 	</mailingLists>
 
@@ -837,7 +838,7 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- JFreeSVG - http://www.jfree.org/jfreesvg/ -->
+		<!-- JFreeSVG - https://www.jfree.org/jfreesvg/ -->
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreesvg</artifactId>
