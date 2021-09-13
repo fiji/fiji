@@ -43,7 +43,7 @@ public final class Main {
 		// installation, you will have access to that installation's scripts
 		// and ImageJ 1.x plugins.
 		//
-		// However, ImageJ1 will prioritize the plugin JARs in the ImageJ
+		// However, ImageJ 1.x will prioritize the plugin JARs in the ImageJ
 		// installation's plugins folder over the JARs on the classpath!
 //		System.setProperty("plugins.dir", "/path/to/your/Fiji.app");
 
