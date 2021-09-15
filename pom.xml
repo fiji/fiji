@@ -785,13 +785,6 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>TrakEM2_</artifactId>
 			<scope>runtime</scope>
-			<exclusions>
-				<!-- TEMP: Until TrakEM2_ 1.0j is released. -->
-				<exclusion>
-					<groupId>org.scijava</groupId>
-					<artifactId>jython-shaded</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
