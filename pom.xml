@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>31.0.0</version>
+		<version>31.1.0</version>
 		<relativePath />
 	</parent>
 
@@ -785,6 +785,12 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>TrakEM2_</artifactId>
 			<scope>runtime</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.morphonets</groupId>
+					<artifactId>SNT</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
