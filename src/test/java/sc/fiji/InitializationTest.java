@@ -1,4 +1,4 @@
-/*-
+/*
  * #%L
  * Fiji distribution of ImageJ for the life sciences.
  * %%
@@ -20,19 +20,28 @@
  * #L%
  */
 
-package sc.fiji.compat;
+package sc.fiji;
 
-import ij.IJ;
-import ij.plugin.PlugIn;
+import net.imagej.ImageJ;
 
-public class Compile_and_Run implements PlugIn {
+import org.junit.Test;
 
-	protected static String directory, fileName;
+/**
+ * Tests that Fiji can successfully start up and shut down.
+ *
+ * @author Curtis Rueden
+ */
+public final class InitializationTest {
 
-	@Override
-	public void run(String arg) {
-		IJ.showMessage("The \"Compile and Run\" command is not currently supported."
-			+ " We recommend using the Script Editor or an IDE such as Eclipse for "
-			+ "plugin development.");
+  @Test
+	public void testInitialization() {
+		final ImageJ ij = new ImageJ();
+    ij.ui().setHeadless(true);
+    ij.launch();
+    ij.script().run("script.js",
+			"#@ LogService log\n" +
+			"log.info('Success!');\n",
+			true);
+    ij.dispose();
 	}
 }
