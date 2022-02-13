@@ -232,6 +232,11 @@
 
 		<!-- Standard Fiji projects - https://github.com/fiji -->
 		<dependency>
+			<groupId>org.janelia</groupId>
+			<artifactId>H5J_Loader_Plugin</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Blob_Segmentation</artifactId>
 			<scope>runtime</scope>
@@ -394,6 +399,11 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Gray_Morphology</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>HDF5_Vibez</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -664,16 +674,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-lib</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.janelia</groupId>
-			<artifactId>H5J_Loader_Plugin</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>HDF5_Vibez</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
