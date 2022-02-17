@@ -181,6 +181,10 @@
 		<!-- TEMP: Update to non-log4j-dependent versions of components. -->
 		<jitk-tps.version>3.0.2</jitk-tps.version>
 		<bigwarp_fiji.version>7.0.5</bigwarp_fiji.version>
+
+		<!-- TEMP: Until pom-scijava 32.0.0 is released. -->
+		<jython-autocompletion.version>0.0.4</jython-autocompletion.version>
+		<org.scijava.jython-autocompletion.version>${jython-autocompletion.version}</org.scijava.jython-autocompletion.version>
 	</properties>
 
 	<repositories>
@@ -222,6 +226,13 @@
 		</dependency>
 
 		<!-- Runtime dependencies -->
+
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>jython-autocompletion</artifactId>
+			<version>${org.scijava.jython-autocompletion.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 
 		<!-- Op-Finder is currently GPL -->
 		<dependency>
