@@ -219,7 +219,7 @@
 
 		<dependency>
 			<groupId>org.scijava</groupId>
-			<artifactId>jython-autocompletion</artifactId>
+			<artifactId>script-editor-jython</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 
