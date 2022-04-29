@@ -3,11 +3,11 @@ set -x
 
 # Instructions :
 
-# Continous Integration and automatic upload to ImageJ Maven repository.
+# Continous Integration and automatic upload to SciJava Maven repository.
 
 # - Enable Travis for your GitHub repo at https://travis-ci.org/GITHUB_NAME/GITHUB_REPO.
 # - Run the [travisify.sh](https://github.com/scijava/scijava-scripts/blob/master/travisify.sh) script on your repo.
-# - Starting from here, Travis will build and deploys `SNAPSHOT` build for each new commit pushed to `master` to the [ImageJ Maven repo](http://maven.imagej.net/).
+# - Starting from here, Travis will build and deploys `SNAPSHOT` build for each new commit pushed to `master` to the [SciJava Maven repo](https://maven.scijava.org/).
 
 # - To release a new version, you have to run the [`release-version.sh`](https://github.com/scijava/scijava-scripts/blob/master/release-version.sh) script.
 

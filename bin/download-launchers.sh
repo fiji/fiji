@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This script fetches the ImageJ launcher from http://maven.imagej.net/
+# This script fetches the ImageJ launcher from https://maven.scijava.org/
 
 set -e
 unset CDPATH
@@ -22,13 +22,13 @@ groupId=net/imagej
 artifactId=imagej-launcher
 case "$mode" in
 snapshots)
-	baseurl=http://maven.imagej.net/service/local/repositories/sonatype-snapshots/content/$groupId/$artifactId
+	baseurl=https://maven.scijava.org/service/local/repositories/sonatype-snapshots/content/$groupId/$artifactId
 	;;
 releases)
-	baseurl=http://maven.imagej.net/service/local/repositories/sonatype/content/$groupId/$artifactId
+	baseurl=https://maven.scijava.org/service/local/repositories/sonatype/content/$groupId/$artifactId
 	;;
 *)
-	baseurl=http://maven.imagej.net/service/local/repo_groups/public/content/$groupId/$artifactId
+	baseurl=https://maven.scijava.org/service/local/repo_groups/public/content/$groupId/$artifactId
 	;;
 esac
 
