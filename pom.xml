@@ -35,7 +35,6 @@
 			<name>Curtis Rueden</name>
 			<url>https://imagej.net/people/ctrueden</url>
 			<roles>
-				<role>founder</role>
 				<role>lead</role>
 				<role>developer</role>
 				<role>debugger</role>
@@ -53,6 +52,12 @@
 			<properties><id>dscho</id></properties>
 		</contributor>
 		<contributor>
+			<name>Albert Cardona</name>
+			<url>https://imagej.net/people/acardona</url>
+			<roles><role>founder</role></roles>
+			<properties><id>acardona</id></properties>
+		</contributor>
+		<contributor>
 			<name>Ignacio Arganda-Carreras</name>
 			<url>https://imagej.net/people/iarganda</url>
 			<properties><id>iarganda</id></properties>
@@ -61,11 +66,6 @@
 			<name>Eric Barnhill</name>
 			<url>https://imagej.net/people/ericbarnhill</url>
 			<properties><id>ericbarnhill</id></properties>
-		</contributor>
-		<contributor>
-			<name>Albert Cardona</name>
-			<url>https://imagej.net/people/acardona</url>
-			<properties><id>acardona</id></properties>
 		</contributor>
 		<contributor>
 			<name>Michael Doube</name>
