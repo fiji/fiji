@@ -45,3 +45,27 @@ rm -f "$dir/jars/"*-android-*.jar \
    "$dir/jars/"*-linux-armv6*.jar \
    "$dir/jars/"*-linux-armhf*.jar \
    "$dir/jars/"*-linux-ppc64le*.jar
+
+# Install native libraries for all platforms.
+mvn dependency:list |
+  grep '\(macosx\|windows\|linux\)-' |
+  grep -v '(optional)' |
+  sed 's/.* \(.*\):[^:]*$/\1/' | while read native
+do
+  set +x
+  g=${native%%:*}
+  r=${native#*:}
+  a=${r%%:*}
+  r=${r#*:}
+  p=${r%%:*}
+  r=${r#*:}
+  c=${r%%:*}
+  r=${r#*:}
+  v=${r%%:*}
+  set -x
+  mvn dependency:copy -DoutputDirectory=Fiji.app/jars/win32 -Dartifact=$g:$a:$v:jar:windows-x86
+  mvn dependency:copy -DoutputDirectory=Fiji.app/jars/win64 -Dartifact=$g:$a:$v:jar:windows-x86_64
+  mvn dependency:copy -DoutputDirectory=Fiji.app/jars/macosx -Dartifact=$g:$a:$v:jar:macosx-x86_64
+  mvn dependency:copy -DoutputDirectory=Fiji.app/jars/linux32 -Dartifact=$g:$a:$v:jar:linux-x86
+  mvn dependency:copy -DoutputDirectory=Fiji.app/jars/linux64 -Dartifact=$g:$a:$v:jar:linux-x86_64
+done
