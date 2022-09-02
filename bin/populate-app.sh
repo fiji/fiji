@@ -9,7 +9,7 @@ set -e
 
 die() { echo "$1"; exit 1; }
 
-test $# -eq 1 || die "Usage: bin/populate-fiji.sh /path/to/Fiji.app"
+test $# -eq 1 || die "Usage: bin/populate-app.sh /path/to/Fiji.app"
 dir=$1
 test -d "$dir" || die "No such directory: $dir"
 dir=$(cd "$1" && pwd)
