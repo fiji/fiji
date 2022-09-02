@@ -40,7 +40,7 @@ mv -f "$dir/jars/KymographBuilder-"*.jar   "$dir/plugins/"
 mv -f "$dir/jars/bigdataviewer_fiji-"*.jar "$dir/plugins/"
 
 # Prune extraneous native libraries.
-rm "$dir/jars/"*-android-*.jar \
+rm -f "$dir/jars/"*-android-*.jar \
    "$dir/jars/"*-solaris-*.jar \
    "$dir/jars/"*-linux-armv6*.jar \
    "$dir/jars/"*-linux-armhf*.jar \
