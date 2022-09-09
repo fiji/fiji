@@ -39,13 +39,6 @@ mv -f "$dir/jars/Correct_3D_Drift-"*.jar   "$dir/plugins/"
 mv -f "$dir/jars/KymographBuilder-"*.jar   "$dir/plugins/"
 mv -f "$dir/jars/bigdataviewer_fiji-"*.jar "$dir/plugins/"
 
-# Prune extraneous native libraries.
-rm -f "$dir/jars/"*-android-*.jar \
-   "$dir/jars/"*-solaris-*.jar \
-   "$dir/jars/"*-linux-armv6*.jar \
-   "$dir/jars/"*-linux-armhf*.jar \
-   "$dir/jars/"*-linux-ppc64le*.jar
-
 # Install native libraries for all platforms.
 mvn dependency:list |
   grep '\(macosx\|windows\|linux\)-' |
@@ -62,10 +55,30 @@ do
   c=${r%%:*}
   r=${r#*:}
   v=${r%%:*}
+  case "$g" in
+    org.jogamp.*)
+      win32=natives-windows-i586
+      win64=natives-windows-amd64
+      macosx=natives-macosx-universal
+      linux32=natives-linux-i586
+      linux64=natives-linux-amd64
+      ;;
+    org.bytedeco)
+      win32=windows-x86
+      win64=windows-x86_64
+      macosx=macosx-x86_64
+      linux32=linux-x86
+      linux64=linux-x86_64
+      ;;
+    *)
+      echo "[WARNING] Unknown native library '$native' -- not populating it for other platforms"
+      continue
+      ;;
+  esac
   set -x
-  mvn dependency:copy -DoutputDirectory=Fiji.app/jars/win32 -Dartifact=$g:$a:$v:jar:windows-x86
-  mvn dependency:copy -DoutputDirectory=Fiji.app/jars/win64 -Dartifact=$g:$a:$v:jar:windows-x86_64
-  mvn dependency:copy -DoutputDirectory=Fiji.app/jars/macosx -Dartifact=$g:$a:$v:jar:macosx-x86_64
-  mvn dependency:copy -DoutputDirectory=Fiji.app/jars/linux32 -Dartifact=$g:$a:$v:jar:linux-x86
-  mvn dependency:copy -DoutputDirectory=Fiji.app/jars/linux64 -Dartifact=$g:$a:$v:jar:linux-x86_64
+  mvn -q dependency:copy -DoutputDirectory=Fiji.app/jars/win32 -Dartifact=$g:$a:$v:jar:$win32
+  mvn -q dependency:copy -DoutputDirectory=Fiji.app/jars/win64 -Dartifact=$g:$a:$v:jar:$win64
+  mvn -q dependency:copy -DoutputDirectory=Fiji.app/jars/macosx -Dartifact=$g:$a:$v:jar:$macosx
+  mvn -q dependency:copy -DoutputDirectory=Fiji.app/jars/linux32 -Dartifact=$g:$a:$v:jar:$linux32
+  mvn -q dependency:copy -DoutputDirectory=Fiji.app/jars/linux64 -Dartifact=$g:$a:$v:jar:$linux64
 done
