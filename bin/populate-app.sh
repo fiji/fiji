@@ -39,6 +39,11 @@ mv -f "$dir/jars/Correct_3D_Drift-"*.jar   "$dir/plugins/"
 mv -f "$dir/jars/KymographBuilder-"*.jar   "$dir/plugins/"
 mv -f "$dir/jars/bigdataviewer_fiji-"*.jar "$dir/plugins/"
 
+# HACK: Install libraries with clashing artifactIds.
+# org.antlr:antlr:3.5.2 vs antlr:antlr:2.7.7
+mvn -q dependency:copy -DoutputDirectory="$dir/jars" -Dartifact=antlr:antlr:2.7.7
+mv "$dir/jars/antlr-2.7.7.jar" "$dir/jars/antlr.antlr-2.7.7.jar"
+
 # Install native libraries for all platforms.
 mvn dependency:list |
   grep '\(macosx\|windows\|linux\)-' |
