@@ -825,6 +825,8 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Other libraries -->
+
 		<!--
 		reload4j - https://reload4j.qos.ch/
 		A drop-in replacement for log4j 1.2.17 without the security problems.
@@ -834,22 +836,11 @@
 			<artifactId>reload4j</artifactId>
 		</dependency>
 
-		<!-- Optional runtime dependencies -->
-
-		<!-- SciJava projects - https://github.com/scijava -->
-		<dependency>
-			<groupId>org.scijava</groupId>
-			<artifactId>scijava-config</artifactId>
-			<scope>runtime</scope>
-			<optional>true</optional>
-		</dependency>
-
 		<!-- JFreeSVG - https://www.jfree.org/jfreesvg/ -->
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreesvg</artifactId>
 			<scope>runtime</scope>
-			<optional>true</optional>
 		</dependency>
 
 		<!-- JOGL libraries, for Java 3D - https://github.com/jogamp -->
@@ -857,32 +848,39 @@
 			<groupId>org.jogamp.gluegen</groupId>
 			<artifactId>gluegen-rt-main</artifactId>
 			<scope>runtime</scope>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.joal</groupId>
 			<artifactId>joal-main</artifactId>
 			<scope>runtime</scope>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.jocl</groupId>
 			<artifactId>jocl-main</artifactId>
 			<scope>runtime</scope>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.jogl</groupId>
 			<artifactId>jogl-all-main</artifactId>
 			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Optional runtime dependencies -->
+
+		<!--
+		NB: scijava-config provides application configuration (e.g. logging) that
+		should not be propagated to downstream components depending on Fiji.
+		-->
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-config</artifactId>
+			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
 
 		<!--
-		NB: At the moment, Bio-Formats currently brings this in. But
-		regardless we should define an slf4j logging implementation.
-		If a new Bio-Formats version updates its logger, this should
-		be updated accordingly.
+		HACK: Bio-Formats depends on logback-classic without the optional flag set,
+		but it should be optional, so we add an explicit optional dependency here.
 		-->
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
