@@ -175,6 +175,8 @@
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
+
+		<jogamp.version>2.4.0-rc-20210111</jogamp.version>
 	</properties>
 
 	<repositories>
@@ -846,23 +848,51 @@
 		<!-- JOGL libraries, for Java 3D - https://github.com/jogamp -->
 		<dependency>
 			<groupId>org.jogamp.gluegen</groupId>
-			<artifactId>gluegen-rt-main</artifactId>
+			<artifactId>gluegen-rt</artifactId>
+			<version>${jogamp.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.joal</groupId>
-			<artifactId>joal-main</artifactId>
+			<artifactId>joal</artifactId>
+			<version>${jogamp.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.jocl</groupId>
-			<artifactId>jocl-main</artifactId>
+			<artifactId>jocl</artifactId>
+			<version>${jogamp.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>jogl-all-main</artifactId>
+			<artifactId>jogl-all</artifactId>
+			<version>${jogamp.version}</version>
 			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.jogamp.gluegen</groupId>
+			<artifactId>gluegen-rt</artifactId>
+			<version>${jogamp.version}</version>
+			<classifier>${scijava.natives.classifier.jogamp}</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.jogamp.joal</groupId>
+			<artifactId>joal</artifactId>
+			<version>${jogamp.version}</version>
+			<classifier>${scijava.natives.classifier.jogamp}</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.jogamp.jocl</groupId>
+			<artifactId>jocl</artifactId>
+			<version>${jogamp.version}</version>
+			<classifier>${scijava.natives.classifier.jogamp}</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.jogamp.jogl</groupId>
+			<artifactId>jogl-all</artifactId>
+			<version>${jogamp.version}</version>
+			<classifier>${scijava.natives.classifier.jogamp}</classifier>
 		</dependency>
 
 		<!-- Optional runtime dependencies -->
