@@ -18,7 +18,7 @@
 /.settings/
 
 # IntelliJ #
-*.iml
+/.idea/
 
 # Updater #
 /db.xml.gz
