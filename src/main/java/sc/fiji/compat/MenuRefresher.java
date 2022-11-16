@@ -47,7 +47,6 @@ public class MenuRefresher implements PlugIn, Runnable {
 	@Override
 	public void run() {
 		overrideCommands();
-		SampleImageLoader.install();
 		Main.installRecentCommands();
 	}
 
