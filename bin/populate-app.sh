@@ -62,10 +62,10 @@ do
   v=${r%%:*}
   case "$g" in
     org.jogamp.*)
-      win32=natives-windows-i586
+      win32=
       win64=natives-windows-amd64
       macosx=natives-macosx-universal
-      linux32=natives-linux-i586
+      linux32=
       linux64=natives-linux-amd64
       ;;
     org.bytedeco)
@@ -81,9 +81,9 @@ do
       ;;
   esac
   set -x
-  mvn -q dependency:copy -DoutputDirectory=Fiji.app/jars/win32 -Dartifact=$g:$a:$v:jar:$win32
-  mvn -q dependency:copy -DoutputDirectory=Fiji.app/jars/win64 -Dartifact=$g:$a:$v:jar:$win64
-  mvn -q dependency:copy -DoutputDirectory=Fiji.app/jars/macosx -Dartifact=$g:$a:$v:jar:$macosx
-  mvn -q dependency:copy -DoutputDirectory=Fiji.app/jars/linux32 -Dartifact=$g:$a:$v:jar:$linux32
-  mvn -q dependency:copy -DoutputDirectory=Fiji.app/jars/linux64 -Dartifact=$g:$a:$v:jar:$linux64
+  test -z "$win32" || mvn -q dependency:copy -DoutputDirectory="$dir/jars/win32" -Dartifact=$g:$a:$v:jar:$win32
+  test -z "$win64" || mvn -q dependency:copy -DoutputDirectory="$dir/jars/win64" -Dartifact=$g:$a:$v:jar:$win64
+  test -z "$macosx" || mvn -q dependency:copy -DoutputDirectory="$dir/jars/macosx" -Dartifact=$g:$a:$v:jar:$macosx
+  test -z "$linux32" || mvn -q dependency:copy -DoutputDirectory="$dir/jars/linux32" -Dartifact=$g:$a:$v:jar:$linux32
+  test -z "$linux64" || mvn -q dependency:copy -DoutputDirectory="$dir/jars/linux64" -Dartifact=$g:$a:$v:jar:$linux64
 done
