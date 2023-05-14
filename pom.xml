@@ -729,16 +729,16 @@
 			<artifactId>bio-formats_plugins</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-		<!-- https://github.com/saalfeldlab/bigwarp -->
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>bigwarp_fiji</artifactId>
-			<scope>runtime</scope>
-		</dependency>
 		<!-- https://github.com/saalfeldlab/n5-viewer -->
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>
 			<artifactId>n5-viewer_fiji</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<!-- https://github.com/saalfeldlab/bigwarp -->
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bigwarp_fiji</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<!-- https://github.com/saalfeldlab/trakem2-tps -->
