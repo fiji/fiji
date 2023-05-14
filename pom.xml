@@ -741,6 +741,12 @@
 			<artifactId>bigwarp_fiji</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- https://github.com/juglab/labkit-ui -->
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>labkit-ui</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 		<!-- https://github.com/saalfeldlab/trakem2-tps -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
