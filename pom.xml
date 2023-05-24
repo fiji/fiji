@@ -11,7 +11,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>fiji</artifactId>
-	<version>2.13.1-SNAPSHOT</version>
+	<version>2.13.2-SNAPSHOT</version>
 
 	<name>Fiji</name>
 	<description>Fiji is a distribution of ImageJ for the life sciences.</description>
