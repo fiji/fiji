@@ -21,7 +21,7 @@ do
   rm -rf Fiji.app
 
   zip=fiji-$template-$platform.zip
-  test -f "$zip" || curl -fLO "https://downloads.imagej.net/fiji/releases/$zip"
+  test -f "$zip" || curl -fLO "https://downloads.imagej.net/fiji/releases/$template/$zip"
   unzip "$zip"
 
   # Populate with JARs.
@@ -32,7 +32,8 @@ do
   # Delete non-matching platform folders.
   for d in Fiji.app/jars/*/ Fiji.app/lib/*/
   do
-    if [ "$d" != Fiji.app/jars/bio-formats/ \
+    if [ "$platform" != nojre \
+      -a "$d" != Fiji.app/jars/bio-formats/ \
       -a "$d" != Fiji.app/jars/"$platform"/ \
       -a "$d" != Fiji.app/lib/"$platform"/ ]
     then
