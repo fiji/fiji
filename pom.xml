@@ -849,16 +849,6 @@
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.jogamp.joal</groupId>
-			<artifactId>joal</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jocl</groupId>
-			<artifactId>jocl</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.jogamp.jogl</groupId>
 			<artifactId>jogl-all</artifactId>
 			<scope>runtime</scope>
@@ -867,16 +857,6 @@
 			<groupId>org.jogamp.gluegen</groupId>
 			<artifactId>gluegen-rt</artifactId>
 			<classifier>${scijava.natives.classifier.gluegen}</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.joal</groupId>
-			<artifactId>joal</artifactId>
-			<classifier>${scijava.natives.classifier.joal}</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jocl</groupId>
-			<artifactId>jocl</artifactId>
-			<classifier>${scijava.natives.classifier.jocl}</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.jogl</groupId>
