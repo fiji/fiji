@@ -15,6 +15,7 @@ If you publish a paper using this macro, please acknowledge.
 2. Run the macro
 3. In the dialog choose one of the LUT for time coding.
 	select frame range (default is full).
+	select the projection method (maximum intensity is the default projection).
 	check if you want to have color scale bar.
 
 History
@@ -28,6 +29,7 @@ History
 101122  plugin'ified it
 101123	fixed for cases when slices > 1 and frames == 1
 191025  fixed LUT listing by making use of the getList("LUTs") function
+210113  added all the stack projection methods as Max Intensity was the only option earlier
 *****************************************************************************
 */
 
@@ -36,7 +38,7 @@ var Gstartf = 1;
 var Gendf = 10;
 var GFrameColorScaleCheck = 1;
 var GbatchMode = 0;
-
+var Z_proj="Max Intensity"; //default maximum projection method
 macro "Time-Lapse Color Coder" {
 	Stack.getDimensions(ww, hh, channels, slices, frames);
 	if (channels > 1)
@@ -119,7 +121,7 @@ macro "Time-Lapse Color Coder" {
 
 	run("Stack to Hyperstack...", "order=xyctz channels=1 slices="
 		+ totalframes + " frames=" + slices + " display=Color");
-	op = "start=1 stop=" + Gendf + " projection=[Max Intensity] all";
+	op = "start=1 stop=" + Gendf + " projection=[" + Z_proj + "] all";
 	run("Z Project...", op);
 	if (slices > 1)
 		run("Stack to Hyperstack...", "order=xyczt(default) channels=1 slices=" + slices
@@ -140,16 +142,19 @@ macro "Time-Lapse Color Coder" {
 
 function showDialog() {
 	lutA = getList("LUTs");
+	projection = newArray("Average Intensity","Max Intensity","Min Intensity","Sum Slices","Standard Deviation","Median"); //new array for different projection methods supported by ZProjector
  	Dialog.create("Color Code Settings");
 	Dialog.addChoice("LUT", lutA);
 	Dialog.addNumber("start frame", Gstartf);
 	Dialog.addNumber("end frame", Gendf);
+	Dialog.addChoice("Projection Method", projection,"Max Intensity"); //default projection method is max intensity
 	Dialog.addCheckbox("Create Time Color Scale Bar", GFrameColorScaleCheck);
 	Dialog.addCheckbox("Batch mode? (no image output)", GbatchMode);
 	Dialog.show();
  	Glut = Dialog.getChoice();
 	Gstartf = Dialog.getNumber();
 	Gendf = Dialog.getNumber();
+	Z_proj=Dialog.getChoice(); 
 	GFrameColorScaleCheck = Dialog.getCheckbox();
 	GbatchMode = Dialog.getCheckbox();
 }
