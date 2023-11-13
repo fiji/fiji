@@ -34,6 +34,7 @@ void writeLinuxDesktopFile(File file) {
 	out.println("StartupNotify=true");
 	out.println("Icon=" + icon);
 	out.println("StartupWMClass=fiji-Main");
+	out.println("MimeType=x-scheme-handler/fiji;");
 	out.close();
 	file.setExecutable(true);
 }
