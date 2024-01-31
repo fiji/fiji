@@ -51,7 +51,13 @@ def scaleToDPI() {
   newWindow = gd.getNextBoolean()
 
   // update applicable Image Scale parameters
-  Scaler.staticInterpolationMethod = new Integer(interpolationMethod)
+  try {
+    Scaler.staticInterpolationMethod = interpolationMethod
+  }
+  catch (Exception exc) {
+    // ImageJ before 1.53n
+    Scaler.interpolationMethod = interpolationMethod
+  }
   Scaler.fillWithBackground = fillWithBackground
   Scaler.averageWhenDownsizing = averageWhenDownsizing
   Scaler.newWindow = newWindow
