@@ -41,11 +41,22 @@
 		<string>Fiji</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>fiji-url-scheme</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>fiji</string>
+				</array>
+			</dict>
+		</array>
+		<key>CFBundleVersion</key>
+		<string>1</string>
 		<!-- See https://developer.apple.com/app-store/categories/ for list of AppStore categories -->
 		<key>LSApplicationCategoryType</key>
 		<string>public.app-category.utilities</string>
-		<key>CFBundleVersion</key>
-		<string>1</string>
 		<key>NSHumanReadableCopyright</key>
 		<string>Copyright (C) 2024</string>
 		<key>NSHighResolutionCapable</key>
