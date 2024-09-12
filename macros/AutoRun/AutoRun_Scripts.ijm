@@ -1,11 +1,16 @@
-// run all the scripts provided in plugins/Scripts/Plugins/AutoRun/
-autoRunDirectory = getDirectory("imagej") + "/plugins/Scripts/Plugins/AutoRun/";
-if (File.isDirectory(autoRunDirectory)) {
-    list = getFileList(autoRunDirectory);
-    // make sure startup order is consistent
-    Array.sort(list);
-    for (i = 0; i < list.length; i++) {
-        runMacro(autoRunDirectory + list[i]);
+// run all the scripts provided in the following directories
+autoRunDirs = newArray(2);
+autoRunDirs[0] = getDirectory("imagej") + "/plugins/Scripts/Plugins/AutoRun/";
+autoRunDirs[1] = getDirectory("imagej") + "/scripts/Plugins/AutoRun/";
+
+for (d=0; d<autoRunDirs.length; d++) {
+    autoRunDir = autoRunDirs[d];
+    if (File.isDirectory(autoRunDir)) {
+        list = getFileList(autoRunDir);
+        // make sure startup order is consistent
+        Array.sort(list);
+        for (i = 0; i < list.length; i++) {
+            runMacro(autoRunDir + list[i]);
+        }
     }
 }
-
