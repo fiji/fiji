@@ -44,12 +44,12 @@ To start Fiji:
 2. Alternatively, you can run Fiji from the command line:
 
 
-## Passing Arguments
+### Passing Arguments
 You can pass arguments to ImageJ directly through the command line. For example:
 
 	$ $ ./ImageJ-linux32 --some-argument
 
-### Passing Arguments to the Java Virtual Machine (JVM)
+#### Passing Arguments to the Java Virtual Machine (JVM)
 To pass arguments to the Java Virtual Machine, specify them on the command line, separating them from the ImageJ arguments (if any) with a `--`.  In other words, if you want to override the memory setting, call Fiji like this:
 
 	$ $ ./ImageJ-linux32 -Xmx128m --
