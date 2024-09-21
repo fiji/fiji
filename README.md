@@ -98,7 +98,7 @@ To debug this issue, launch ImageJ from the console in debug mode:
 
 ### Memory Issues
 
-If Fiji crashes or freezes due to insufficient memory, try increasing the maximum memory allocation. You can do this by launching Fiji with this example command, which increases the maximum memory usage to 2048 MB.:
+If Fiji crashes or freezes due to insufficient memory, try increasing the maximum memory allocation. Here is an example command you can follow when launching Fiji, which increases the maximum memory usage to 2048 MB.:
 
 	$ ./ImageJ-linux32 -Xmx2048m --
 
@@ -111,7 +111,7 @@ If ImageJ crashes—i.e., the program suddenly terminates, with or without an er
 
 ### Other Issues
 
-If you're experiencing an issue not mentioned here, please visit the [Fiji Troubleshooting](https://imagej.net/learn/troubleshooting) website for further assistance, or add your concern to the [Forum](https://forum.image.sc/c/usage-issues/7).
+If you're experiencing an issue not mentioned here, please visit the [Fiji Troubleshooting](https://imagej.net/learn/troubleshooting) website for further assistance, or ask for help on the [Forum](https://forum.image.sc/c/usage-issues/7).
 
 
 Contributing to Fiji
