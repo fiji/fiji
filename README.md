@@ -5,8 +5,7 @@
 [ Fiji Is Just ImageJ ]
 =======================
 
-Fiji is a "batteries-included" distribution of
-[ImageJ](http://imagej.net/)—a popular, free scientific image processing application—which includes a lot of plugins organized into a coherent menu structure. Fiji compares to ImageJ as Ubuntu compares to Linux.
+Fiji is a "batteries-included" distribution of [ImageJ](http://imagej.net/)—a popular, free scientific image processing application—which includes a lot of plugins organized into a coherent menu structure. Fiji compares to ImageJ as Ubuntu compares to Linux.
 
 The primary goal of Fiji is to assist research in life sciences by making ImageJ and its plugins more accessible and easier to install and manage.
 
@@ -82,10 +81,51 @@ Therefore, the majority of Fiji is licensed under the GNU Public License version
 
 Fiji's source code is split up into a [main repository](https://github.com/fiji/fiji), containing the top-level project and support scripts, while all components live in their own repositories in the [Fiji organization on GitHub](https://github.com/fiji/). As a rule of thumb: the file name and the project name correspond pretty well, e.g. fiji-compat.jar is maintained in [fiji-compat](https://github.com/fiji/fiji-compat).
 
-Contributing to Fiji
--------------
+Troubleshooting
+---------------
+If you encounter any issues while running Fiji, here are some common solutions:
 
-Contributions are encouraged! Here's how you can get involved:
+### Java Errors
+
+Ensure that the bundled version of Java is being used. Fiji includes its own Java runtime, but sometimes conflicts may arise with other installed versions of Java. If you're seeing Java-related errors, make sure no other Java versions are overriding the bundled one.
+
+To debug this issue, launch ImageJ from the console in debug mode:
+- **Linux 64-bit**: 
+	DEBUG=1 $HOME/ImageJ2.app/ImageJ-linux64
+- **macOS**: 
+  DEBUG=1 /Applications/ImageJ2.app/Contents/MacOS/ImageJ-macosx
+- **Windows**: Create a copy of ImageJ-win64.exe called debug.exe, then run debug.exe.
+
+### Memory Issues
+
+If Fiji crashes or freezes due to insufficient memory, try increasing the maximum memory allocation. You can do this by launching Fiji with this example command, which increases the maximum memory usage to 2048 MB.:
+
+	$ ./ImageJ-linux32 -Xmx2048m --
+
+### Fiji Crashes
+
+If ImageJ crashes—i.e., the program suddenly terminates, with or without an error message—it is very helpful to identify the steps that can reliably reproduce the crash:
+1. Launch ImageJ from the console (see instructions in the "Running Fiji" section).
+2. Perform the same actions that previously resulted in the crash.
+3. Take note of any error messages in the console window, which you can copy and paste into a bug report.
+
+### Other Issues
+
+If you're experiencing an issue not mentioned here, please visit the [Fiji Troubleshooting](https://imagej.net/learn/troubleshooting) website for further assistance, or add your concern to the [Forum](https://forum.image.sc/c/usage-issues/7).
+
+
+Contributing to Fiji
+--------------------
+
+Contributions are encouraged! 
+
+### How to help
+
+1. **Bug Reports & Feature Requests**: Open an issue on GitHub to report bugs or suggest new features.
+2. **Pull Requests**: Feel free to fork the repository, make your changes, and submit a pull request. See the [Contributing](http://imagej.net/Contributing) page for details.
+3. Join the Developer Community: You can engage with other developers via the [Zulip Developer Chat](https://imagesc.zulipchat.com/#narrow/stream/327238-Fiji) to collaborate and seek advice.
+
+### How to get involved
 
 1. **Fork the repository**: Start by forking the [Fiji main repository](https://github.com/fiji/fiji).
 2. **Make changes**: Develop new features or improve existing ones.
