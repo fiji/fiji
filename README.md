@@ -58,7 +58,7 @@ Usage
 -----
 Fiji is a versatile tool widely used in scientific research, especially in life sciences, for processing and analyzing images. Its functionality can be extended through plugins, making it applicable to various fields of study.
 
-## Key Applications
+### Key Applications
 - **Biological Image Processing**: Fiji is widely adopted for tasks such as cell counting, particle tracking, and 3D image reconstruction.
 - **Microscopy**: It includes tools for visualizing, enhancing, and analyzing microscopy data, such as fluorescence microscopy images.
 - **Image Analysis Pipelines**: Researchers use Fiji to automate complex image analysis workflows, integrating multiple plugins into custom pipelines. Fiji can perform image analysis techniques such as colocalization, segmentation, tracking, registration, and deconvolution.
