@@ -32,28 +32,38 @@ Fiji is intended to be the most painless, easy, quick and convenient way to inst
 2. **Unpack** the archive to a directory of your choice.
 3. **Launch** Fiji by double-clicking the [ImageJ launcher](https://github.com/imagej/imagej-launcher).
 
-Usage
------
+Running Fiji
+------------
 
 Fiji is distributed as a portable application, meaning it can be run without installation directly from wherever you copy it. By default, Fiji is distributed without source code to keep the download size as small as possible.
 
-## Running Fiji
 
 To start Fiji:
-1. **Launch** Fiji by double-clicking the ImageJ launcher, which will set up the environment, start Java, and open ImageJ.
+1. Launch Fiji by double-clicking the ImageJ launcher, which will set up the environment, start Java, and open ImageJ.
 2. Alternatively, you can run Fiji from the command line:
 
 
 ### Passing Arguments
 You can pass arguments to ImageJ directly through the command line. For example:
 
-	$ $ ./ImageJ-linux32 --some-argument
+	$ ./ImageJ-linux32 --some-argument
 
 #### Passing Arguments to the Java Virtual Machine (JVM)
 To pass arguments to the Java Virtual Machine, specify them on the command line, separating them from the ImageJ arguments (if any) with a `--`.  In other words, if you want to override the memory setting, call Fiji like this:
 
-	$ $ ./ImageJ-linux32 -Xmx128m --
+	$ ./ImageJ-linux32 -Xmx128m --
 This will set the maximum memory usage for Fiji to 128 MB.
+
+Usage
+-----
+Fiji is a versatile tool widely used in scientific research, especially in life sciences, for processing and analyzing images. Its functionality can be extended through plugins, making it applicable to various fields of study.
+
+## Key Applications
+- **Biological Image Processing**: Fiji is widely adopted for tasks such as cell counting, particle tracking, and 3D image reconstruction.
+- **Microscopy**: It includes tools for visualizing, enhancing, and analyzing microscopy data, such as fluorescence microscopy images.
+- **Image Analysis Pipelines**: Researchers use Fiji to automate complex image analysis workflows, integrating multiple plugins into custom pipelines. Fiji can perform image analysis techniques such as colocalization, segmentation, tracking, registration, and deconvolution.
+
+The platform is highly customizable, with a wide range of plugins available to meet specific research needs. You can explore the [Fiji Wiki](https://fiji.sc/) and [ImageJ Wiki](https://imagej.net/) to discover more applications and tutorials for various use cases.
 
 Getting Help
 -----------
