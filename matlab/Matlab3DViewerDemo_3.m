@@ -45,9 +45,9 @@ universe.show();
 %%
 % Feed it the previous ImagePlus, but render it as a surface plot, where
 % the intensity is encoded as height in a 3D space.
-color = org.scijava.vecmath.Color3f(240 / 255, 120 / 255, 20 / 255);
+color = org.jogamp.vecmath.Color3f(240 / 255, 120 / 255, 20 / 255);
 c = universe.addSurfacePlot(imp, ...
-        org.scijava.vecmath.Color3f(), ...
+        org.jogamp.vecmath.Color3f(), ...
         'Matlab Peak in 3D', ...
         1, ...
         [true true true], ...
@@ -61,7 +61,7 @@ c.setColor(color);
 c.setTransform([1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1]);
 universe.fireContentChanged(c);
 universe.centerSelected(c);
-universe.rotateUniverse(org.scijava.vecmath.Vector3d(-1, -0.5, +0.2), +120 * pi / 180);
+universe.rotateUniverse(org.jogamp.vecmath.Vector3d(-1, -0.5, +0.2), +120 * pi / 180);
 
 %%
 % Et voilà! A beautiful monochrome MATLAB logo, rendered in an accelerated

@@ -175,6 +175,18 @@
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
+
+		<!-- TEMP: Until pom-scijava 39.0.0 is released. -->
+		<_3D_Blob_Segmentation.version>4.0.0</_3D_Blob_Segmentation.version>
+		<_3D_Viewer.version>5.0.0</_3D_Viewer.version>
+		<Volume_Calculator.version>3.0.0</Volume_Calculator.version>
+		<Correct_3D_Drift.version>1.0.7</Correct_3D_Drift.version>
+		<Trainable_Segmentation.version>4.0.0</Trainable_Segmentation.version>
+		<VIB.version>4.0.0</VIB.version>
+		<Volume_Calculator.version>3.0.0</Volume_Calculator.version>
+		<legacy-imglib1.version>1.1.11</legacy-imglib1.version>
+		<TrakEM2.version>2.0.0</TrakEM2.version>
+		<VectorString.version>3.0.0</VectorString.version>
 	</properties>
 
 	<dependencies>

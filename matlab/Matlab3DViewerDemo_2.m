@@ -78,9 +78,9 @@ for i = 1 : nballs
     %%
     % It is possible to specify the color of the iso-surface at creation,
     % but the 3D viewer expects a |Color3f| object, which is part of the
-    % |org.scijava.vecmath package|. We determine its actual color
+    % |org.jogamp.vecmath package|. We determine its actual color
     % randomly again.
-    color = org.scijava.vecmath.Color3f(rand, rand, rand);
+    color = org.jogamp.vecmath.Color3f(rand, rand, rand);
 
     %%
     % Finally, we add the object to the 3D universe, in the shape of an
