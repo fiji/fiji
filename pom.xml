@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>37.0.0</version>
+		<version>38.0.1</version>
 		<relativePath />
 	</parent>
 
@@ -175,8 +175,6 @@
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
-
-		<de.nanoimaging.View5D_.version>2.5.3</de.nanoimaging.View5D_.version>
 	</properties>
 
 	<dependencies>
@@ -712,7 +710,6 @@
 		<dependency>
 			<groupId>de.nanoimaging</groupId>
 			<artifactId>View5D_</artifactId>
-			<version>${de.nanoimaging.View5D_.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<!-- https://github.com/saalfeldlab/jitk-tps -->
