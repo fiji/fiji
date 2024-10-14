@@ -267,3 +267,9 @@ macro "Save Inverted FITS" {
 	run("FITS...", "");
 	run("Flip Vertically");
 }
+
+macro "Auto Brightness/Contrast [F12]" {
+	if (nImages>0) {
+	run("Enhance Contrast", "saturated=0.35");
+	}
+}
