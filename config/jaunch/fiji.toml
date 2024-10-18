@@ -1,0 +1,274 @@
+# *** Welcome to the Fiji launcher's configuration file! ***
+#
+# The Fiji launcher is built on Jaunch (https://github.com/scijava/jaunch).
+#
+# The contents below define Fiji's particular launcher behavior and features,
+# on top of Jaunch's "sensible default" functionality.
+#
+# See the common.toml file for more details about Jaunch configuration.
+
+jaunch-version = 1
+
+program-name = 'Fiji'
+
+includes = ['jvm.toml', 'python.toml']
+
+supported-options = [
+    '--print-ij-dir|print where Fiji thinks it is located',
+    '--ij-dir=<path>|set the ImageJ directory to <path> (used to find\njars/, plugins/ and macros/)',
+    '--pass-classpath=<classpath>|pass -classpath <classpath> to the main() method',
+    '--full-classpath|call the main class with the full ImageJ class path',
+    '--default-gc|do not use advanced garbage collector settings by default\n(-XX:+UseG1GC)',
+    '--gc-g1|use the G1 garbage collector',
+    '--debug-gc|show debug info about the garbage collector on stderr',
+    '--no-splash|suppress showing a splash screen upon startup',
+
+    # Options for Fiji:
+    '--python|launch in Python mode!',
+    '--dont-patch-ij1|do not try to runtime-patch ImageJ (implies --ij1)',
+    '--ij2,--imagej|no effect -- here for backwards compatibility only', #NO
+    '--ij1|start in original ImageJ mode', #NO
+    '--legacy|start in legacy/Fiji1 mode', #NO
+    '--allow-multiple|do not reuse existing Fiji instance',
+    '--plugins=<dir>|use <dir> to discover plugins',
+    '--run <plugin> [<arg>]|run <plugin> in Fiji, optionally with arguments',
+    '--compile-and-run <path-to-.java-file>|compile and run <plugin> in Fiji',
+    '--edit [<file>...]|edit the given file in the script editor',
+
+    # Options to run programs other than Fiji:
+    '--update|start the command-line version of the ImageJ updater',
+    '--main-class=<class name>|start the given class instead of Fiji',
+    '--jar=<jar path>|run the given JAR instead of Fiji',
+
+    # Windows things
+    '--console,--attach-console|attempt to attach output to the calling console',
+    '--new-console|ensure the launch of a new, dedicated console for output',
+    '--set-icon=<exe-file>,<ico-file>|add/replace the icon of the given program', #NO
+
+    # Even more things...
+    '--freeze-classloader|TODO undocumented',
+    '--compile-and-run|TODO undocumented',
+    '--showUI|TODO undocumented',
+    '--jdb|TODO undocumented',
+    '--ijcp|TODO undocumented',
+
+# Nico: NEED: execute a script with parameters
+# ./ImageJ-linux64 --ij2 --headless --console --run hello.py 'name="Mr Kraken"'
+]
+
+modes = [
+  '!--python|LAUNCH:JVM',
+  '--python|LAUNCH:PYTHON',
+  '--python|--full-classpath',
+
+  # Decide which mode to launch: default, original-imagej, legacy-fiji, or custom-main.
+  '--dont-patch-ij1|MODE:original-imagej',
+  '--ij1|MODE:original-imagej',
+  '--ij2|!MODE:original-imagej',
+  '--legacy|MODE:legacy-fiji',
+  '--update|MODE:custom-main',
+  '--main-class|MODE:custom-main',
+  '--jar|MODE:custom-main',
+
+  # TODO: the --update flag is a shorthand for the following IJL options:
+  # --update --info --dont-patch-ij1 --full-classpath --main-class=net.imagej.updater.CommandLine
+
+  # To start in ImageJ2 or Fiji mode, we must patch IJ1.
+  # But when running the command-line Updater, we don't need to.
+  '--dont-patch-ij1|MODE:no-ij1-patching',
+  'MODE:custom-main|MODE:no-ij1-patching',
+  '--ij2|!MODE:no-ij1-patching',
+
+  # Disable the splash screen when running a different
+  # main class, and/or when --no-splash option is given.
+  '--no-splash|MODE:no-splash',
+  '--headless|MODE:no-splash',
+  '--update|MODE:no-splash',
+  '--main-class|MODE:no-splash',
+]
+
+directives = [
+  '--print-ij-dir|print-app-dir,ABORT', # For backwards compatibility.
+  'LAUNCH:JVM|apply-update,INIT_THREADS',
+  'LAUNCH:PYTHON|apply-update,INIT_THREADS',
+]
+
+# /============================================================================\
+# |                               PYTHON CONFIG                                |
+# \============================================================================/
+
+python.version-min = '3.8'
+
+python.packages = [
+  'pyimagej>=1.4.1',
+  'scyjava>=1.9.1',
+]
+
+python.script-path = ['${app-dir}/fiji.py']
+
+python.main-args = [
+    '${jvm.libjvmPath}',
+    '@{jvm.runtimeArgs}',
+    '--',
+    '${jvm.mainClass}',
+    '@{jvm.mainArgs}',
+]
+
+# /============================================================================\
+# |                                JAVA CONFIG                                 |
+# \============================================================================/
+
+jvm.version-min = '8'
+
+jvm.classpath = [
+    '--full-classpath|${app-dir}/jars/*.jar',
+    '--full-classpath|${app-dir}/jars/*/*.jar',
+    '--full-classpath|${app-dir}/plugins/*.jar',
+    '!--full-classpath|${app-dir}/jars/imagej-launcher*.jar',
+    '--main-class|.', # Weird behavior, but it's what the ImageJ Launcher does.
+    '--jar|${jar}',
+]
+
+jvm.max-heap = '75%'
+
+jvm.runtime-args = [
+    '--info|-Dscijava.log.level=info',
+    '--debug|-Dij.debug=true',
+    '--debug|-Dscijava.log.level=debug',
+
+    # In https://forum.image.sc/t/88620, acardona wrote:
+    # > When running in a machine with many CPU cores (like 64, or 256) and lots
+    # > of RAM (e.g., more than 100 GB, like 500 GB of heap size as defined by -Xmx),
+    # > I find that the concurrent garbage collector (G1 GC) works *a lot better*.
+    '!--default-gc|JAVA:6+|-XX:+UseG1GC',
+    # Handle --gc-g1 option.
+    '--gc-g1|-XX:+UseCompressedOops',
+    '--gc-g1|-XX:+UnlockExperimentalVMOptions',
+    '--gc-g1|-XX:+UseG1GC',
+    '--gc-g1|-XX:NewRatio=5',
+
+    # Handle --debug-gc option.
+    '--debug-gc|-verbose:gc',
+
+    # Handle --dont-patch-ij1 option.
+    'MODE:no-ij1-patching|-Dpatch.ij1=false',
+
+    # Handle JVM args for ij1 mode.
+    'MODE:original-imagej|-Dsun.java.command=ImageJ',
+
+    # Enable SciJava logging in updater mode.
+    '--update|-Dscijava.log.level=info',
+
+    # Convince the Java module system to play nice.
+    # Supported since Jigsaw was introduced in Java 9.
+    # Necessary for ij1-patcher to work properly with Java 17+.
+
+    # net.imagej.patcher.LegacyInjector uses ClassLoader.findLoadedClass
+    # javassist.util.proxy.SecurityActions uses ClassLoader.defineClass
+    'JAVA:9+|--add-opens=java.base/java.lang=ALL-UNNAMED',
+
+    # For org.apache.arrow - TODO: document exactly why
+    'JAVA:9+|--add-opens=java.base/java.nio=ALL-UNNAMED',
+
+    # org.scijava.util.SizeableArrayList uses ArrayList.size
+    'JAVA:9+|--add-opens=java.base/java.util=ALL-UNNAMED',
+
+    # com.jogamp.nativewindow.awt.AppContextInfo uses sun.awt.AppContext
+    'JAVA:9+|--add-opens=java.desktop/sun.awt=ALL-UNNAMED',
+
+    #  ini.trakem2.Project.openFSProject uses javax.swing.JTree.expandedState
+    'JAVA:9+|--add-opens=java.desktop/javax.swing=ALL-UNNAMED',
+
+    # HACK: For fiji.debugging.Object_Inspector
+    # The Object_Inspector could end up reflecting anything, so this doesn't
+    # make it work in all cases, but it helps for inspecting AWT/Swing windows.
+    'JAVA:9+|--add-opens=java.desktop/java.awt=ALL-UNNAMED',
+
+    # sc.fiji.compat.DefaultFijiService uses XToolkit.awtAppClassName
+    'JAVA:9+|OS:LINUX|--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED', 
+
+    # TODO: document where this happens on macOS.
+    'JAVA:9+|OS:MACOSX|--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED',
+
+    # For scenery - TODO: document exactly why
+    #'JAVA:9+|--add-opens=java.base/java.lang=ALL-UNNAMED',
+    'JAVA:9+|--add-opens=java.base/java.lang.invoke=ALL-UNNAMED',
+    'JAVA:9+|--add-opens=java.base/java.net=ALL-UNNAMED',
+    #'JAVA:9+|--add-opens=java.base/java.nio=ALL-UNNAMED',
+    'JAVA:9+|--add-opens=java.base/java.time=ALL-UNNAMED',
+    #'JAVA:9+|--add-opens=java.base/java.util=ALL-UNNAMED',
+    'JAVA:9+|--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED',
+    'JAVA:9+|--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
+    'JAVA:9+|--add-opens=java.base/sun.util.calendar=ALL-UNNAMED',
+
+    # Allow access to com.sun.tools.example.debug.tty.TTY class.
+    'JAVA:9+|--jdb|--add-opens=jdk.jdi/com.sun.tools.example.debug.tty=ALL-UNNAMED',
+
+    # Avoid Jython's huge startup cost.
+    '-Dpython.cachedir.skip=true',
+
+    # Set ImageJ's plugins.dir property.
+    '--plugins|-Dplugins.dir=${plugins}'
+    '!--plugins|-Dplugins.dir=${app-dir}',
+
+    '!MODE:no-splash|-Dimagej.splash=true',
+
+    '-Dimagej.dir=${app-dir}',
+    '-Dij.dir=${app-dir}',
+    '-Dfiji.dir=${app-dir}',
+
+    # TODO: is fiji.defaultLibPath property necessary for any reason?
+
+    '-Dfiji.executable=${executable}',
+    '-Dij.executable=${executable}',
+
+    'OS:LINUX|ARCH:X64|-Djava.library.path=${app-dir}/lib/linux64',
+    'OS:LINUX|ARCH:X86|-Djava.library.path=${app-dir}/lib/linux32',
+    'OS:MACOSX|ARCH:ARM64|-Djava.library.path=${app-dir}/lib/macosx-arm64',
+    'OS:MACOSX|ARCH:X64|-Djava.library.path=${app-dir}/lib/macosx',
+    'OS:WINDOWS|ARCH:X64|-Djava.library.path=${app-dir}\lib\win64',
+    'OS:WINDOWS|ARCH:X86|-Djava.library.path=${app-dir}\lib\win32',
+
+    # Make SciJava startup less brittle.
+    '-Dscijava.context.strict=false',
+
+    # Avoid the following error message on Windows:
+    #
+    #   console: Failed to install '': java.nio.charset.UnsupportedCharsetException: cp0.
+    #
+    # See https://github.com/imagej/imagej-launcher/issues/56
+    '-Dpython.console.encoding=UTF-8',
+]
+
+jvm.main-class = [
+    '--main-class|${main-class}',
+    '--jar|net.imagej.launcher.JarLauncher',
+    '--update|net.imagej.updater.CommandLine',
+    'net.imagej.launcher.ClassLauncher',
+]
+
+jvm.main-args = [
+    '--jar|${jar}',
+
+    # TODO: -classpath is a flag for the ClassLauncher and JarLauncher mains!
+    # Go back through and put in the right -classpath stuff here.
+
+    # Handle ClassLauncher-specific main args (not custom-main).
+    '--jdb|!MODE:custom-main|-jdb',
+
+    # Handle main args for the default main mode (neither original-imagej nor custom-main).
+    '!MODE:original-imagej|!MODE:custom-main|-ijjarpath',
+    '!MODE:original-imagej|!MODE:custom-main|jars',
+    '!MODE:original-imagej|!MODE:custom-main|-ijjarpath',
+    '!MODE:original-imagej|!MODE:custom-main|plugins',
+    '!MODE:original-imagej|!MODE:custom-main|net.imagej.Main',
+
+    # Handle main args for original-imagej mode.
+    'MODE:original-imagej|-classpath',
+    'MODE:original-imagej|jars/ij-*.jar',
+    'MODE:original-imagej|ij.ImageJ',
+    'MODE:original-imagej|--allow-multiple|-port0',
+
+    # The -batch flag is required when --headless is given.
+    '--headless|!MODE:custom-main|-batch',
+]

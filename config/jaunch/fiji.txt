@@ -1,0 +1,32 @@
+The ImageJ Launcher (a.k.a. the Fiji Launcher) program has been replaced with a
+new launcher named Jaunch.
+
+I made a concerted effort to preserve backward compatibility as much as
+possible. As such, most features of the previous launcher still work in the
+same manner.
+
+However, the following features of the ImageJ Launcher are no longer supported:
+
+* Launching in "Fiji1" mode (fiji.Main).
+
+* Launching in "IJ1" mode without ImageJ2 support.
+  A separate `imagej` launcher configuration now exists for this use case.
+  But it does not use the ImageJ.cfg file; you must edit imagej.toml.
+
+* Launching versions of ImageJ2 before 2.0.0-beta-8
+  (released 2014-05-16) when the component+package structure was finalized.
+
+* The undocumented `--tools-jar` nor `--only-tools-jar` options.
+
+* Usage of Info.plist `<key>` elements to get and set launch configuration
+  parameters on macOS. We need to keep the entire Fiji.app immutable in the
+  future, to facilitate code signing for better distribution mechanisms.
+
+* Best-effort automatic detection of headless mode on macOS and Linux.
+
+* "Falling back to system Java" i.e. launching Java in a subprocess.
+  Jaunch always uses libjvm functions.
+
+* TODO: Decide about all the various `net.imagej.launcher.*` features...
+
+See also https://github.com/scijava/jaunch/issues.
