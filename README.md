@@ -64,8 +64,8 @@ Fiji's source code is split up into a [main
 repository](https://github.com/fiji/fiji), containing the top-level project and
 support scripts, while all components live in their own repositories in the
 [Fiji organization on GitHub](https://github.com/fiji/). As a rule of thumb: the
-file name and the project name correspond pretty well, e.g. fiji-compat.jar is
-maintained in [fiji-compat](https://github.com/fiji/fiji-compat).
+file name and the project name correspond pretty well, e.g. fiji-lib.jar is
+maintained in [fiji-lib](https://github.com/fiji/fiji-lib).
 
 Participating
 -------------
