@@ -124,7 +124,7 @@ jvm.classpath = [
     '--full-classpath|${app-dir}/jars/*.jar',
     '--full-classpath|${app-dir}/jars/*/*.jar',
     '--full-classpath|${app-dir}/plugins/*.jar',
-    '!--full-classpath|${app-dir}/jars/imagej-launcher*.jar',
+    '!--full-classpath|${app-dir}/jars/app-launcher*.jar',
     '--main-class|.', # Weird behavior, but it's what the ImageJ Launcher does.
     '--jar|${jar}',
 ]
@@ -211,8 +211,6 @@ jvm.runtime-args = [
     '--plugins|-Dplugins.dir=${plugins}'
     '!--plugins|-Dplugins.dir=${app-dir}',
 
-    '!MODE:no-splash|-Dimagej.splash=true',
-
     '-Dimagej.dir=${app-dir}',
     '-Dij.dir=${app-dir}',
     '-Dfiji.dir=${app-dir}',
@@ -240,6 +238,12 @@ jvm.runtime-args = [
     'OS:WINDOWS|ARCH:X86|-Djava.library.path=${app-dir}\lib\win32',
     'OS:WINDOWS|ARCH:X86|-Djna.library.path=${app-dir}\lib\win32',
 
+    # Set properties favored by the the SciJava app-launcher.
+    # See https://github.com/scijava/app-launcher#readme
+    '-Dscijava.app.name=Fiji',
+    '!MODE:no-splash|!OS:WINDOWS|-Dscijava.app.splash-image=${app-dir}/images/icon.png',
+    '!MODE:no-splash|OS:WINDOWS|-Dscijava.app.splash-image=${app-dir}\images\icon.png',
+
     # Make SciJava startup less brittle.
     '-Dscijava.context.strict=false',
 
@@ -253,9 +257,9 @@ jvm.runtime-args = [
 
 jvm.main-class = [
     '--main-class|${main-class}',
-    '--jar|net.imagej.launcher.JarLauncher',
+    '--jar|org.scijava.launcher.JarLauncher',
     '--update|net.imagej.updater.CommandLine',
-    'net.imagej.launcher.ClassLauncher',
+    'org.scijava.launcher.ClassLauncher',
 ]
 
 jvm.main-args = [
@@ -268,10 +272,8 @@ jvm.main-args = [
     '--jdb|!MODE:custom-main|-jdb',
 
     # Handle main args for the default main mode (neither original-imagej nor custom-main).
-    '!MODE:original-imagej|!MODE:custom-main|-ijjarpath',
-    '!MODE:original-imagej|!MODE:custom-main|jars',
-    '!MODE:original-imagej|!MODE:custom-main|-ijjarpath',
-    '!MODE:original-imagej|!MODE:custom-main|plugins',
+    '!MODE:original-imagej|!MODE:custom-main|-jarpath',
+    '!MODE:original-imagej|!MODE:custom-main|jars:plugins:~/.plugins',
     '!MODE:original-imagej|!MODE:custom-main|net.imagej.Main',
 
     # Handle main args for original-imagej mode.
