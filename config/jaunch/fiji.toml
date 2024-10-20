@@ -224,7 +224,7 @@ jvm.runtime-args = [
 
     'OS:LINUX|ARCH:X64|-Djava.library.path=${app-dir}/lib/linux64',
     'OS:LINUX|ARCH:X86|-Djava.library.path=${app-dir}/lib/linux32',
-    'OS:MACOSX|ARCH:ARM64|-Djava.library.path=${app-dir}/lib/macosx-arm64',
+    'OS:MACOSX|ARCH:ARM64|-Djava.library.path=${app-dir}/lib/macos-arm64',
     'OS:MACOSX|ARCH:X64|-Djava.library.path=${app-dir}/lib/macosx',
     'OS:WINDOWS|ARCH:X64|-Djava.library.path=${app-dir}\lib\win64',
     'OS:WINDOWS|ARCH:X86|-Djava.library.path=${app-dir}\lib\win32',
