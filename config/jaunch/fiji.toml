@@ -64,6 +64,10 @@ modes = [
   # TEMP (maybe): app-launcher ClassLoaderPlus does ont behave correctly yet on Windows.
   'OS:WINDOWS|--full-classpath',
 
+  # The --update flag runs with full classpath, at INFO level logging.
+  '--update|--full-classpath',
+  '--update|--info',
+
   # Decide which mode to launch: default, original-imagej, legacy-fiji, or custom-main.
   '--dont-patch-ij1|MODE:original-imagej',
   '--ij1|MODE:original-imagej',
@@ -73,11 +77,9 @@ modes = [
   '--main-class|MODE:custom-main',
   '--jar|MODE:custom-main',
 
-  # TODO: the --update flag is a shorthand for the following IJL options:
-  # --update --info --dont-patch-ij1 --full-classpath --main-class=net.imagej.updater.CommandLine
-
   # To start in ImageJ2 or Fiji mode, we must patch IJ1.
   # But when running the command-line Updater, we don't need to.
+  '--update|MODE:no-ij1-patching',
   '--dont-patch-ij1|MODE:no-ij1-patching',
   'MODE:custom-main|MODE:no-ij1-patching',
   '--ij2|!MODE:no-ij1-patching',
