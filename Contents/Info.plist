@@ -7,7 +7,7 @@
   <key>CFBundleAllowMixedLocalizations</key>
   <true/>
   <key>CFBundleExecutable</key>
-  <string>fiji-macos-universal</string>
+  <string>fiji-macos</string>
   <key>CFBundleIconFile</key>
   <string>Fiji.icns</string>
   <key>CFBundleIdentifier</key>
