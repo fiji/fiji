@@ -61,6 +61,9 @@ modes = [
   '--python|LAUNCH:PYTHON',
   '--python|--full-classpath',
 
+  # TEMP (maybe): app-launcher ClassLoaderPlus does ont behave correctly yet on Windows.
+  'OS:WINDOWS|--full-classpath',
+
   # Decide which mode to launch: default, original-imagej, legacy-fiji, or custom-main.
   '--dont-patch-ij1|MODE:original-imagej',
   '--ij1|MODE:original-imagej',
