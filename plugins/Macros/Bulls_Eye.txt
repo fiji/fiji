@@ -2,7 +2,7 @@
 // the center of the image window.
 // Based on the bullseye.js script distributed
 // with  Kas Thomas' JavaScript Editor plugin at
-// http://rsb.info.nih.gov/ij/plugins/javascript.html
+// https://imagej.net/ij/plugins/javascript.html
 
   requires("1.29m");
   w = 512; h = 512;

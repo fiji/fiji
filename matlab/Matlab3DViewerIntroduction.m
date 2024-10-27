@@ -5,8 +5,8 @@
 % is a very good chance that ImageJ is installed on your computer.
 %
 % *ImageJ* is developed mainly by Wayne Rasband, and is written in Java
-% (see http://rsb.info.nih.gov/ij/index.html). It has a clever plugin
-% system that allows users to extend it with new functionalities.
+% (see https://imagej.net/ij/). It has a clever plugin system
+% that allows users to extend it with new functionalities.
 %
 % *Fiji* (Fiji is Just ImageJ, http://fiji.sc/) is a _distribution_ of
 % ImageJ, that includes (amongst other things) a lot of plugins, some

@@ -18,8 +18,8 @@
 
 (binding [*unchecked-math* true]
   ; Fetch two example 512x512 images from the net
-  (let [^ImagePlus baboon (open-url "http://rsb.info.nih.gov/ij/images/baboon.jpg")
-        ^ImagePlus bridge (open-url "http://rsb.info.nih.gov/ij/images/bridge.gif")]
+  (let [^ImagePlus baboon (open-url "https://imagej.net/ij/images/baboon.jpg")
+        ^ImagePlus bridge (open-url "https://imagej.net/ij/images/bridge.gif")]
     ; Obtain color channel byte arrays for baboon color image
     (let [len (count (.. baboon getProcessor getPixels)) ; could also say (* 512 512)
 	  r (byte-array len)

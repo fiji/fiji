@@ -89,25 +89,25 @@ newArray("ImageJ Website","News", "Documentation", "ImageJ Wiki", "Resources", "
 macro "Developer Menu Tool - C037T0b11DT7b09eTcb09v" {
 	cmd = getArgument();
 	if (cmd=="ImageJ Website")
-		run("URL...", "url=http://rsbweb.nih.gov/ij/");
+		run("URL...", "url=https://imagej.net/ij/");
 	else if (cmd=="News")
-		run("URL...", "url=http://rsbweb.nih.gov/ij/notes.html");
+		run("URL...", "url=https://imagej.net/ij/notes.html");
 	else if (cmd=="Documentation")
-		run("URL...", "url=http://rsbweb.nih.gov/ij/docs/");
+		run("URL...", "url=https://imagej.net/ij/docs/");
 	else if (cmd=="ImageJ Wiki")
 		run("URL...", "url=http://imagejdocu.tudor.lu/imagej-documentation-wiki/");
 	else if (cmd=="Resources")
-		run("URL...", "url=http://rsbweb.nih.gov/ij/developer/");
+		run("URL...", "url=https://imagej.net/ij/developer/");
 	else if (cmd=="Macro Language")
-		run("URL...", "url=http://rsbweb.nih.gov/ij/developer/macro/macros.html");
+		run("URL...", "url=https://imagej.net/ij/developer/macro/macros.html");
 	else if (cmd=="Macros")
-		run("URL...", "url=http://rsbweb.nih.gov/ij/macros/");
+		run("URL...", "url=https://imagej.net/ij/macros/");
 	else if (cmd=="Macro Functions")
-		run("URL...", "url=http://rsbweb.nih.gov/ij/developer/macro/functions.html");
+		run("URL...", "url=https://imagej.net/ij/developer/macro/functions.html");
 	else if (cmd=="Plugins")
-		run("URL...", "url=http://rsbweb.nih.gov/ij/plugins/");
+		run("URL...", "url=https://imagej.net/ij/plugins/");
 	else if (cmd=="Source Code")
-		run("URL...", "url=http://rsbweb.nih.gov/ij/developer/source/");
+		run("URL...", "url=https://imagej.net/ij/developer/source/");
 	else if (cmd=="Mailing List Archives")
 		run("URL...", "url=https://list.nih.gov/archives/imagej.html");
 	else if (cmd=="Debug Mode")
@@ -251,7 +251,7 @@ macro "About Startup Macros..." {
 		+ "menu when Fiji starts.\n"
 		+ "\n"
 		+ "More information is available at:\n"
-		+ "<http://imagej.nih.gov/ij/developer/macro/macros.html>";
+		+ "<https://imagej.net/ij/developer/macro/macros.html>";
 	dummy = call("fiji.FijiTools.openEditor", title, text);
 }
 

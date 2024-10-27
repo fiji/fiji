@@ -8,7 +8,7 @@ import javax.swing.JLabel;
 import net.sf.image4j.util.ImageUtil;
 import net.sf.image4j.codec.ico.ICOEncoder;
 
-url = new URL("http://imagej.nih.gov/ij/images/ImageJ.png");
+url = new URL("https://imagej.net/ij/images/ImageJ.png");
 image = Toolkit.getDefaultToolkit().getImage(url);
 tracker = new MediaTracker(new JLabel("dummy"));
 tracker.addImage(image, 1);

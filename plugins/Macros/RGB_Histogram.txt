@@ -3,7 +3,7 @@
 // of an RGB image and saves them in a stack.
 
 // Requires the ImageJ 1.35b preview at
-// http://rsb.info.nih.gov/ij/ij.jar
+// https://imagej.net/ij/ij.jar
 
   requires("1.35b");
   if (bitDepth!=24)

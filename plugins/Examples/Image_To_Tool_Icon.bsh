@@ -1,7 +1,7 @@
 /**
  * This script turns the top left 16x16 pixels of the current image
  * into an icon string suitable for Tool Icons as described here:
- * http://rsb.info.nih.gov/ij/developer/macro/macros.html#icons
+ * https://imagej.net/ij/developer/macro/macros.html#icons
  *
  * It was inspired by Albert Cardona's Image_To_Tool plugin:
  * http://rierol.net/plugins/Image_To_Tool.java
