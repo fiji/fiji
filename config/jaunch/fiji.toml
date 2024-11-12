@@ -14,88 +14,58 @@ program-name = 'Fiji'
 includes = ['jvm.toml', 'python.toml']
 
 supported-options = [
-    '--print-ij-dir|print where Fiji thinks it is located',
-    '--ij-dir=<path>|set the ImageJ directory to <path> (used to find\njars/, plugins/ and macros/)',
-    '--pass-classpath=<classpath>|pass -classpath <classpath> to the main() method',
-    '--full-classpath|call the main class with the full ImageJ class path',
+    # General options
     '--default-gc|do not use advanced garbage collector settings by default\n(-XX:+UseG1GC)',
     '--gc-g1|use the G1 garbage collector',
     '--debug-gc|show debug info about the garbage collector on stderr',
     '--no-splash|suppress showing a splash screen upon startup',
+    '--jdb|launch the jdb debugger',
 
-    # Options for Fiji:
-    '--python|launch in Python mode!',
-    '--dont-patch-ij1|do not try to runtime-patch ImageJ (implies --ij1)',
-    '--ij2,--imagej|no effect -- here for backwards compatibility only', #NO
-    '--ij1|start in original ImageJ mode', #NO
-    '--legacy|start in legacy/Fiji1 mode', #NO
+    # Fiji-specific options
+    '--python|launch in Python mode',
     '--allow-multiple|do not reuse existing Fiji instance',
     '--plugins=<dir>|use <dir> to discover plugins',
     '--run <plugin> [<arg>]|run <plugin> in Fiji, optionally with arguments',
-    '--compile-and-run <path-to-.java-file>|compile and run <plugin> in Fiji',
     '--edit [<file>...]|edit the given file in the script editor',
 
-    # Options to run programs other than Fiji:
-    '--update|start the command-line version of the ImageJ updater',
+    # Options to run programs other than Fiji
+    '--update|start the command-line version of the Updater',
     '--main-class=<class name>|start the given class instead of Fiji',
-    '--jar=<jar path>|run the given JAR instead of Fiji',
 
     # Windows things
     '--console,--attach-console|attempt to attach output to the calling console',
     '--new-console|ensure the launch of a new, dedicated console for output',
     '--set-icon=<exe-file>,<ico-file>|add/replace the icon of the given program', #NO
 
-    # Even more things...
-    '--freeze-classloader|TODO undocumented',
-    '--compile-and-run|TODO undocumented',
-    '--showUI|TODO undocumented',
-    '--jdb|TODO undocumented',
-    '--ijcp|TODO undocumented',
-
 # Nico: NEED: execute a script with parameters
-# ./ImageJ-linux64 --ij2 --headless --console --run hello.py 'name="Mr Kraken"'
+# ./ImageJ-linux64 --headless --console --run hello.py 'name="Mr Kraken"'
+# Can we simplify this further?
 ]
 
 modes = [
-  '!--python|LAUNCH:JVM',
+  # Launch mode: Python or Java?
   '--python|LAUNCH:PYTHON',
-  '--python|--full-classpath',
+  '!--python|LAUNCH:JVM',
 
-  # TEMP (maybe): app-launcher ClassLoaderPlus does ont behave correctly yet on Windows.
-  'OS:WINDOWS|--full-classpath',
-
-  # The --update flag runs with full classpath, at INFO level logging.
-  '--update|--full-classpath',
+  # Set INFO level logging for the command line Updater.
   '--update|--info',
 
-  # Decide which mode to launch: default, original-imagej, legacy-fiji, or custom-main.
-  '--dont-patch-ij1|MODE:original-imagej',
-  '--ij1|MODE:original-imagej',
-  '--ij2|!MODE:original-imagej',
-  '--legacy|MODE:legacy-fiji',
+  # Are we launching with an alternative main class?
+  # This list should match the one in jvm.main-class below.
+  '--jdb|MODE:custom-main',
   '--update|MODE:custom-main',
   '--main-class|MODE:custom-main',
-  '--jar|MODE:custom-main',
-
-  # To start in ImageJ2 or Fiji mode, we must patch IJ1.
-  # But when running the command-line Updater, we don't need to.
-  '--update|MODE:no-ij1-patching',
-  '--dont-patch-ij1|MODE:no-ij1-patching',
-  'MODE:custom-main|MODE:no-ij1-patching',
-  '--ij2|!MODE:no-ij1-patching',
 
   # Disable the splash screen when running a different
-  # main class, and/or when --no-splash option is given.
+  # main class, or when --no-splash or --headless is given.
+  'MODE:custom-main|MODE:no-splash',
   '--no-splash|MODE:no-splash',
   '--headless|MODE:no-splash',
-  '--update|MODE:no-splash',
-  '--main-class|MODE:no-splash',
 ]
 
 directives = [
-  '--print-ij-dir|print-app-dir,ABORT', # For backwards compatibility.
-  'LAUNCH:JVM|apply-update,INIT_THREADS',
-  'LAUNCH:PYTHON|apply-update,INIT_THREADS',
+  'LAUNCH:JVM|!--dry-run|apply-update,INIT_THREADS',
+  'LAUNCH:PYTHON|!--dry-run|apply-update,INIT_THREADS',
 ]
 
 # /============================================================================\
@@ -126,13 +96,15 @@ python.main-args = [
 jvm.version-min = '8'
 
 jvm.classpath = [
-    '--full-classpath|${app-dir}/jars/*.jar',
-    '--full-classpath|${app-dir}/jars/*/*.jar',
-    '--full-classpath|${app-dir}/plugins/*.jar',
-    '!--full-classpath|${app-dir}/jars/app-launcher*.jar',
-    '!--full-classpath|${app-dir}/jars/flatlaf*.jar',
+    # Construct the classpath.
+    '${app-dir}/jars/*.jar',
+    '${app-dir}/jars/*/*.jar',
+    '--plugins|${plugins}/*.jar'
+    '!--plugins|${app-dir}/plugins/*.jar',
+    #'${user.home}/.plugins/*.jar',
+    #'${user.home}/.share/fiji/jars/*.jar',
+    #'/usr/local/share/fiji/jars/*.jar',
     '--main-class|.', # Weird behavior, but it's what the ImageJ Launcher does.
-    '--jar|${jar}',
 ]
 
 jvm.max-heap = '75%'
@@ -156,11 +128,8 @@ jvm.runtime-args = [
     # Handle --debug-gc option.
     '--debug-gc|-verbose:gc',
 
-    # Handle --dont-patch-ij1 option.
-    'MODE:no-ij1-patching|-Dpatch.ij1=false',
-
-    # Handle JVM args for ij1 mode.
-    'MODE:original-imagej|-Dsun.java.command=ImageJ',
+    # If running a custom main class, do not patch ImageJ.
+    'MODE:custom-main|-Dpatch.ij1=false',
 
     # Enable SciJava logging in updater mode.
     '--update|-Dscijava.log.level=info',
@@ -207,9 +176,6 @@ jvm.runtime-args = [
     'JAVA:9+|--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
     'JAVA:9+|--add-opens=java.base/sun.util.calendar=ALL-UNNAMED',
 
-    # Allow access to com.sun.tools.example.debug.tty.TTY class.
-    'JAVA:9+|--jdb|--add-opens=jdk.jdi/com.sun.tools.example.debug.tty=ALL-UNNAMED',
-
     # Avoid Jython's huge startup cost.
     '-Dpython.cachedir.skip=true',
 
@@ -217,16 +183,19 @@ jvm.runtime-args = [
     '--plugins|-Dplugins.dir=${plugins}'
     '!--plugins|-Dplugins.dir=${app-dir}',
 
+    # Set application directory properties.
     '-Dimagej.dir=${app-dir}',
     '-Dij.dir=${app-dir}',
     '-Dfiji.dir=${app-dir}',
 
-    # TODO: is fiji.defaultLibPath property necessary for any reason?
-
+    # Set application executable properties.
     '-Dfiji.executable=${executable}',
     '-Dij.executable=${executable}',
 
+    # TODO: is fiji.defaultLibPath property necessary for any reason?
+
     # Set up platform-specific native library paths.
+    # TODO: Link to jna.library.path issue on GitHub.
     'OS:LINUX|ARCH:ARM64|-Djava.library.path=${app-dir}/lib/linux-arm64',
     'OS:LINUX|ARCH:ARM64|-Djna.library.path=${app-dir}/lib/linux-arm64',
     'OS:LINUX|ARCH:X64|-Djava.library.path=${app-dir}/lib/linux64',
@@ -251,6 +220,7 @@ jvm.runtime-args = [
     '!MODE:no-splash|OS:WINDOWS|-Dscijava.app.splash-image=${app-dir}\images\icon.png',
     '-Dscijava.app.java-version-minimum=1.8',
     '-Dscijava.app.java-version-recommended=21',
+    '-Dscijava.app.look-and-feel=com.formdev.flatlaf.FlatLightLaf',
     'OS:WINDOWS|-Dscijava.app.config-file=${app-dir}\config\fiji.cfg',
     '!OS:WINDOWS|-Dscijava.app.config-file=${app-dir}/config/fiji.cfg',
     'OS:LINUX|ARCH:ARM64|-Dscijava.app.java-root=${app-dir}/java/linux-arm64',
@@ -274,6 +244,9 @@ jvm.runtime-args = [
     # Make SciJava startup less brittle.
     '-Dscijava.context.strict=false',
 
+    # Enable AWT/Swing's HiDPI scaling.
+    '-Dsun.java2d.uiScale=true',
+
     # Avoid the following error message on Windows:
     #
     #   console: Failed to install '': java.nio.charset.UnsupportedCharsetException: cp0.
@@ -283,31 +256,16 @@ jvm.runtime-args = [
 ]
 
 jvm.main-class = [
-    '--main-class|${main-class}',
-    '--jar|org.scijava.launcher.JarLauncher',
+    # This list should match the one in modes above.
+    '--jdb|com.sun.tools.example.debug.tty.TTY',
     '--update|net.imagej.updater.CommandLine',
+    '--main-class|${main-class}',
     'org.scijava.launcher.ClassLauncher',
 ]
 
 jvm.main-args = [
-    '--jar|${jar}',
-
-    # TODO: -classpath is a flag for the ClassLauncher and JarLauncher mains!
-    # Go back through and put in the right -classpath stuff here.
-
-    # Handle ClassLauncher-specific main args (not custom-main).
-    '--jdb|!MODE:custom-main|-jdb',
-
-    # Handle main args for the default main mode (neither original-imagej nor custom-main).
-    '!MODE:original-imagej|!MODE:custom-main|-jarpath',
-    '!MODE:original-imagej|!MODE:custom-main|jars:plugins:~/.plugins',
-    '!MODE:original-imagej|!MODE:custom-main|net.imagej.Main',
-
-    # Handle main args for original-imagej mode.
-    'MODE:original-imagej|-classpath',
-    'MODE:original-imagej|jars/ij-*.jar',
-    'MODE:original-imagej|ij.ImageJ',
-    'MODE:original-imagej|--allow-multiple|-port0',
+    # Pass the actual main class to the ClassLauncher as an argument.
+    '!MODE:custom-main|net.imagej.Main',
 
     # The -batch flag is required when --headless is given.
     '--headless|!MODE:custom-main|-batch',
