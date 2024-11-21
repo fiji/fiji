@@ -216,6 +216,7 @@ jvm.runtime-args = [
     # Set properties favored by the the SciJava app-launcher.
     # See https://github.com/scijava/app-launcher#readme
     '-Dscijava.app.name=Fiji',
+    '-Dscijava.app.directory=${app-dir}',
     '!MODE:no-splash|!OS:WINDOWS|-Dscijava.app.splash-image=${app-dir}/images/icon.png',
     '!MODE:no-splash|OS:WINDOWS|-Dscijava.app.splash-image=${app-dir}\images\icon.png',
     '-Dscijava.app.java-version-minimum=1.8',
