@@ -245,6 +245,9 @@ jvm.runtime-args = [
     # Make SciJava startup less brittle.
     '-Dscijava.context.strict=false',
 
+    # Enable JavaFX's JavaScript engine.
+    '-Djavafx.allowjs=true',
+
     # Enable AWT/Swing's HiDPI scaling.
     '-Dsun.java2d.uiScale=true',
 
