@@ -107,7 +107,9 @@ jvm.classpath = [
     '--main-class|.', # Weird behavior, but it's what the ImageJ Launcher does.
 ]
 
-jvm.max-heap = '75%'
+cfg.max-heap = '75%'
+
+jvm.max-heap = '${cfg.max-heap}'
 
 jvm.runtime-args = [
     '--info|-Dscijava.log.level=info',
