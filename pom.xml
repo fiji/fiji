@@ -199,6 +199,10 @@
 		<!-- SciJava dependencies - https://github.com/scijava -->
 		<dependency>
 			<groupId>org.scijava</groupId>
+			<artifactId>app-launcher</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
 			<artifactId>scijava-common</artifactId>
 		</dependency>
 
