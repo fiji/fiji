@@ -35,6 +35,8 @@ import java.util.StringJoiner;
 /** This plugin implements the {@code Edit>Options>Memory & Threads...} command. */
 public class Memory implements PlugIn {
 	public static final String FIJI_HEAP_KEY = "max-heap";
+	public static final long FIJI_MIN_MB = 100;
+
 	public void run(String arg) {
 		long memory = maxMemory() >> 20;
 		int threads = Prefs.getThreads();
@@ -86,6 +88,12 @@ public class Memory implements PlugIn {
 
 		memory = (long)gd.getNextNumber();
 		threads = (int)gd.getNextNumber();
+
+		if (memory < FIJI_MIN_MB) {
+			IJ.showMessage("Memory",
+					"Invalid memory setting. Must be above " + FIJI_MIN_MB + "MB.");
+			return;
+		}
 		Prefs.setThreads(threads);
 
 		// Update the config file with the new memory setting, in MB
