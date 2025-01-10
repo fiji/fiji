@@ -71,6 +71,7 @@ public class Memory implements PlugIn {
 			}
 		}
 
+		final long lastMemory = memory;
 		final GenericDialog gd = new GenericDialog("Memory "
 			+ (IJ.is64Bit() ? "(64-bit)" : "(32-bit)"));
 		gd.addNumericField("Maximum Memory:", memory, 0, 5, "MB");
@@ -104,6 +105,11 @@ public class Memory implements PlugIn {
 			IJ.error(
 				"Could not write to existing config file: " + fijiCfg.getAbsolutePath());
 			return;
+		}
+
+		if (lastMemory != memory) {
+			IJ.showMessage("Memory",
+					"The new " + memory + "MB setting will take effect after restarting.");
 		}
 
 		final int limit = 1700;
