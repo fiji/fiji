@@ -25,105 +25,26 @@ import ij.IJ;
 import ij.Prefs;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
-import org.scijava.launcher.Config;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.io.PrintStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** This plugin implements the {@code Edit>Options>Memory & Threads...} command. */
 public class Memory implements PlugIn {
-	public static final String FIJI_HEAP_KEY = "max-heap";
-	public static final long FIJI_MIN_MB = 100;
-
 	public void run(String arg) {
-		long memory = maxMemory() >> 20;
-		int threads = Prefs.getThreads();
-
-		// Attempt to load existing config settings
-		final File fijiCfg = new File(
-				new StringJoiner(File.separator).add(System.getProperty("ij.dir"))
-						.add("config").add("jaunch").add("fiji.cfg").toString());
-
-		if (fijiCfg.exists()) {
-			try {
-				final Map<String, String> config = Config.load(fijiCfg);
-				if (config.containsKey(FIJI_HEAP_KEY)) {
-					String memSetting = config.get(FIJI_HEAP_KEY);
-					// Record and pop off the suffix
-					final char suffix = memSetting.toLowerCase().charAt(memSetting.length() - 1);
-					memSetting = memSetting.substring(0, memSetting.length() - 1);
-					// Use the memory setting if it was set in GB or MB.
-					long memConfig = Long.parseLong(memSetting);
-					switch (suffix) {
-						case 'g': memConfig *= 1024;
-						case 'm': memory = memConfig; break;
-						default:
-							IJ.error("Ignoring unrecognized memory setting: " + memSetting);
-					}
-				}
-			}
-			catch (IOException e) {
-				IJ.error(
-						"Could not read existing config file: " + fijiCfg.getAbsolutePath());
-				return;
-			}
+		String appDir = System.getProperty("scijava.app.directory");
+		if (appDir == null) {
+			// We are probably running with the ImageJ launcher; use the old code.
+			MemoryImageJ.run(arg);
 		}
-
-		final long lastMemory = memory;
-		final GenericDialog gd = new GenericDialog("Memory "
-			+ (IJ.is64Bit() ? "(64-bit)" : "(32-bit)"));
-		gd.addNumericField("Maximum Memory:", memory, 0, 5, "MB");
-		gd.addNumericField("Parallel Threads for Stacks:",
-				threads, 0, 5, "");
-		gd.showDialog();
-		if (gd.wasCanceled())
-			return;
-
-		if (gd.invalidNumber()) {
-			IJ.showMessage("Memory",
-					"The number entered was invalid.");
-			return;
+		else {
+			// We are probably running with the Jaunch launcher; use the new code.
+			MemoryJaunch.run(appDir);
 		}
-
-		memory = (long)gd.getNextNumber();
-		threads = (int)gd.getNextNumber();
-
-		if (memory < FIJI_MIN_MB) {
-			IJ.showMessage("Memory",
-					"Invalid memory setting. Must be above " + FIJI_MIN_MB + "MB.");
-			return;
-		}
-		Prefs.setThreads(threads);
-
-		// Update the config file with the new memory setting, in MB
-		try {
-			Config.update(fijiCfg, FIJI_HEAP_KEY, String.valueOf(memory) + "m");
-		}
-		catch (IOException e) {
-			IJ.error(
-				"Could not write to existing config file: " + fijiCfg.getAbsolutePath());
-			return;
-		}
-
-		if (lastMemory != memory) {
-			IJ.showMessage("Memory",
-					"The new " + memory + "MB setting will take effect after restarting.");
-		}
-
-		final int limit = 1700;
-		if (!IJ.is64Bit() && memory > limit) {
-			if (!IJ.showMessageWithCancel("Memory",
-					"Note: setting the memory limit to a "
-					+ "value\ngreater than " + limit
-					+ "MB on a 32-bit system\n"
-					+ "may cause ImageJ to fail to start."))
-				return;
-		}
-	}
-
-	private static long maxMemory() {
-			return Runtime.getRuntime().maxMemory();
 	}
 }
