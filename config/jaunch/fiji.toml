@@ -156,6 +156,10 @@ jvm.runtime-args = [
     #  ini.trakem2.Project.openFSProject uses javax.swing.JTree.expandedState
     'JAVA:9+|--add-opens=java.desktop/javax.swing=ALL-UNNAMED',
 
+    # For accessing internal Swing UI classes used by BVV - TODO: document exactly where
+    'JAVA:9+|--add-opens=java.desktop/sun.swing=ALL-UNNAMED',
+    'JAVA:9+|--add-opens=java.desktop/com.sun.java.swing=ALL-UNNAMED',
+
     # HACK: For fiji.debugging.Object_Inspector
     # The Object_Inspector could end up reflecting anything, so this doesn't
     # make it work in all cases, but it helps for inspecting AWT/Swing windows.
