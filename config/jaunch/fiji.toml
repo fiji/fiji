@@ -24,6 +24,7 @@ supported-options = [
     # Fiji-specific options
     '--python|launch in Python mode',
     '--allow-multiple|do not reuse existing Fiji instance',
+    '--info|informational output',
     '--plugins=<dir>|use <dir> to discover plugins',
     '--run <plugin> [<arg>]|run <plugin> in Fiji, optionally with arguments',
     '--edit [<file>...]|edit the given file in the script editor',
