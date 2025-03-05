@@ -80,7 +80,7 @@ python.packages = [
   'scyjava>=1.9.1',
 ]
 
-python.script-path = ['${app-dir}/fiji.py']
+python.script-path = ['${app-dir}/config/jaunch/fiji.py']
 
 python.main-args = [
     '${jvm.libjvmPath}',
