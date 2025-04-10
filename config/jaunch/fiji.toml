@@ -190,7 +190,7 @@ jvm.runtime-args = [
     '-Dpython.cachedir.skip=true',
 
     # Set ImageJ's plugins.dir property.
-    '--plugins|-Dplugins.dir=${plugins}'
+    '--plugins|-Dplugins.dir=${plugins}',
     '!--plugins|-Dplugins.dir=${app-dir}',
 
     # Set application directory properties.
