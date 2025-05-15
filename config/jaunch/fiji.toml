@@ -239,7 +239,8 @@ jvm.runtime-args = [
     # TODO: is fiji.defaultLibPath property necessary for any reason?
 
     # Set up platform-specific native library paths.
-    # TODO: Link to jna.library.path issue on GitHub.
+    # Regarding the setting of jna.library.path, see:
+    # https://github.com/scijava/scijava-common/pull/438
     'OS:LINUX|ARCH:ARM64|-Djava.library.path=${app-dir}/lib/linux-arm64',
     'OS:LINUX|ARCH:ARM64|-Djna.library.path=${app-dir}/lib/linux-arm64',
     'OS:LINUX|ARCH:X64|-Djava.library.path=${app-dir}/lib/linux64',
