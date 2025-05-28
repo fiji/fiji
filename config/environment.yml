@@ -8,7 +8,7 @@ dependencies:
   - pip
   - pip:
     - pyimagej>=1.7.0 # required! see config/jaunch/fiji.py
-    - appose # needed for interprocess work via Appose
+    - git+https://github.com/apposed/appose-python.git@efe6dadb2242ca45820fcbb7aeea2096f99f9cb2
     # Niceties:
     - scikit-image
     - napari[all]
