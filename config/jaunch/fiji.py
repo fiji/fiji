@@ -20,7 +20,7 @@ def in_interactive_inspect_mode():
 
 def launch_fiji():
     # Discern app directory.
-    app_dir = Path(__file__).parent
+    app_dir = Path(__file__).parent.parent.parent
 
     # Find the divider argument.
     divider = "--"
