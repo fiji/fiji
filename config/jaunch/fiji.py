@@ -82,6 +82,14 @@ def launch_fiji():
 
 ij = launch_fiji()
 
+# Sweet HACK ᕦ( ͡° ͜ʖ ͡°)ᕤ
+try:
+    appFrame = ij.ui().getDefaultUI().getApplicationFrame()
+    appFrame.getComponent().setTitle("(Fiji Is Just) PyImageJ")
+except Exception:
+    # Too bad, so sad, we tried.
+    pass
+
 if not in_interactive_inspect_mode():
     # We're not in interactive mode, so we need to block
     # to prevent the entire process from shutting down.
