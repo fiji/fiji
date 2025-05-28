@@ -176,8 +176,8 @@
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
 
-		<!-- TEMP: Until pom-scijava 40.1.0 is released. -->
-		<app-launcher.version>2.1.0</app-launcher.version>
+		<!-- TEMP: Until pom-scijava 41.0.0 is released. -->
+		<app-launcher.version>2.3.0</app-launcher.version>
 	</properties>
 
 	<dependencies>
