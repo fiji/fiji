@@ -23,6 +23,7 @@ supported-options = [
 
     # Fiji-specific options
     '--python|launch in Python mode',
+    '--no-python|do not launch in Python mode',
     '--allow-multiple|do not reuse existing Fiji instance',
     '--info|informational output',
     '--plugins=<dir>|use <dir> to discover plugins',
@@ -44,9 +45,16 @@ supported-options = [
 ]
 
 modes = [
-  # Launch mode: Python or Java?
+  # Decide on launch mode: Python or Java?
+
+  # Interpolate cfg.launch-mode var to set a starting LAUNCH: hint.
+  'LAUNCH:${cfg.launch-mode}',
+  # If --python given, force PYTHON mode.
   '--python|LAUNCH:PYTHON',
-  '!--python|LAUNCH:JVM',
+  '--python|!LAUNCH:JVM',
+  # If --no-python given, force JVM mode.
+  '--no-python|LAUNCH:JVM',
+  '--no-python|!LAUNCH:PYTHON',
 
   # Set INFO level logging for the command line Updater.
   '--update|--info',
@@ -74,6 +82,7 @@ directives = [
 # \============================================================================/
 
 cfg.max-heap = '75%'
+cfg.launch-mode = 'JVM'
 
 # /============================================================================\
 # |                               PYTHON CONFIG                                |
