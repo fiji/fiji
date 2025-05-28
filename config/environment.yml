@@ -1,0 +1,16 @@
+# Use this file to configure Fiji's primary Python environment.
+
+name: fiji
+channels:
+  - conda-forge
+dependencies:
+  - python = 3.12
+  - pip
+  - pip:
+    - pyimagej>=1.7.0 # required! see config/jaunch/fiji.py
+    - appose # needed for interprocess work via Appose
+    # Niceties:
+    - scikit-image
+    - napari[all]
+    - napari-imagej
+    - ndv[qt]
