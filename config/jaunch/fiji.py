@@ -102,9 +102,6 @@ def launch_fiji():
     # --headless flag is given, Fiji still ends up in headless mode.
     ij = imagej.init(app_dir, mode="interactive")
 
-    # Let the Script Editor support Python via scyjava/PyImageJ.
-    scyjava.enable_python_scripting(ij.context())
-
     # Show the user interface.
     ij.ui().showUI()
 
