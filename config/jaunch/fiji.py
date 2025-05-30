@@ -123,9 +123,16 @@ def launch_fiji():
 
 ij = launch_fiji()
 
-if not in_interactive_inspect_mode():
+if ij and not in_interactive_inspect_mode():
     # We're not in interactive mode, so we need to block
     # to prevent the entire process from shutting down.
+    # Wait until the SciJava context is disposed.
     from time import sleep
+    ctx = ij.context()
+    # HACK: No public way to ask for disposal state.
+    disposed = ctx.getClass().getDeclaredField("disposed")
+    disposed.setAccessible(True)
     while True:
+        if disposed.get(ctx):
+            break
         sleep(0.1)
