@@ -77,8 +77,13 @@ def launch_fiji():
     scyjava.config.add_classpath(*classpath)
     scyjava.start_jvm(jvm_args)
 
+    if main_class != "org.scijava.launcher.ClassLauncher":
+        # Launching with an alternate main class; stop here.
+        MainClass = scyjava.jimport(main_class)
+        MainClass.main(main_args)
+        return None
+
     # Do early startup actions: splash screen and java check.
-    # Aligned with the logic in org.scijava.launcher.ClassLauncher.
 
     def tryTo(f):
         try:
@@ -102,21 +107,21 @@ def launch_fiji():
     # --headless flag is given, Fiji still ends up in headless mode.
     ij = imagej.init(app_dir, mode="interactive")
 
-    # Show the user interface.
-    ij.ui().showUI()
+    # Sweet HACK ᕦ( ͡° ͜ʖ ͡°)ᕤ
+    try:
+        appFrame = ij.ui().getDefaultUI().getApplicationFrame()
+        appFrame.getComponent().setTitle("(Fiji Is Just) PyImageJ")
+    except Exception:
+        # Too bad, so sad, we tried.
+        pass
+
+    # Perform launch actions (handle CLI args, show UI, etc.).
+    ij.launch(main_args)
 
     return ij
 
 
 ij = launch_fiji()
-
-# Sweet HACK ᕦ( ͡° ͜ʖ ͡°)ᕤ
-try:
-    appFrame = ij.ui().getDefaultUI().getApplicationFrame()
-    appFrame.getComponent().setTitle("(Fiji Is Just) PyImageJ")
-except Exception:
-    # Too bad, so sad, we tried.
-    pass
 
 if not in_interactive_inspect_mode():
     # We're not in interactive mode, so we need to block
