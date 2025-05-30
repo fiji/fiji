@@ -62,6 +62,11 @@ def launch_fiji():
         p = p.parent
     os.environ["JAVA_HOME"] = str(p.parent)
 
+    # If we are in debug mode, activate PyImageJ's debug mode too.
+    if "-Dscijava.log.level=debug" in jvm_args:
+        from imagej import doctor
+        doctor.debug_to_stderr()
+
     #scyjava.config.add_classpath(*scyjava.config.find_jars(app_dir))
     scyjava.config.add_classpath(*classpath)
     scyjava.start_jvm(jvm_args)
