@@ -69,13 +69,34 @@ def launch_fiji():
     os.environ["JAVA_HOME"] = str(p.parent)
 
     # If we are in debug mode, activate PyImageJ's debug mode too.
-    if "-Dscijava.log.level=debug" in jvm_args:
+    debug = "-Dscijava.log.level=debug" in jvm_args
+    if debug:
         from imagej import doctor
         doctor.debug_to_stderr()
 
     #scyjava.config.add_classpath(*scyjava.config.find_jars(app_dir))
     scyjava.config.add_classpath(*classpath)
     scyjava.start_jvm(jvm_args)
+
+    # Do early startup actions: splash screen and java check.
+    # Aligned with the logic in org.scijava.launcher.ClassLauncher.
+
+    def tryTo(f):
+        try:
+            f()
+        except Exception as e:
+            if debug:
+                print(scyjava.jstacktrace(e))
+
+    Splash = scyjava.jimport("org.scijava.launcher.Splash")
+    tryTo(lambda: Splash.show())
+
+    Java = scyjava.jimport("org.scijava.launcher.Java")
+    tryTo(lambda: Java.check())
+
+    System = scyjava.jimport("java.lang.System")
+    appName = str(System.getProperty("scijava.app.name") or "Fiji")
+    tryTo(lambda: Splash.update(f"Launching {appName}..."))
 
     # Initialize ImageJ, wrapping the local Fiji directory.
     # NB: It's OK to pass `interactive` always, because when the
