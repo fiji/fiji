@@ -74,7 +74,6 @@ def launch_fiji():
         from imagej import doctor
         doctor.debug_to_stderr()
 
-    #scyjava.config.add_classpath(*scyjava.config.find_jars(app_dir))
     scyjava.config.add_classpath(*classpath)
     scyjava.start_jvm(jvm_args)
 
