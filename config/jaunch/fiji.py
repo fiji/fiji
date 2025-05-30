@@ -55,10 +55,16 @@ def launch_fiji():
         for el in arg[len(classpath_prefix):].split(os.path.pathsep)
     ]
 
-    # Set JAVA_HOME to encourage use of the intended JVM.
-    # HACK: Assume the JVM library is nestled beneath a `lib` folder.
-    p = Path(libjvm_path).absolute().parent
-    while p.name != "lib" and p != p.parent:
+    # Pass the JVM path to JPype.
+    p = Path(libjvm_path).absolute()
+    jvmpath = str(p)
+    scyjava.config.add_kwargs(jvmpath=jvmpath)
+
+    # Set JAVA_HOME to encourage use of the intended JVM,
+    # e.g. by Maven when resolving remote artifacts.
+    # Assume the JVM library is nestled beneath a
+    # `lib` (Linux/macOS) or `bin` (Windows) folder.
+    while p.name != "lib" and p.name != "bin" and p != p.parent:
         p = p.parent
     os.environ["JAVA_HOME"] = str(p.parent)
 
