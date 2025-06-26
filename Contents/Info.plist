@@ -11,7 +11,7 @@
   <key>CFBundleIconFile</key>
   <string>Fiji.icns</string>
   <key>CFBundleIdentifier</key>
-  <string>sc.fiji</string>
+  <string>sc.fiji.fiji</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
@@ -32,10 +32,12 @@
   <!-- See https://developer.apple.com/app-store/categories/ for list of AppStore categories -->
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.utilities</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0.4</string>
   <key>CFBundleVersion</key>
-  <string>1</string>
+  <string>1.0.4-02eeae7</string>
   <key>NSHumanReadableCopyright</key>
-  <string>Copyright (C) 2024</string>
+  <string>Copyright (C) 2025</string>
   <key>NSHighResolutionCapable</key>
   <string>true</string>
  </dict>
