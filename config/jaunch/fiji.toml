@@ -182,7 +182,13 @@ jvm.runtime-args = [
     'JAVA:9+|OS:WINDOWS|ARCH:ARM64|--module-path=${app-dir}\jars\win-arm64',
     'JAVA:9+|OS:WINDOWS|ARCH:X64|--module-path=${app-dir}\jars\win64',
     'JAVA:9+|OS:WINDOWS|ARCH:X86|--module-path=${app-dir}\jars\win32',
-    'JAVA:9+|--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web',
+
+    # Add the JavaFX modules. But only for platforms JavaFX supports.
+    # There are no JavaFX binaries for linux-arm64 or windows-arm64 yet.
+    'JAVA:9+|OS:LINUX|ARCH:X64|--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web',
+    'JAVA:9+|OS:WINDOWS|ARCH:X64|--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web',
+    'JAVA:9+|OS:MACOSX|ARCH:X64|--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web',
+    'JAVA:9+|OS:MACOSX|ARCH:ARM64|--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web',
 
     # Give the SciJava app-launcher permission to unlock reflection on modularized code.
     'JAVA:9+|--add-opens=java.base/java.lang=ALL-UNNAMED',
