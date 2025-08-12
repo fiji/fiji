@@ -16,22 +16,22 @@ while read sha1 ref
 do
 	ref=$origin/${ref#refs/heads/}
 	case $ref in
-	$origin/master|$origin/debian-*)
+	$origin/main|$origin/debian-*)
 		continue;; # ignore debian as a topic branch
 	esac
-	case "$(git merge-base $sha1 master)" in
+	case "$(git merge-base $sha1 main)" in
 	$sha1)
 		case "$mode" in
 		merged)
 			test $origin/contrib = "$ref" ||
-			echo $ref is already in master;;
+			echo $ref is already in main;;
 		esac;;
 	*)
 		case "$mode" in
 		unmerged)
 			date=$(git show -s --format='%cd' $ref)
-			echo "$origin/master..$ref ($date)":
-			git log $origin/master..$ref --format='    (%an) %s'
+			echo "$origin/main..$ref ($date)":
+			git log $origin/main..$ref --format='    (%an) %s'
 			echo;;
 		esac;;
 	esac

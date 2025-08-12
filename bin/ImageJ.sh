@@ -6,7 +6,7 @@
 # It exists here for backwards compatibility only.
 #
 # The most recent version can be found at:
-# https://github.com/imagej/imagej/blob/master/bin/ImageJ.sh
+# https://github.com/imagej/imagej2/blob/-/bin/ImageJ.sh
 # -----------------------------------------------------------
 ###
 
