@@ -1,4 +1,5 @@
 # Use this file to configure Fiji's primary Python environment.
+# See fiji.py for the Python-based Fiji startup script.
 
 name: fiji
 channels:
@@ -7,10 +8,21 @@ dependencies:
   - python = 3.12
   - pip
   - pip:
-    - pyimagej>=1.7.0 # required! see config/jaunch/fiji.py
-    - git+https://github.com/apposed/appose-python.git@efe6dadb2242ca45820fcbb7aeea2096f99f9cb2
-    # Niceties:
+    # PyImageJ is used for in-process Java<->Python integration.
+    # https://py.imagej.net/
+    - pyimagej>=1.7.0
+
+    # Appose facilitates interprocess Python support.
+    # https://apposed.org/
+    - appose
+
+    # Qt is needed for GUI support on macOS.
+    # https://github.com/apposed/jaunch/blob/-/doc/MACOS.md#combining-java-awt-and-python-qt
+    - PyQt6
+    - QtPy
+
+    # Python-based bioimage analysis tools.
     - scikit-image
-    - napari[all]
+    - napari[optional]
     - napari-imagej
     - ndv[qt]
