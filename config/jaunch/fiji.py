@@ -105,7 +105,7 @@ def launch_fiji():
     # Initialize ImageJ, wrapping the local Fiji directory.
     # NB: It's OK to pass `interactive` always, because when the
     # --headless flag is given, Fiji still ends up in headless mode.
-    ij = imagej.init(app_dir, mode="interactive")
+    ij = imagej.init(app_dir, mode="interactive:force")
 
     # Sweet HACK ᕦ( ͡° ͜ʖ ͡°)ᕤ
     try:
@@ -121,18 +121,48 @@ def launch_fiji():
     return ij
 
 
-ij = launch_fiji()
+# CRITICAL: Qt must run on main thread on macOS.
 
-if ij and not in_interactive_inspect_mode():
-    # We're not in interactive mode, so we need to block
-    # to prevent the entire process from shutting down.
-    # Wait until the SciJava context is disposed.
-    from time import sleep
-    ctx = ij.context()
-    # HACK: No public way to ask for disposal state.
-    disposed = ctx.getClass().getDeclaredField("disposed")
-    disposed.setAccessible(True)
-    while True:
-        if disposed.get(ctx):
-            break
-        sleep(0.1)
+from qtpy.QtWidgets import QApplication
+from qtpy.QtCore import Qt, QTimer
+import threading
+import sys
+
+# Configure Qt for macOS before any QApplication creation
+QApplication.setAttribute(Qt.AA_MacPluginApplication, True)
+QApplication.setAttribute(Qt.AA_PluginApplication, True) 
+QApplication.setAttribute(Qt.AA_DisableSessionManager, True)
+
+# Create QApplication on main thread.
+app = QApplication(sys.argv)
+
+# Prevent Qt from quitting when last Qt window closes; we want Fiji to stay running.
+app.setQuitOnLastWindowClosed(False)
+
+# Launch Fiji in a background thread.
+def run_fiji_in_background():
+    ij = launch_fiji()
+
+    if ij and not in_interactive_inspect_mode():
+        # Block this thread until Fiji is disposed.
+        from time import sleep
+        ctx = ij.context()
+        disposed = ctx.getClass().getDeclaredField("disposed")
+        disposed.setAccessible(True)
+        while True:
+            if disposed.get(ctx):
+                break
+            sleep(0.1)
+    
+    # Signal main thread to quit Qt when Fiji closes.
+    app.quit()
+
+fiji_thread = threading.Thread(target=run_fiji_in_background, daemon=False)
+fiji_thread.start()
+
+# Run Qt event loop on main thread.
+app.exec()
+
+# Wait for Fiji cleanup.
+if fiji_thread.is_alive():
+    fiji_thread.join()
