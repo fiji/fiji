@@ -468,6 +468,9 @@ jvm.runtime-args = [
     'OS:WINDOWS|ARCH:X64|-Dscijava.app.java-platform=win64',
     'OS:WINDOWS|ARCH:X86|-Dscijava.app.java-platform=win32',
 
+    # Expose the python dir
+    '-Dscijava.python.dir=${cfg.python-dir}',
+
     # Make SciJava startup less brittle.
     '-Dscijava.context.strict=false',
 
