@@ -18,6 +18,117 @@
   <string>Fiji</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
+  <key>CFBundleDocumentTypes</key>
+  <array>
+    <!-- Common non-science-specific image formats -->
+    <dict>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>tiff</string>
+        <string>tif</string>
+      </array>
+      <key>CFBundleTypeName</key>
+      <string>TIFF Image</string>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleTypeIconFile</key>
+      <string>Fiji.icns</string>
+    </dict>
+    <dict>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>png</string>
+      </array>
+      <key>CFBundleTypeName</key>
+      <string>PNG Image</string>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleTypeIconFile</key>
+      <string>Fiji.icns</string>
+    </dict>
+    <dict>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>jpeg</string>
+        <string>jpg</string>
+      </array>
+      <key>CFBundleTypeName</key>
+      <string>JPEG Image</string>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleTypeIconFile</key>
+      <string>Fiji.icns</string>
+    </dict>
+    <dict>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>gif</string>
+      </array>
+      <key>CFBundleTypeName</key>
+      <string>GIF Image</string>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleTypeIconFile</key>
+      <string>Fiji.icns</string>
+    </dict>
+    <dict>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>bmp</string>
+      </array>
+      <key>CFBundleTypeName</key>
+      <string>BMP Image</string>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleTypeIconFile</key>
+      <string>Fiji.icns</string>
+    </dict>
+    <!-- Common science-specific image formats -->
+    <dict>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>dicom</string>
+        <string>dcm</string>
+        <string>dic</string>
+      </array>
+      <key>CFBundleTypeName</key>
+      <string>DICOM Image</string>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleTypeIconFile</key>
+      <string>Fiji.icns</string>
+    </dict>
+    <!-- Application-specific formats -->
+    <dict>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>roi</string>
+      </array>
+      <key>CFBundleTypeName</key>
+      <string>ImageJ ROI</string>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleTypeIconFile</key>
+      <string>Fiji.icns</string>
+    </dict>
+    <!-- Catch-all to allow drag-and-drop of any file -->
+    <dict>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>*</string>
+      </array>
+      <key>CFBundleTypeName</key>
+      <string>All documents</string>
+      <key>CFBundleTypeOSTypes</key>
+      <array>
+        <string>****</string>
+      </array>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>LSTypeIsPackage</key>
+      <false/>
+    </dict>
+  </array>
   <key>CFBundleURLTypes</key>
   <array>
     <dict>
