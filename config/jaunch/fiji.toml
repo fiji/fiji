@@ -478,6 +478,7 @@ jvm.runtime-args = [
     '-Djavafx.allowjs=true',
 
     # Enable AWT/Swing's HiDPI scaling.
+    '-Dsun.java2d.dpiaware=true',
     '-Dsun.java2d.uiScale=true',
 
     # Avoid the following error message on Windows:
