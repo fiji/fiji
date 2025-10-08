@@ -184,11 +184,12 @@ jvm.runtime-args = [
     'JAVA:9+|OS:WINDOWS|ARCH:X86|--module-path=${app-dir}\jars\win32',
 
     # Add the JavaFX modules. But only for platforms JavaFX supports.
-    # There are no JavaFX binaries for linux-arm64 or windows-arm64 yet.
+    # There are no JavaFX binaries for windows-arm64 yet.
+    'JAVA:9+|OS:LINUX|ARCH:ARM64|--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web',
     'JAVA:9+|OS:LINUX|ARCH:X64|--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web',
-    'JAVA:9+|OS:WINDOWS|ARCH:X64|--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web',
-    'JAVA:9+|OS:MACOSX|ARCH:X64|--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web',
     'JAVA:9+|OS:MACOSX|ARCH:ARM64|--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web',
+    'JAVA:9+|OS:MACOSX|ARCH:X64|--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web',
+    'JAVA:9+|OS:WINDOWS|ARCH:X64|--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web',
 
     # Avoid Jython's huge startup cost.
     '-Dpython.cachedir.skip=true',
