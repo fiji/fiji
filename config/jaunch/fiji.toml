@@ -229,6 +229,13 @@ jvm.runtime-args = [
     'OS:WINDOWS|ARCH:X86|-Djava.library.path=${app-dir}\lib\win32',
     'OS:WINDOWS|ARCH:X86|-Djna.library.path=${app-dir}\lib\win32',
 
+    # Squelch native access warnings. Example:
+    # WARNING: A restricted method in java.lang.System has been called
+    # WARNING: java.lang.System::load has been called by org.jpype.JPypeContext in an unnamed module (file:.../org.jpype.jar)
+    # WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+    # WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+    'JAVA:17+|--enable-native-access=ALL-UNNAMED',
+
     # Give the SciJava app-launcher permission
     # to unlock reflection on modularized code.
     'JAVA:9+|--add-opens=java.base/java.lang=ALL-UNNAMED',
