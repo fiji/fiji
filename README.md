@@ -14,10 +14,10 @@ The main focus of Fiji is to assist research in life sciences.
 
 At the moment, the following platforms are supported:
 
-- Windows Intel 32-bit/64-bit
-- Linux Intel 32-bit/64-bit
-- MacOSX Intel 32-bit/64-bit (partial support for PowerPC 32-bit)
-- all platforms supporting Java and a POSIX shell, via `bin/ImageJ.sh`
+- Windows arm64 and x64
+- Linux arm64 and x64
+- macOS arm64 and x64
+- all platforms supporting Java 21+ and a POSIX shell, via `fiji.sh`
 
 The setup is as easy as unpacking the portable archive and
 double-clicking the [ImageJ
@@ -26,7 +26,6 @@ launcher](https://github.com/imagej/imagej-launcher).
 Fiji is intended to be the most painless, easy, quick and convenient way
 to install ImageJ and plugins and keep everything up-to-date.
 
-
 Usage
 -----
 
@@ -34,8 +33,8 @@ Fiji is meant to be distributed without source, to make the download as
 small as possible. In the basic version, Fiji is a portable application,
 i.e. it should run wherever you copy it.
 
-The starting point is the ImageJ launcher, which will launch Java, set
-up the environment, and call ImageJ.
+The starting point is the Fiji launcher, which will launch Java, set
+up the environment, and call ImageJ/ImageJ2.
 
 To pass arguments to ImageJ, just specify them on the command line.
 
@@ -44,7 +43,7 @@ command line, separating them from the ImageJ arguments (if any) with a
 `--`.  In other words, if you want to override the memory setting, call
 Fiji like this:
 
-	$ ./ImageJ-linux32 -Xmx128m --
+	$ ./fiji -Xmx128m --
 
 Open Source
 -----------
@@ -79,25 +78,24 @@ Authors
 -------
 
 * Fiji was created by
-  [Johannes Schindelin](https://imagej.net/User:Schindelin).
-  It is currently maintained by [Curtis Rueden](https://imagej.net/User:Rueden)
-  of [LOCI](https://imagej.net/LOCI) at the University of Wisconsin-Madison.
-* ImageJ 1.x was created and is maintained by
-  [Wayne Rasband](https://imagej.net/Wayne_Rasband).
-* ImageJ2 was created and is maintained and actively developed by
-  Curtis Rueden.
+  [Johannes Schindelin](https://imagej.net/people/dscho).
+  It is currently maintained by [Curtis Rueden](https://imagej.net/people/ctrueden)
+  of [LOCI](https://imagej.net/orgs/loci) at the University of Wisconsin-Madison.
+* ImageJ was created and is maintained by
+  [Wayne Rasband](https://imagej.net/people/rasband).
+* ImageJ2 was created and is maintained by Curtis Rueden.
 * For a list of most recent contributors, please refer to the
-  [Contributors](http://imagej.net/Contributors) page of the ImageJ wiki.
+  [Contributors](http://imagej.net/people) page of the ImageJ wiki.
 
 Thanks
 ------
 
 We are very grateful to Wayne Rasband, who is not only a very dedicated
-developer of ImageJ 1.x; he also fosters an active and friendly
+developer of ImageJ; he also fosters an active and friendly
 community around ImageJ.
 
 We are especially grateful to be part of an outstanding
-[community](http://imagej.net/Community) who is active, friendly and
+[community](http://imagej.net/discuss) who is active, friendly and
 helping to scientists understanding and analysing images every day.
 
 Oh, and Fiji is also an island. We just wanted to let you know.
