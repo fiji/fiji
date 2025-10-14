@@ -280,8 +280,11 @@ jvm.runtime-args = [
     '-Djavafx.allowjs=true',
 
     # Enable AWT/Swing's HiDPI scaling.
-    '-Dsun.java2d.dpiaware=true',
     '-Dsun.java2d.uiScale=true',
+    # See also:
+    # * https://forum.image.sc/t/blurry-letters-in-newest-fiji-version/116921
+    # * https://forum.image.sc/t/changed-font-size-after-windows-11-update/117029
+    #'-Dsun.java2d.dpiaware=true',
 
     # Avoid the following error message on Windows:
     #
