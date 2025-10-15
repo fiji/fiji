@@ -1,0 +1,53 @@
+BUGS!
+
+== scyjava ==
+
+[DEBUG:scyjava._jvm] Starting JVM
+Initializing type converters
+[DEBUG:scyjava] Initializing type converters
+Java converters:{'
+-'.join(java_converters)}
+[DEBUG:scyjava] Java converters:{'
+-'.join(java_converters)}
+Python converters:{'
+-'.join(py_converters)}
+[DEBUG:scyjava] Python converters:{'
+-'.join(py_converters)}
+
+== Jaunch ==
+
+`Added classpath arg` is long as hell
+
+== Duplicate plugins ==
+
+But not ALL of them... only those which are dependencies of imglib2-imglyb.
+Need to reconcile this somehow! Should PyImageJ deduplicate classpath JARs? :-(
+```
+[DEBUG] Found 2083 plugins.
+[DEBUG] - class='net.imagej.plugins.tools.KonamiHandler', name='Konami', priority=Infinity, enabled=true, pluginType=Tool
+[DEBUG] - class='org.scijava.module.process.DebugPostprocessor', priority=1.0E300, enabled=true, pluginType=PostprocessorPlugin
+[DEBUG] - class='org.scijava.module.process.DebugPostprocessor', priority=1.0E300, enabled=true, pluginType=PostprocessorPlugin
+[DEBUG] - class='org.scijava.module.process.DebugPreprocessor', priority=1.0E300, enabled=true, pluginType=PreprocessorPlugin
+[DEBUG] - class='org.scijava.module.process.DebugPreprocessor', priority=1.0E300, enabled=true, pluginType=PreprocessorPlugin
+[DEBUG] - class='net.imagej.legacy.SingleInstanceArgument', priority=1000000.0, enabled=true, pluginType=ConsoleArgument
+[DEBUG] - class='org.scijava.convert.NullConverter', priority=1000000.0, enabled=true, pluginType=Converter
+[DEBUG] - class='org.scijava.convert.NullConverter', priority=1000000.0, enabled=true, pluginType=Converter
+[DEBUG] - class='org.scijava.search.snippet.SnippetSearcher', priority=1000000.0, enabled=true, pluginType=Searcher
+```
+
+== Annoying shutdown exception ==
+
+Only sometimes:
+```
+AWT blocker activation interrupted:
+java.lang.InterruptedException
+	at java.base/java.lang.Object.wait0(Native Method)
+	at java.base/java.lang.Object.wait(Object.java:366)
+	at java.base/java.lang.Object.wait(Object.java:339)
+	at java.desktop/sun.awt.AWTAutoShutdown.activateBlockerThread(AWTAutoShutdown.java:349)
+	at java.desktop/sun.awt.AWTAutoShutdown.notifyThreadBusy(AWTAutoShutdown.java:175)
+```
+
+== Ed's startup failure on Windows VM ==
+
+Need thumb drive from Ed with VM on it. Uses virt-manager.
