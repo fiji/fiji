@@ -10,7 +10,7 @@ from ctypes import POINTER, c_int, cast, pythonapi
 
 from pathlib import Path
 
-__version__ = "2.0.0"
+__version__ = "2.0.2"
 
 _logger = logging.getLogger(__name__)
 
