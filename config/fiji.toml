@@ -49,6 +49,8 @@ modes = [
 
   # Set INFO level logging for the command line Updater.
   '--update|--info',
+  # Set headless mode for the command line Updater.
+  '--update|--headless',
 
   # Are we launching with an alternative main class?
   # This list should match the one in jvm.main-class below.
