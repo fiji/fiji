@@ -33,10 +33,6 @@ supported-options = [
     # Options to run programs other than Fiji
     '--update|start the command-line version of the Updater',
     '--main-class=<class name>|start the given class instead of Fiji',
-
-# Nico: NEED: execute a script with parameters
-# ./ImageJ-linux64 --headless --console --run hello.py 'name="Mr Kraken"'
-# Can we simplify this further?
 ]
 
 modes = [
