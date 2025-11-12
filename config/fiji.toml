@@ -68,8 +68,12 @@ modes = [
 ]
 
 directives = [
-  'LAUNCH:JVM|!--dry-run|apply-update,INIT_THREADS',
-  'LAUNCH:PYTHON|!--dry-run|apply-update,INIT_THREADS',
+  # Apply pending updates before launching Fiji.
+  'LAUNCH:JVM|!--dry-run|apply-update',
+  'LAUNCH:PYTHON|!--dry-run|apply-update',
+  # Initialize X11 threads if not running headless.
+  'LAUNCH:JVM|!--dry-run|!--headless|INIT_THREADS',
+  'LAUNCH:PYTHON|!--dry-run|!--headless|INIT_THREADS',
 ]
 
 # /============================================================================\
