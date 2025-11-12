@@ -306,5 +306,8 @@ jvm.main-args = [
     '!MODE:custom-main|net.imagej.Main',
 
     # The -batch flag is required when --headless is given.
-    '--headless|!MODE:custom-main|-batch',
+    # Or at least: it was added automatically by the ImageJ Launcher.
+    # But including it naively here breaks command-line execution of
+    # SciJava scripts via the --run flag; see fiji/fiji#416.
+    #'--headless|!MODE:custom-main|-batch',
 ]
