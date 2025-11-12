@@ -34,11 +34,6 @@ supported-options = [
     '--update|start the command-line version of the Updater',
     '--main-class=<class name>|start the given class instead of Fiji',
 
-    # Windows things
-    '--console,--attach-console|attempt to attach output to the calling console',
-    '--new-console|ensure the launch of a new, dedicated console for output',
-    '--set-icon=<exe-file>,<ico-file>|add/replace the icon of the given program', #NO
-
 # Nico: NEED: execute a script with parameters
 # ./ImageJ-linux64 --headless --console --run hello.py 'name="Mr Kraken"'
 # Can we simplify this further?
