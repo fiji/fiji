@@ -1,3 +1,62 @@
+"""
+Fiji Python Mode Startup Script
+===============================
+
+This script launches Fiji in Python mode, integrating ImageJ2/Fiji with
+Python via PyImageJ and JPype. It provides a hybrid environment where:
+
+- Java/Fiji runs in a background thread
+- Python runs on the main thread with Qt event loop (on macOS)
+- Both GUI systems (AWT/Swing and Qt) can coexist
+
+Architecture Overview
+---------------------
+
+1. Argument Parsing
+   - Receives JVM path, JVM arguments, main class, and application arguments
+   - Configures JPype to use the specified JVM
+
+2. Qt Integration (macOS)
+   - On macOS, the CoreFoundation runloop must run on the main thread for AWT/Swing
+   - Qt provides this runloop while also enabling Qt-based tools (napari, ndv, etc.)
+   - Main thread: Qt event loop
+   - Background thread: Fiji/ImageJ initialization and execution
+
+3. ImageJ Initialization
+   - Initializes PyImageJ in interactive mode
+   - Launches the ImageJ UI and processes command-line arguments
+   - Stores global reference (_ij) for access from exception handlers
+
+4. Exception Handling
+   - Python level: sys.excepthook and threading.Thread.run patch for better error messages
+   - C++/Objective-C level (macOS): std::terminate handler to catch NSExceptions
+   - Provides clear, actionable error messages instead of cryptic crashes
+
+Threading Model
+---------------
+
+- WITHOUT Qt: Fiji runs on main thread, blocks until quit
+- WITH Qt: Main thread runs Qt event loop, Fiji runs in background thread
+
+The background thread approach allows Qt GUI operations to execute on the main
+thread (required on macOS) while Fiji/Java code runs separately. This prevents
+threading violations that would otherwise crash the application.
+
+Exception Handling Strategy
+---------------------------
+
+Three layers of defensive error handling:
+
+1. sys.excepthook: Catches uncaught Python exceptions on main thread
+2. Thread.run patch: Catches uncaught Python exceptions in background threads
+3. C++ terminate handler: Catches NSExceptions from Qt/Cocoa threading violations
+
+The C++ handler is particularly important on macOS, where creating Qt/Cocoa
+widgets on the wrong thread triggers NSInternalInconsistencyException.
+Instead of crashing, we provide a helpful error message directing users
+to use @ensure_main_thread from the superqt package.
+"""
+
 import logging
 import os
 import sys
