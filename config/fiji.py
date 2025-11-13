@@ -14,6 +14,9 @@ __version__ = "2.0.2"
 
 _logger = logging.getLogger(__name__)
 
+_ij = None
+_cpp_terminate_callback = None  # Keep reference to prevent garbage collection
+
 
 def in_interactive_inspect_mode():
     """Whether '-i' option is present or PYTHONINSPECT is not empty."""
@@ -128,6 +131,10 @@ def launch_fiji(args):
     # Perform launch actions (handle CLI args, show UI, etc.).
     ij.launch(main_args)
 
+    # Save a global reference to the ImageJ2 gateway, in case of crash.
+    global _ij
+    _ij = ij
+
     return ij
 
 
@@ -157,13 +164,209 @@ def maybe_block_until_quit(ij):
 
 
 def try_to(do_something):
+    """Execute a function and log any exceptions without crashing."""
     try:
         do_something()
     except Exception as e:
         _logger.warning(e)
 
 
+def log_exception(context, exc_type=None, exc_value=None, exc_traceback=None):
+    """
+    Log an exception with context information.
+
+    Args:
+        context: Description of where the exception occurred (e.g., "main thread", "background thread")
+        exc_type: Exception type (or None to use sys.exc_info())
+        exc_value: Exception value (or None to use sys.exc_info())
+        exc_traceback: Exception traceback (or None to use sys.exc_info())
+    """
+    import traceback
+
+    if exc_type is None:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+
+    _logger.error(f"Unhandled exception in {context}:", exc_info=(exc_type, exc_value, exc_traceback))
+    print(f"*** Unhandled exception in {context}:", file=sys.stderr)
+    traceback.print_exception(exc_type, exc_value, exc_traceback)
+
+
+def install_python_exception_handlers():
+    """
+    Install Python exception handlers for defensive error handling.
+
+    This installs two complementary handlers:
+
+    1. sys.excepthook: Catches uncaught exceptions in the main thread.
+       - Primarily a safety net for post-Qt-event-loop exceptions
+       - Qt bypasses this for its own exceptions (calls qFatal instead)
+       - Unlikely to trigger in normal operation, but provides an extra layer of defense
+
+    2. threading.Thread.run patch: Catches uncaught exceptions in background threads.
+       - Critical for the Fiji background thread where Java↔Python calls happen
+       - Logs exceptions from Java→Python callbacks that would otherwise be silent
+       - Prevents threads from dying without any error message
+
+    Both handlers log the exception with full traceback before propagating/exiting.
+    """
+    import threading
+    import traceback
+
+    # Install sys.excepthook for main thread exceptions.
+    original_excepthook = sys.excepthook
+
+    def fiji_excepthook(exc_type, exc_value, exc_traceback):
+        """Handle uncaught exceptions in the main thread."""
+        log_exception("main thread", exc_type, exc_value, exc_traceback)
+        # Call original handler to maintain default behavior.
+        original_excepthook(exc_type, exc_value, exc_traceback)
+
+    sys.excepthook = fiji_excepthook
+
+    # Patch threading.Thread.run to catch exceptions in background threads.
+    original_thread_run = threading.Thread.run
+
+    def patched_thread_run(self):
+        """Handle uncaught exceptions in background threads."""
+        try:
+            original_thread_run(self)
+        except Exception:
+            log_exception(f"thread {self.name}")
+            # Re-raise to maintain normal thread termination behavior.
+            raise
+
+    threading.Thread.run = patched_thread_run
+
+
+def install_cpp_terminate_handler():
+    """
+    Install a C++ terminate handler to catch std::terminate() calls.
+
+    This is particularly important on macOS to catch NSExceptions that occur
+    when Qt/Cocoa operations are attempted on the wrong thread. Instead of
+    crashing with a cryptic error, we provide a clear, actionable message.
+
+    This catches exceptions at the C++/Objective-C level that Python exception
+    handlers cannot reach (e.g., NSInternalInconsistencyException from Cocoa).
+    """
+    import ctypes
+
+    try:
+        # Load all symbols in the current process.
+        libcxx = ctypes.CDLL(None)
+
+        # Define the terminate handler signature: void (*)()
+        TERMINATE_HANDLER = ctypes.CFUNCTYPE(None)
+
+        def cpp_terminate_handler():
+            """Handle C++ terminate() calls with a clear error message."""
+            # Try to determine what caused terminate() to be called.
+            exception_info = "unknown exception"
+            is_nsexception = False
+
+            try:
+                # Try to get exception type using __cxa_current_exception_type.
+                # This is GCC/Clang specific (Itanium C++ ABI).
+                cxa_current_exception_type = libcxx.__cxa_current_exception_type
+                cxa_current_exception_type.restype = ctypes.c_void_p
+
+                type_info_ptr = cxa_current_exception_type()
+                if type_info_ptr:
+                    # Get the type name from std::type_info.
+                    # type_info.name() is at offset 8 on 64-bit systems.
+                    name_ptr = ctypes.c_void_p.from_address(type_info_ptr + 8).value
+                    if name_ptr:
+                        mangled_name = ctypes.c_char_p(name_ptr).value
+                        if mangled_name:
+                            exception_info = mangled_name.decode("utf-8")
+                            # Check if it's an NSException.
+                            if b"NSException" in mangled_name or b"NSInternalInconsistencyException" in mangled_name:
+                                is_nsexception = True
+            except Exception:
+                # If introspection fails, assume it's NSException based on context.
+                # We're on macOS with Qt, in a terminate handler - very likely NSException.
+                is_nsexception = True
+
+            if is_nsexception:
+                error_msg = """
+================================================================================
+FATAL ERROR: Qt/Cocoa operation attempted on wrong thread
+================================================================================
+
+A Qt or Cocoa GUI operation was attempted from a non-main thread on macOS.
+This is not allowed and causes the application to crash.
+
+SOLUTION: Ensure Qt/Cocoa operations run on the main thread.
+
+If you're using napari or other Qt-based tools from Fiji scripts, use the
+@ensure_main_thread decorator from the 'superqt' package:
+
+    from superqt import ensure_main_thread
+
+    @ensure_main_thread
+    def show_data(data):
+        napari.imshow(data)
+
+    # Now safe to call from any thread
+    show_data(my_array)
+
+For more information, see:
+https://github.com/pyapp-kit/superqt
+
+================================================================================
+"""
+            else:
+                error_msg = f"""
+================================================================================
+FATAL ERROR: Uncaught exception in C++ code
+================================================================================
+
+An uncaught exception was thrown in C++ code, causing std::terminate() to be
+called. Exception type: {exception_info}
+
+Fiji must exit to prevent further corruption. Please report this issue if you
+believe it is a bug.
+
+================================================================================
+"""
+
+            print(error_msg, file=sys.stderr)
+            _logger.error(f"C++ terminate() called - exception type: {exception_info}")
+
+            # Also tell the user graphically.
+            global _ij
+            try:
+                ui = _ij.ui() if _ij else None
+                if ui:
+                    ui.showDialog(error_msg, "Fiji")
+            except BaseException:
+                pass
+
+            # Exit cleanly with a non-zero status code.
+            # We can't continue because the JVM may be in an inconsistent state.
+            sys.exit(186)  # 186 = gBI = Graphical Broken Interface ;_;
+
+        # Store callback globally to prevent garbage collection.
+        # If we don't keep a reference, Python will delete the callback object
+        # and the C++ runtime will call a dangling pointer → crash!
+        global _cpp_terminate_callback
+        _cpp_terminate_callback = TERMINATE_HANDLER(cpp_terminate_handler)
+
+        # Install the terminate handler using std::set_terminate.
+        # The symbol is mangled as _ZSt13set_terminatePFvvE on macOS/Linux.
+        libcxx._ZSt13set_terminatePFvvE.restype = ctypes.c_void_p
+        libcxx._ZSt13set_terminatePFvvE.argtypes = [TERMINATE_HANDLER]
+        libcxx._ZSt13set_terminatePFvvE(_cpp_terminate_callback)
+        _logger.debug("Installed C++ terminate handler")
+
+    except AttributeError:
+        _logger.debug("Could not find std::set_terminate symbol")
+    except Exception as e:
+        _logger.debug(f"Failed to install C++ terminate handler: {e}")
+
+
 def main(args):
+    """Main entry point for Fiji Python mode."""
     # Set up logging.
     _debug = (
         "--debug" in args
@@ -196,6 +399,15 @@ def main(args):
 
     if use_qt:
         import threading
+
+        # Install defensive Python exception handlers for better error reporting.
+        # These handlers deal with exceptions on both main and non-main threads.
+        install_python_exception_handlers()
+
+        # On macOS, also install a C++ terminate handler to catch NSExceptions
+        # that occur when Qt/Cocoa operations are attempted on the wrong thread.
+        if sys.platform == "darwin":
+            install_cpp_terminate_handler()
 
         # Configure Qt for macOS before any QApplication creation.
         try_to(lambda: QApplication.setAttribute(Qt.AA_PluginApplication, True))
