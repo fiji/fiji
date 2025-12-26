@@ -80,6 +80,7 @@ directives = [
 
 cfg.max-heap = '75%'
 cfg.launch-mode = 'JVM'
+cfg.python-dir = ''
 
 # /============================================================================\
 # |                               PYTHON CONFIG                                |
