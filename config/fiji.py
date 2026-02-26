@@ -128,6 +128,7 @@ def launch_fiji(args):
     p = Path(libjvm_path).absolute()
     jvmpath = str(p)
     scyjava.config.add_kwargs(jvmpath=jvmpath)
+    scyjava.config.set_java_constraints(fetch="never")
 
     # Set JAVA_HOME to encourage use of the intended JVM,
     # e.g. by Maven when resolving remote artifacts.
