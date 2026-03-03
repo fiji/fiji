@@ -1,4 +1,4 @@
-/*
+/*-
  * #%L
  * Fiji distribution of ImageJ for the life sciences.
  * %%
@@ -19,6 +19,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 
 package sc.fiji.compat;
 

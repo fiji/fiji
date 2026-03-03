@@ -20,6 +20,7 @@
  * #L%
  */
 
+
 package sc.fiji.compat;
 
 import ij.IJ;

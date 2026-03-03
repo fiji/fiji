@@ -1,4 +1,4 @@
-/*
+/*-
  * #%L
  * Fiji distribution of ImageJ for the life sciences.
  * %%
