@@ -50,7 +50,6 @@ public class DefaultFijiService extends AbstractService implements FijiService {
 	public void actuallyInitialize() {
 		FileDialogDecorator.registerAutomaticDecorator();
 		JFileChooserDecorator.registerAutomaticDecorator();
-		setAWTAppClassName("fiji-Main");
 		final ImageJ ij = IJ.getInstance();
 		if (ij != null) {
 			new MenuRefresher().run();
@@ -75,23 +74,5 @@ public class DefaultFijiService extends AbstractService implements FijiService {
 	@EventHandler
 	protected void onEvent(@SuppressWarnings("unused") ServicesLoadedEvent evt) {
 		actuallyInitialize();
-	}
-
-	private static boolean setAWTAppClassName(String appName) {
-		if (!GraphicsEnvironment.isHeadless())  try {
-			Toolkit toolkit = Toolkit.getDefaultToolkit();
-			if (toolkit == null)
-				return false;
-			Class<?> clazz = toolkit.getClass();
-			if (!"sun.awt.X11.XToolkit".equals(clazz.getName()))
-				return false;
-			Field field = clazz.getDeclaredField("awtAppClassName");
-			field.setAccessible(true);
-			field.set(toolkit, appName);
-			return true;
-		} catch (Throwable t) {
-			t.printStackTrace();
-		}
-		return false;
 	}
 }
