@@ -12,9 +12,10 @@
 
 # Eclipse #
 /.checksums
+/.classpath
+/.factorypath
 /.metadata
 /.project
-/.classpath
 /.settings/
 
 # IntelliJ #
