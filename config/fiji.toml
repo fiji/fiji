@@ -11,7 +11,7 @@ jaunch-version = 2
 
 program-name = 'Fiji'
 
-includes = ['jvm.toml', 'python.toml']
+includes = ['jvm.toml', 'python.toml', 'extra*.toml']
 
 supported-options = [
     # General options
