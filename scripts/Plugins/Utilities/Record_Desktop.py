@@ -7,8 +7,10 @@ import thread
 import time
 
 from ij import IJ, ImagePlus, ImageStack
+from ij.gui import GenericDialog
 
 from java.awt import Robot, Rectangle
+from java.lang import System
 
 def run(title):
 	gd = GenericDialog('Record Desktop')
