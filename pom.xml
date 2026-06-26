@@ -5,13 +5,13 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>42.0.0</version>
+		<version>45.0.0</version>
 		<relativePath />
 	</parent>
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>fiji</artifactId>
-	<version>2.17.1-SNAPSHOT</version>
+	<version>2.18.0-SNAPSHOT</version>
 
 	<name>Fiji</name>
 	<description>Fiji is a distribution of ImageJ for the life sciences.</description>
@@ -166,6 +166,7 @@
 	</ciManagement>
 
 	<properties>
+		<scijava.jvm.version>21</scijava.jvm.version>
 		<main-class>sc.fiji.Main</main-class>
 		<package-name>sc.fiji</package-name>
 
@@ -763,11 +764,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>bigdataviewer-vistools</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
