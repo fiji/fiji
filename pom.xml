@@ -739,6 +739,12 @@
 			<artifactId>mpicbg_</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- https://github.com/JaneliaSciComp/BigStitcher -->
+		<dependency>
+			<groupId>net.preibisch</groupId>
+			<artifactId>BigStitcher</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 		<!-- https://github.com/openmicroscopy/bioformats -->
 		<dependency>
 			<groupId>ome</groupId>
