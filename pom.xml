@@ -177,6 +177,7 @@
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
 
+		<javafx.version>23.0.2</javafx.version>
 		<imagej2.version>2.18.0</imagej2.version>
 		<fiji-links.version>1.0.0</fiji-links.version>
 	</properties>
