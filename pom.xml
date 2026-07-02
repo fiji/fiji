@@ -922,4 +922,29 @@
 			<url>https://maven.scijava.org/content/groups/public</url>
 		</repository>
 	</repositories>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<version>${license-maven-plugin.version}</version>
+				<configuration>
+					<addJavaLicenseAfterPackage>false</addJavaLicenseAfterPackage>
+					<canUpdateDescription>true</canUpdateDescription>
+					<canUpdateCopyright>true</canUpdateCopyright>
+
+					<!-- SPDX-style minimal header -->
+					<inlineHeader>SPDX-License-Identifier: ${license.licenseName}
+						Copyright (C) ${project.inceptionYear} - ${license.currentYear} ${license.copyrightOwners}</inlineHeader>
+
+					<extraExtensions>
+						<bsh>java</bsh>
+						<config>properties</config>
+						<ijm>java</ijm>
+					</extraExtensions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>
