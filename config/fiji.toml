@@ -276,6 +276,10 @@ jvm.runtime-args = [
     'OS:WINDOWS|ARCH:X64|-Dscijava.app.java-platform=win64',
     'OS:WINDOWS|ARCH:X86|-Dscijava.app.java-platform=win32',
 
+    # Run only one instance of Fiji at a time.
+    # See https://github.com/scijava/app-launcher#readme
+    '-Dscijava.app.single-instance=true',
+
     # Set properties favored by SciJava desktop integration.
     # See https://github.com/scijava/scijava-desktop#readme
     '!OS:WINDOWS|-Dscijava.app.icon=${app-dir}/images/icon.png',
