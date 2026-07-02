@@ -179,7 +179,9 @@
 
 		<javafx.version>23.0.2</javafx.version>
 		<imagej2.version>2.18.0</imagej2.version>
+
 		<fiji-links.version>1.0.0</fiji-links.version>
+		<appose.version>0.12.0<appose.version>
 	</properties>
 
 	<dependencies>
@@ -219,11 +221,6 @@
 
 		<!-- Runtime dependencies -->
 
-		<dependency>
-			<groupId>org.scijava</groupId>
-			<artifactId>script-editor-jython</artifactId>
-			<scope>runtime</scope>
-		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-links</artifactId>
@@ -841,7 +838,116 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- SciJava projects - https://github.com/scijava -->
+		<dependencyL>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-collections</artifactId>
+		</dependencyL>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-common3</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-concurrent</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-discovery</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-discovery-test</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-function</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-legacy</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-meta</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-ops-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-ops-benchmarks</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-ops-desktop</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-ops-engine</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-ops-ext-parser</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-ops-flim</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-ops-image</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-ops-indexer</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-ops-opencv</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-ops-spi</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-ops-tutorial</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-priority</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-progress</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-struct</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-taglets</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-testutil</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-types</artifactId>
+		</dependency>
+
 		<!-- Other libraries -->
+
+		<dependency>
+			<groupId>org.apposed</groupId>
+			<artifactId>appose</artifactId>
+			<version>${appose.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 
 		<!--
 		reload4j - https://reload4j.qos.ch/
@@ -895,6 +1001,25 @@
 			<artifactId>scijava-config</artifactId>
 			<scope>runtime</scope>
 			<optional>true</optional>
+		</dependency>
+
+		<!--
+		HACK: multiview-reconstruction depends on ijp-kheops, which bloats
+		the dependency tree with transitive dependencies on OMERO and Spring.
+		Fiji cannot depend on OMERO because the OMERO server requires matching
+		OMERO client library versions, meaning that if Fiji were to bundle it,
+		only certain versions of the OMERO server would be compatible with it.
+		-->
+		<dependency>
+			<groupId>net.preibisch</groupId>
+			<artifactId>multiview-reconstruction</artifactId>
+			<scope>runtime</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>ch.epfl.biop</groupId>
+					<artifactId>ijp-kheops</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<!--
