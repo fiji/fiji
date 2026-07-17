@@ -1009,6 +1009,25 @@
 		</dependency>
 
 		<!--
+		HACK: multiview-reconstruction depends on ijp-kheops, which bloats
+		the dependency tree with transitive dependencies on OMERO and Spring.
+		Fiji cannot depend on OMERO because the OMERO server requires matching
+		OMERO client library versions, meaning that if Fiji were to bundle it,
+		only certain versions of the OMERO server would be compatible with it.
+		-->
+		<dependency>
+			<groupId>net.preibisch</groupId>
+			<artifactId>multiview-reconstruction</artifactId>
+			<scope>runtime</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>ch.epfl.biop</groupId>
+					<artifactId>ijp-kheops</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!--
 		HACK: Bio-Formats depends on logback-classic without the optional flag set,
 		but it should be optional, so we add an explicit optional dependency here.
 		-->
