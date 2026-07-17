@@ -179,7 +179,9 @@
 
 		<javafx.version>23.0.2</javafx.version>
 		<imagej2.version>2.18.0</imagej2.version>
+
 		<fiji-links.version>1.0.0</fiji-links.version>
+		<appose.version>0.12.0</appose.version>
 	</properties>
 
 	<dependencies>
@@ -842,6 +844,13 @@
 		</dependency>
 
 		<!-- Other libraries -->
+
+		<dependency>
+			<groupId>org.apposed</groupId>
+			<artifactId>appose</artifactId>
+			<version>${appose.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 
 		<!--
 		reload4j - https://reload4j.qos.ch/
