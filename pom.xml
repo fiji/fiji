@@ -936,11 +936,6 @@
 		</dependency>
 		<dependency>
 			<groupId>org.scijava</groupId>
-			<artifactId>scijava-testutil</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.scijava</groupId>
 			<artifactId>scijava-types</artifactId>
 			<scope>runtime</scope>
 		</dependency>
