@@ -283,8 +283,8 @@ jvm.runtime-args = [
     '-Dscijava.app.categories=ImageProcessing;Science;Education;',
     '-Dscijava.app.wmclass=sc-fiji-Fiji',
 
-    # Expose the python dir
-    '-Dscijava.python.dir=${cfg.python-dir}',
+    # Expose the python dir when running in Python mode.
+    'LAUNCH:PYTHON|-Dscijava.python.dir=${cfg.python-dir}',
 
     # Make SciJava startup less brittle.
     '-Dscijava.context.strict=false',
