@@ -20,8 +20,7 @@ At the moment, the following platforms are supported:
 - all platforms supporting Java 21+ and a POSIX shell, via `fiji.sh`
 
 The setup is as easy as unpacking the portable archive and
-double-clicking the [ImageJ
-launcher](https://github.com/imagej/imagej-launcher).
+double-clicking the [Fiji launcher](https://imagej.net/plugins/launcher).
 
 Fiji is intended to be the most painless, easy, quick and convenient way
 to install ImageJ and plugins and keep everything up-to-date.
