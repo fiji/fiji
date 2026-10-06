@@ -17,7 +17,6 @@ At the moment, the following platforms are supported:
 - Windows arm64 and x64
 - Linux arm64 and x64
 - macOS arm64 and x64
-- all platforms supporting Java 21+ and a POSIX shell, via `fiji.sh`
 
 The setup is as easy as unpacking the portable archive and
 double-clicking the [Fiji launcher](https://imagej.net/plugins/launcher).
