@@ -19,7 +19,7 @@ At the moment, the following platforms are supported:
 - macOS arm64 and x64
 
 The setup is as easy as unpacking the portable archive and
-double-clicking the [Fiji launcher](https://imagej.net/plugins/launcher).
+double-clicking the [Fiji launcher](https://imagej.net/learn/launcher).
 
 Fiji is intended to be the most painless, easy, quick and convenient way
 to install ImageJ and plugins and keep everything up-to-date.
