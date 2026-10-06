@@ -6,9 +6,8 @@ NCSA PalEdit program or with NIH Image. Known exceptions:
    1. LUTs prefixed by "mpl-": Matplotlib colormaps created by NJ
       Smith, S van der Walt, and (in the case of viridis) E Firing,
       under a CC0 license (http://bids.github.io/colormap/)
-   2. glasbey LUTs (http://imagej.net/Glasbey), based on Glasbey et
-      al. (2007) Color Research & Application 32.4:304-9
-
+   2. glasbey LUTs (https://imagej.net/plugins/glasbey), based on
+      Glasbey et al. (2007) Color Research & Application 32.4:304-9
 
 There are numerous ways to open LUTs:
 

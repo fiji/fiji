@@ -71,7 +71,7 @@ Participating
 [Pull Requests](https://help.github.com/articles/using-pull-requests)
 are very welcome!
 
-See the [Contributing](http://imagej.net/Contributing) page of the ImageJ wiki.
+See the [Contributing](https://imagej.net/contribute) page of the ImageJ wiki.
 
 Authors
 -------

@@ -11,7 +11,7 @@ function imp = copytoImagePlus(I,varargin)
 %
 % REQUIREMENTS
 % ImageJ-MATLAB as part of Fiji installation
-% https://imagej.net/MATLAB_Scripting
+% https://imagej.net/scripting/matlab
 %
 % ijmshow assumes a net.imagej.matlab.ImageJMATLABCommands Java object
 % named 'IJM' is made available in the base Workspace by ImageJ (part of
@@ -68,7 +68,7 @@ function imp = copytoImagePlus(I,varargin)
 %
 % net.imagej.matlab.ImageJMATLABCommands
 % evalin, assignin
-% https://imagej.net/MATLAB_Scripting
+% https://imagej.net/scripting/matlab
 
 
 import ij.process.ShortProcessor
