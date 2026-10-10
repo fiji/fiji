@@ -122,6 +122,8 @@ jvm.classpath = [
     #'${user.home}/.plugins/*/*.jar',
     #'${user.home}/.share/fiji/jars/*.jar',
     #'/usr/local/share/fiji/jars/*.jar',
+    #'${USERPROFILE}/.plugins/*.jar',
+    #'${USERPROFILE}/.plugins/*/*.jar',
     '--main-class|.', # Weird behavior, but it's what the ImageJ Launcher does.
 ]
 
