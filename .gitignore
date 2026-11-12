@@ -54,6 +54,9 @@ hs_err*.log
 # Jython #
 *$py.class
 
+# Serena #
+/.serena
+
 # Package Maker #
 /fiji-*.7z
 /fiji-*.dmg
