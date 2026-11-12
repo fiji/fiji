@@ -112,6 +112,7 @@ jvm.version-min = '8'
 
 jvm.classpath = [
     # Construct the classpath.
+    '${app-dir}/jars/app-launcher*.jar',
     '${app-dir}/jars/*.jar',
     '${app-dir}/jars/*/*.jar',
     '--plugins|${plugins}/*.jar'
